@@ -1,0 +1,43 @@
+[project]
+name = "ewmonitor"
+version = "0.1.0"
+description = "Energiewende-Monitor: SMARD- und Marktstammdatenregister-Daten als Star-Schema in SQL Server, Basis für ein öffentliches Power-BI-Modell."
+readme = "README.md"
+requires-python = ">=3.12"
+license = { text = "MIT" }
+authors = [{ name = "Harithas Harikaran" }]
+dependencies = [
+  "requests>=2.32",
+  "pandas>=2.2",
+  "pyodbc>=5.2",
+  "typer>=0.15",
+  "tzdata>=2025.2",
+]
+
+[project.optional-dependencies]
+mastr = ["open-mastr>=0.15"]
+
+[project.scripts]
+ewmonitor = "ewmonitor.cli:app"
+
+[dependency-groups]
+dev = ["pytest>=8.3", "ruff>=0.9", "responses>=0.25"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/ewmonitor"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+markers = ["db: needs a running SQL Server (MSSQL_SA_PASSWORD set)"]
+addopts = "-m 'not db'"
+
+[tool.ruff]
+line-length = 110
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]

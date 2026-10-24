@@ -1,0 +1,15 @@
+[scope]
+start = "2023-01-01"
+regions = ["DE-LU"]
+
+[smard]
+base_url = "https://www.smard.de/app/chart_data"
+generation = [1223, 1224, 1225, 1226, 1227, 1228, 4066, 4067, 4068, 4069, 4070, 4071]
+consumption = [410, 4359, 4387]
+price = 4169
+price_regions = ["DE-LU"]
+
+[paths]
+raw = "data/raw"
+seed = "data/seed"
+fixtures = "data/fixtures"
