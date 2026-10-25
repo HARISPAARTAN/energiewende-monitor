@@ -1,14 +1,21 @@
-"""Write the synthetic MaStR fixture: eight CSV tables with open-mastr 1.0 table and column names, 60 units.
+"""Write the synthetic MaStR fixture: eight CSV tables with open-mastr 1.0 table and column names, 61 units.
 
 Usage: uv run python tools/make_mastr_fixture.py
 Writes data/fixtures/mastr/tables/<Tabelle>.csv. Deterministic, no randomness: the units below are the
-whole fixture. tests/unit/test_mastr.py depends on them; the statistics the tests assert come from:
+whole fixture. tests/unit/test_mastr.py depends on them; the statistics the tests assert come from
+(aggregated with calendar 1990-01-01 .. 2030-12-31):
 
 - in_planung = 3            SEE900000000003 (Wind), SEE900000000019 (Solar), SEE900000000079 (Geothermie)
-- vor_kalender_abgang = 1   SEE900000000032 (Steinkohle, stillgelegt 1988-12-31)
-- inbetriebnahme_fehlt = 2  SEE900000000013 (Solar), SEE900000000067 (Wasser); both In Betrieb, no date
+- vor_kalender_abgang = 1   SEE900000000032 (NW Steinkohle, stillgelegt 1988-12-31; no row at all)
+- inbetriebnahme_fehlt = 2  SEE900000000013 (SN Solar, 5 kW), SEE900000000067 (Wasser); both In Betrieb, no date
 - verworfen = 2             SEE900000000052, SEE900000000053 (Batterie; 053 also has no date)
 - unmapped = 1              SEE900000000037 (Energietraeger "Wasserstoff")
+- datum_unplausibel = 0, netto_unplausibel = 0, nach_kalender = 0, stilllegung_ohne_datum = 0
+
+Rule units the tests check by cell:
+- SEE900000000005 (NI Wind, endgueltig stillgelegt 2019-12-31): Zubau 1998-05 and one Abgang 2019-12
+- SEE900000000010 (HE Wind, Vorübergehend stillgelegt with a DatumEndgueltigeStilllegung 2024-06-30):
+  Zubau 2017-05, no Abgang, because only Endgültig stillgelegt units leave the stock
 
 Every other unit maps cleanly: all Wind units have a Lage, all Verbrennung and GSGK fuels are in the
 mapping, all other storage units are Pumpspeicher, no other unit has an empty Inbetriebnahmedatum, and
@@ -55,6 +62,7 @@ UNITS = {
         ("SEE900000000007", "", "9500", "9500", "2024-02-01", B, "", "Wind", "Horizontalläufer", "", "Windkraft auf See"),
         ("SEE900000000008", "Sachsen-Anhalt", "1500", "1500", "2005-03-15", V, "", "Wind", "Horizontalläufer", "", "Windkraft an Land"),
         ("SEE900000000009", "Brandenburg", "4200", "4200", "2025-07-01", B, "", "Wind", "Horizontalläufer", "", "Windkraft an Land"),
+        ("SEE900000000010", "Hessen", "3300", "3400", "2017-05-12", V, "2024-06-30", "Wind", "Horizontalläufer", "", "Windkraft an Land"),
     ],
     "EinheitenSolar": [
         ("SEE900000000011", "Bayern", "9.9", "10.5", "2019-03-01", B, "", "Solare Strahlungsenergie", "", "", ""),

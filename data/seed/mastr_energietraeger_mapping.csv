@@ -18,3 +18,5 @@ EinheitenGeothermieGrubengasDruckentspannung,energietraeger_mastr,Grubengas,Sons
 EinheitenGeothermieGrubengasDruckentspannung,energietraeger_mastr,Druckentspannung,Sonstige Konventionelle
 EinheitenStromSpeicher,technologie,Pumpspeicher,Pumpspeicher
 EinheitenStromSpeicher,technologie,*,VERWERFEN
+EinheitenWind,*,*,Wind Onshore
+EinheitenStromSpeicher,*,*,VERWERFEN

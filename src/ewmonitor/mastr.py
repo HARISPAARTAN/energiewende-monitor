@@ -48,7 +48,9 @@ OFFSHORE_LAGE = "Windkraft auf See"
 AWZ, UNBEKANNT = "AWZ", "UNB"
 FALLBACK = "Sonstige Konventionelle"
 VERWERFEN = "VERWERFEN"
-MIN_YEAR = 1900
+MIN_YEAR, MAX_YEAR = 1900, 2100
+KEYS = ["jahr_monat", "bundesland_kuerzel", "energietraeger"]
+VALUE_COLUMNS = list(SEED_COLUMNS[3:])
 
 BUNDESLAND_KUERZEL = {
     "Baden-Württemberg": "BW", "Bayern": "BY", "Berlin": "BE", "Brandenburg": "BB", "Bremen": "HB", "Hamburg": "HH",
@@ -85,15 +87,23 @@ def iter_units(sqlite_path: Path, chunksize: int = 500_000) -> Iterator[pd.DataF
 
 
 def _normalise(df: pd.DataFrame) -> pd.DataFrame:
+    """Normalise one raw chunk. A non-empty date that does not parse or lies outside MIN_YEAR..MAX_YEAR counts as
+    missing (this also keeps dates beyond the datetime64[ns] limit of 2262-04-11 from raising); the number of units
+    with such a date is stored in `attrs["datum_unplausibel"]` of the returned frame, which `aggregate` sums."""
     out = df.copy()
+    unplausibel = pd.Series(False, index=out.index)
     for col in ("inbetriebnahme", "stilllegung"):
-        parsed = pd.to_datetime(out[col], errors="coerce", format="mixed")
-        parsed = parsed.where(parsed.dt.year >= MIN_YEAR)  # implausible years count as missing
-        out[col] = parsed.astype("datetime64[ns]")
+        raw = out[col].astype("string").str.strip().replace({"": pd.NA})
+        parsed = pd.to_datetime(raw, errors="coerce", format="mixed")
+        plausibel = parsed.dt.year.between(MIN_YEAR, MAX_YEAR)
+        unplausibel |= raw.notna() & ~plausibel
+        out[col] = parsed.where(plausibel).astype("datetime64[ns]")
     out["netto_kw"] = pd.to_numeric(out["netto_kw"], errors="coerce").astype("float64")
     for col in ("bundesland", "status", "energietraeger_mastr", "technologie", "hauptbrennstoff", "lage"):
         out[col] = out[col].astype("string").str.strip().replace({"": pd.NA})
-    return out[list(UNIT_COLUMNS)]
+    result = out[list(UNIT_COLUMNS)]
+    result.attrs["datum_unplausibel"] = int(unplausibel.sum())
+    return result
 
 
 def load_mapping(path: Path) -> pd.DataFrame:
@@ -101,6 +111,12 @@ def load_mapping(path: Path) -> pd.DataFrame:
     expected = ["tabelle", "feld", "wert", "energietraeger"]
     if list(mapping.columns) != expected:
         raise ValueError(f"{path}: Spalten {list(mapping.columns)} statt {expected}")
+    leer = mapping.apply(lambda col: col.str.strip().fillna("") == "").any(axis=1)
+    if leer.any():
+        raise ValueError(f"{path}: leere Zellen in Zeile(n) {[i + 2 for i in mapping.index[leer]]}")
+    feld_stern = (mapping["feld"] == "*") & (mapping["wert"] != "*")
+    if feld_stern.any():
+        raise ValueError(f"{path}: feld '*' verlangt wert '*' in Zeile(n) {[i + 2 for i in mapping.index[feld_stern]]}")
     return mapping
 
 
@@ -128,14 +144,20 @@ def _bundesland_kuerzel(df: pd.DataFrame) -> pd.Series:
     return kuerzel.fillna(UNBEKANNT)
 
 
-def aggregate(chunks: Iterable[pd.DataFrame], calendar_start: date, mapping: pd.DataFrame) -> tuple[pd.DataFrame, dict]:
-    """Monthly Zubau, Abgang and Anfangsbestand per Bundesland and Energietraeger, plus statistics."""
+def aggregate(chunks: Iterable[pd.DataFrame], calendar_start: date, calendar_end: date,
+              mapping: pd.DataFrame) -> tuple[pd.DataFrame, dict]:
+    """Monthly Zubau, Abgang and Anfangsbestand per Bundesland and Energietraeger, plus statistics.
+
+    Each chunk is pre-aggregated to one row per cell, so memory grows with the number of cells, not units.
+    MW values are summed unrounded and rounded to 3 decimals per cell only at the end."""
     first_month = f"{calendar_start.year:04d}-{calendar_start.month:02d}"
+    last_month = f"{calendar_end.year:04d}-{calendar_end.month:02d}"
     start_ts = pd.Timestamp(calendar_start)
     stats: Counter = Counter()
     parts: list[pd.DataFrame] = []
     for chunk in chunks:
         stats["einheiten"] += len(chunk)
+        stats["datum_unplausibel"] += int(chunk.attrs.get("datum_unplausibel", 0))
         m = map_energietraeger(chunk, mapping)
         stats["verworfen"] += int(m["verworfen"].sum())
         m = m[~m["verworfen"]]
@@ -145,9 +167,12 @@ def aggregate(chunks: Iterable[pd.DataFrame], calendar_start: date, mapping: pd.
         m = m[m["status"].isin(COUNTED_STATUS)]
         stats["netto_fehlt"] += int(m["netto_kw"].isna().sum())
         m = m[m["netto_kw"].notna()]
+        positiv = m["netto_kw"] > 0
+        stats["netto_unplausibel"] += int((~positiv).sum())
+        m = m[positiv]
         kuerzel = _bundesland_kuerzel(m)
         stats["bundesland_unbekannt"] += int((kuerzel == UNBEKANNT).sum())
-        mw = (m["netto_kw"] / 1000.0).round(3)
+        mw = m["netto_kw"] / 1000.0  # not rounded per unit: cells are rounded after summing
         endgueltig = (m["status"] == STATUS_ENDGUELTIG).fillna(False)
         abgang_ts = m["stilllegung"].where(endgueltig)
         stats["stilllegung_ohne_datum"] += int((endgueltig & m["stilllegung"].isna()).sum())
@@ -168,20 +193,20 @@ def aggregate(chunks: Iterable[pd.DataFrame], calendar_start: date, mapping: pd.
         has_abgang = abgang_ts.notna()
         abgang = base[has_abgang].assign(jahr_monat=abgang_ts[has_abgang].dt.strftime("%Y-%m"), zubau_mw=0.0, anzahl_zubau=0,
                                          abgang_mw=mw[has_abgang], anzahl_abgang=1, anfangsbestand_mw=0.0, anfangsbestand_anzahl=0)
-        parts.extend([zubau, abgang])
+        rows = pd.concat([zubau, abgang], ignore_index=True)
+        nach_kalender = rows["jahr_monat"] > last_month
+        stats["nach_kalender"] += int(nach_kalender.sum())
+        parts.append(rows[~nach_kalender].groupby(KEYS, as_index=False)[VALUE_COLUMNS].sum())
     if not parts:
+        stats["zeilen"] = 0
         return pd.DataFrame(columns=list(SEED_COLUMNS)), dict(stats)
-    long = pd.concat(parts, ignore_index=True)
-    seed = (long.groupby(["jahr_monat", "bundesland_kuerzel", "energietraeger"], as_index=False)
-                .agg(zubau_mw=("zubau_mw", "sum"), anzahl_zubau=("anzahl_zubau", "sum"), abgang_mw=("abgang_mw", "sum"),
-                     anzahl_abgang=("anzahl_abgang", "sum"), anfangsbestand_mw=("anfangsbestand_mw", "sum"),
-                     anfangsbestand_anzahl=("anfangsbestand_anzahl", "sum")))
+    seed = pd.concat(parts, ignore_index=True).groupby(KEYS, as_index=False)[VALUE_COLUMNS].sum()
     for col in ("zubau_mw", "abgang_mw", "anfangsbestand_mw"):
         seed[col] = seed[col].round(3)
     nonzero = (seed[["anzahl_zubau", "anzahl_abgang", "anfangsbestand_anzahl"]].sum(axis=1) > 0)
-    seed = seed[nonzero].sort_values(["jahr_monat", "bundesland_kuerzel", "energietraeger"]).reset_index(drop=True)
+    seed = seed[nonzero].sort_values(KEYS).reset_index(drop=True)
     seed = seed[list(SEED_COLUMNS)]
-    for col in ("jahr_monat", "bundesland_kuerzel", "energietraeger"):
+    for col in KEYS:
         seed[col] = seed[col].astype(str)
     stats["zeilen"] = len(seed)
     return seed, dict(stats)
@@ -190,7 +215,8 @@ def aggregate(chunks: Iterable[pd.DataFrame], calendar_start: date, mapping: pd.
 def write_seed(seed: pd.DataFrame, path: Path, stats: dict, export_date: date) -> None:
     lines = [f"# {ATTRIBUTION}", f"# Exportstand: {export_date.isoformat()}",
              "# Regeln: Zubau im Monat der Inbetriebnahme; Abgang im Monat der endgueltigen Stilllegung; "
-             "Anfangsbestand im ersten Kalendermonat fuer aeltere Inbetriebnahmen und fehlende Daten; In Planung ausgeschlossen",
+             "Anfangsbestand im ersten Kalendermonat fuer aeltere Inbetriebnahmen und fehlende Daten; In Planung ausgeschlossen; "
+             "endgueltig stillgelegt ohne Stilllegungsdatum bleibt im Bestand (stilllegung_ohne_datum)",
              "# Statistik: " + ", ".join(f"{k}={v}" for k, v in sorted(stats.items()))]
     with open(path, "w", encoding="utf-8", newline="\n") as f:
         f.write("\n".join(lines) + "\n")
