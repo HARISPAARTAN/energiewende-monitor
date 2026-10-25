@@ -7,7 +7,7 @@ German version: [README.md](README.md).
 
 **Status:** milestone 1 (data pipeline, SQL schema, tests, CI) is complete. The Power BI model and report follow.
 
-Data as of: 2026-10-25 (from 2023-01-01, DE-LU; load time 3 minutes on a laptop).
+Data as of: 2026-10-25 (from 2023-01-01, DE-LU; load time about 3 minutes on a laptop).
 
 ## What the monitor shows
 
@@ -34,7 +34,7 @@ cp .env.example .env            # set MSSQL_SA_PASSWORD
 docker compose up -d            # SQL Server 2022 Developer on port 1433
 uv sync --dev
 uv run --env-file .env ewmonitor all --fixtures   # load and check the October 2025 test week
-uv run --env-file .env ewmonitor all              # load 2023-01-01 to yesterday (about 15 minutes)
+uv run --env-file .env ewmonitor all              # load 2023-01-01 to yesterday (about 3 minutes)
 ```
 
 Connection: `EWM_DB_SERVER` (default `127.0.0.1,1433`) and `EWM_DB_NAME` (default `energiewende`) from `.env`.
@@ -51,6 +51,14 @@ are downloaded again, because SMARD republishes past weeks). `ewmonitor all --fi
   staging and facts there and loads the test week; the database from `EWM_DB_NAME` is left untouched.
 - GitHub Actions runs both against a SQL Server container (`.github/workflows/ci.yml`).
 
+## Error handling
+
+HTTP failures that may be transient (connection drops, timeouts, 429, 5xx, invalid JSON) are retried three times
+with a backoff. A chunk that still fails stops the run: staging is replaced per series and time range, so a
+skipped chunk would delete that week's good rows. When SMARD has no index (404) for a configured series, the
+series has no chunks and a WARNING is logged. Database errors stop the run and roll the step back; `--from`/`--to`
+outside the calendar (`scope.start` to 2030-12-31) are rejected.
+
 ## Data quality
 
 `ewmonitor check` verifies quarter-hours per day for generation and load (inside each series' loaded span), null
@@ -66,7 +74,8 @@ quarter-hours of the hour have one, otherwise NULL; the `viertelstunden_*` colum
 
 - SMARD, Bundesnetzagentur: CC BY 4.0, attribution `Bundesnetzagentur | SMARD.de`.
   Filters: generation 1223, 1224, 1225, 1226, 1227, 1228, 4066, 4067, 4068, 4069, 4070, 4071; consumption 410, 4359, 4387;
-  price 4169. Nuclear (1224) ends in the source data in January 2024.
+  price 4169. Nuclear (1224): last generation in the quarter-hour from 2023-04-15 23:45 local time, then zeros
+  until 2024-01-30 12:15, no values (NULL) from 2024-01-30 12:30; the series ends in the source data on 2024-02-04.
 - Marktstammdatenregister (from milestone 2): Datenlizenz Deutschland Namensnennung 2.0.
 
 ## Decisions

@@ -7,7 +7,7 @@ English version: [README.en.md](README.en.md).
 
 **Stand:** Meilenstein 1 (Datenpipeline, SQL-Schema, Tests, CI) ist fertig. Power-BI-Modell und Bericht folgen.
 
-Datenstand: 2026-10-25 (ab 2023-01-01, DE-LU; Ladezeit 3 Minuten auf einem Laptop).
+Datenstand: 2026-10-25 (ab 2023-01-01, DE-LU; Ladezeit ca. 3 Minuten auf einem Laptop).
 
 ## Was der Monitor zeigt
 
@@ -35,7 +35,7 @@ cp .env.example .env            # MSSQL_SA_PASSWORD setzen
 docker compose up -d            # SQL Server 2022 Developer, Port 1433
 uv sync --dev
 uv run --env-file .env ewmonitor all --fixtures   # Testwoche (Oktober 2025) laden und prüfen
-uv run --env-file .env ewmonitor all              # ab 2023-01-01 bis gestern laden (ca. 15 Minuten)
+uv run --env-file .env ewmonitor all              # ab 2023-01-01 bis gestern laden (ca. 3 Minuten)
 ```
 
 Verbindung: `EWM_DB_SERVER` (Standard `127.0.0.1,1433`) und `EWM_DB_NAME` (Standard `energiewende`) aus der `.env`.
@@ -53,6 +53,15 @@ ohne Netzwerk.
   leert dort Staging und Fakten und lädt die Testwoche; die Datenbank aus `EWM_DB_NAME` bleibt unberührt.
 - GitHub Actions führt beides gegen einen SQL-Server-Container aus (`.github/workflows/ci.yml`).
 
+## Fehlerbehandlung
+
+HTTP-Fehler, die vorübergehend sein können (Verbindungsabbruch, Zeitüberschreitung, 429, 5xx, ungültiges JSON),
+werden dreimal mit Wartezeit wiederholt. Ein Chunk, der danach noch fehlschlägt, bricht den Lauf ab: Das Staging
+wird je Reihe und Zeitraum ersetzt, ein übersprungener Chunk würde gute Zeilen dieser Woche löschen. Liefert SMARD
+für eine konfigurierte Reihe keinen Index (404), hat sie keine Chunks; das wird als WARNING protokolliert.
+Datenbankfehler brechen den Lauf ab und rollen den Schritt zurück; `--from`/`--to` außerhalb des Kalenders
+(`scope.start` bis 2030-12-31) werden abgelehnt.
+
 ## Datenqualität
 
 `ewmonitor check` prüft: Viertelstunden je Tag für Erzeugung und Last (innerhalb der jeweils geladenen Spanne),
@@ -69,7 +78,9 @@ Anzahl der vorhandenen Werte.
 
 - SMARD, Bundesnetzagentur: Lizenz CC BY 4.0, Quellenangabe `Bundesnetzagentur | SMARD.de`.
   Filter: Erzeugung 1223, 1224, 1225, 1226, 1227, 1228, 4066, 4067, 4068, 4069, 4070, 4071; Verbrauch 410, 4359, 4387;
-  Preis 4169. Kernenergie (1224) endet in den Quelldaten im Januar 2024.
+  Preis 4169. Kernenergie (1224): letzte Erzeugung in der Viertelstunde ab 2023-04-15 23:45 Ortszeit, danach
+  Nullwerte bis 2024-01-30 12:15, ab 2024-01-30 12:30 keine Werte mehr (NULL); die Reihe endet in den Quelldaten
+  am 2024-02-04.
 - Marktstammdatenregister (ab Meilenstein 2): Datenlizenz Deutschland Namensnennung 2.0.
 
 ## Entscheidungen
