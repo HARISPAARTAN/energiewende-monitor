@@ -17,3 +17,18 @@ CREATE TABLE stg.smard_series (
     CONSTRAINT pk_smard_series PRIMARY KEY CLUSTERED (filter_id, region, resolution, ts_utc)
 );
 GO
+IF OBJECT_ID(N'stg.mastr_kapazitaet') IS NULL
+CREATE TABLE stg.mastr_kapazitaet (
+    jahr_monat            char(7)       NOT NULL,
+    bundesland_kuerzel    nvarchar(3)   NOT NULL,
+    energietraeger        nvarchar(40)  NOT NULL,
+    zubau_mw              decimal(12,3) NOT NULL,
+    anzahl_zubau          int           NOT NULL,
+    abgang_mw             decimal(12,3) NOT NULL,
+    anzahl_abgang         int           NOT NULL,
+    anfangsbestand_mw     decimal(14,3) NOT NULL,
+    anfangsbestand_anzahl int           NOT NULL,
+    loaded_at             datetime2(0)  NOT NULL CONSTRAINT df_mastr_kapazitaet_loaded_at DEFAULT SYSUTCDATETIME(),
+    CONSTRAINT pk_mastr_kapazitaet PRIMARY KEY CLUSTERED (jahr_monat, bundesland_kuerzel, energietraeger)
+);
+GO

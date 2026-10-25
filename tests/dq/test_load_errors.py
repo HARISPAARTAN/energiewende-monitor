@@ -9,7 +9,9 @@ from ewmonitor.load import load_facts
 
 pytestmark = pytest.mark.db
 
-FACTS = ("dw.fact_erzeugung", "dw.fact_last", "dw.fact_preis")
+FACTS = ("dw.fact_erzeugung", "dw.fact_last", "dw.fact_preis", "dw.fact_kapazitaet")
+# rebuilt in full from stg.mastr_kapazitaet, ignores the range and never reads stg.smard_series
+RANGE_INDEPENDENT_LOADS = ("140_fact_kapazitaet.sql",)
 
 
 def test_error_after_delete_in_one_batch_raises_and_keeps_the_rows(con, tmp_path):
@@ -67,6 +69,8 @@ def test_load_facts_outside_the_calendar_raises_and_leaves_the_facts_unchanged(c
             load_facts(con, sql_dir, 19891231, 20301231)
         assert _fact_counts(con) == before
         for path in sorted((sql_dir / "load").glob("*.sql")):  # each script on its own, not only the first
+            if path.name in RANGE_INDEPENDENT_LOADS:
+                continue
             with pytest.raises(pyodbc.IntegrityError):
                 run_sql_file(con, path, 19891231, 20301231)
             assert _fact_counts(con) == before, path.name

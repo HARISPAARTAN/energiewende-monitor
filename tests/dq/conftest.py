@@ -10,9 +10,12 @@ from ewmonitor import db
 from ewmonitor.config import load_settings
 from ewmonitor.dims import load_dims
 from ewmonitor.ingest import ingest_fixtures
+from ewmonitor.kapazitaet import write_stg_kapazitaet
 from ewmonitor.load import key_range, load_facts, write_stg
+from ewmonitor.mastr import read_seed
 
-RESET_TABLES = ("stg.smard_series", "dw.fact_erzeugung", "dw.fact_last", "dw.fact_preis")
+RESET_TABLES = ("stg.smard_series", "dw.fact_erzeugung", "dw.fact_last", "dw.fact_preis", "dw.fact_kapazitaet",
+                "stg.mastr_kapazitaet")
 
 
 @pytest.fixture(scope="session")
@@ -40,7 +43,8 @@ def con(settings):
 
 @pytest.fixture(scope="session", autouse=True)
 def fixture_week_loaded(con, settings):
-    """Apply the DDL, empty staging and facts, then load the fixture week (Oct 20-26 2025, autumn DST)."""
+    """Apply the DDL, empty staging and facts, then load the fixture week (Oct 20-26 2025, autumn DST) and the
+    MaStR fixture capacity seed."""
     sql_dir = settings.root / "sql"
     db.run_ddl(con, sql_dir)  # idempotent; on a fresh database the tables do not exist before this
     for table in RESET_TABLES:
@@ -49,4 +53,5 @@ def fixture_week_loaded(con, settings):
     df = ingest_fixtures(settings.fixtures_dir)
     write_stg(con, df)
     load_dims(con, settings.seed_dir, settings.calendar_start, settings.calendar_end)
+    write_stg_kapazitaet(con, read_seed(settings.fixtures_dir / "mastr" / "kapazitaet_monat.csv"))
     load_facts(con, sql_dir, *key_range(df))

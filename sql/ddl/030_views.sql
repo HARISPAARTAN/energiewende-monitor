@@ -95,3 +95,10 @@ LEFT JOIN vorhanden v ON v.region_key = x.region_key AND v.energietraeger_key = 
 JOIN dw.dim_region r ON r.region_key = x.region_key
 JOIN dw.dim_energietraeger e ON e.energietraeger_key = x.energietraeger_key;
 GO
+-- Installed capacity per Bundesland, Energietraeger and month (datum_key = first day of the month).
+CREATE OR ALTER VIEW rpt.v_kapazitaet AS
+SELECT k.datum_key, d.jahr_monat, k.bundesland_key, k.energietraeger_key, k.zubau_mw, k.anzahl_zubau, k.abgang_mw,
+       k.anzahl_abgang, k.anfangsbestand_mw, k.anfangsbestand_anzahl, k.bestand_mw, k.bestand_anzahl
+FROM dw.fact_kapazitaet k
+JOIN dw.dim_datum d ON d.datum_key = k.datum_key;
+GO

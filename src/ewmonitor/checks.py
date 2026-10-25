@@ -205,6 +205,56 @@ def check_freshness(con, now: datetime | None = None, to_key: int | None = None)
                        f"letzter Netzlast-Wert {latest:%Y-%m-%d %H:%M} UTC ({age.days} Tage alt)")
 
 
+PLAUSIBEL_GW = {  # national Bestand at the newest month, generous bounds (warn only)
+    "Photovoltaik": (60.0, 200.0), "Wind Onshore": (40.0, 100.0), "Wind Offshore": (5.0, 25.0), "Biomasse": (5.0, 15.0),
+    "Braunkohle": (5.0, 25.0), "Steinkohle": (3.0, 25.0), "Erdgas": (20.0, 50.0), "Pumpspeicher": (4.0, 12.0),
+}
+
+
+def check_capacity_non_negative(con, from_key: int, to_key: int) -> CheckResult:
+    n = _val(con, "SELECT COUNT(*) FROM dw.fact_kapazitaet WHERE bestand_mw < -0.0005 OR bestand_anzahl < 0")
+    return CheckResult("kapazitaet_bestand_nicht_negativ", "ok" if n == 0 else "fail", f"{n} negative Bestandswerte")
+
+
+def check_capacity_vs_staging(con, from_key: int, to_key: int) -> CheckResult:
+    sql = """
+    SELECT ROUND(SUM(zubau_mw), 3), SUM(anzahl_zubau), ROUND(SUM(abgang_mw), 3), SUM(anzahl_abgang),
+           ROUND(SUM(anfangsbestand_mw), 3), SUM(anfangsbestand_anzahl) FROM {t}"""
+    stg = con.execute(sql.format(t="stg.mastr_kapazitaet")).fetchone()
+    fact = con.execute(sql.format(t="dw.fact_kapazitaet")).fetchone()
+    same = all((a or 0) == (b or 0) for a, b in zip(stg, fact, strict=True))
+    def fmt(row) -> str:  # plain numbers, not Decimal('...') reprs
+        return "(" + ", ".join(str(v) for v in row) + ")"
+    return CheckResult("kapazitaet_vs_staging", "ok" if same else "fail", f"staging {fmt(stg)} vs fakten {fmt(fact)}")
+
+
+def check_capacity_month_grid(con, from_key: int, to_key: int) -> CheckResult:
+    sql = """
+    WITH p AS (SELECT bundesland_key, energietraeger_key, MIN(datum_key) AS von, MAX(datum_key) AS bis, COUNT(*) AS n
+               FROM dw.fact_kapazitaet GROUP BY bundesland_key, energietraeger_key),
+    soll AS (SELECT p.bundesland_key, p.energietraeger_key, p.n, COUNT(d.datum_key) AS m
+             FROM p JOIN dw.dim_datum d ON d.tag = 1 AND d.datum_key BETWEEN p.von AND p.bis
+             GROUP BY p.bundesland_key, p.energietraeger_key, p.n)
+    SELECT COUNT(*) FROM soll WHERE n <> m"""
+    n = _val(con, sql)
+    return CheckResult("kapazitaet_monatsraster", "ok" if n == 0 else "fail", f"{n} Paare mit Luecken im Monatsraster")
+
+
+def check_capacity_plausible(con, from_key: int, to_key: int) -> CheckResult:
+    sql = """
+    SELECT e.name_de, SUM(k.bestand_mw) / 1000.0
+    FROM dw.fact_kapazitaet k JOIN dw.dim_energietraeger e ON e.energietraeger_key = k.energietraeger_key
+    WHERE k.datum_key = (SELECT MAX(datum_key) FROM dw.fact_kapazitaet)
+    GROUP BY e.name_de"""
+    rows = con.execute(sql).fetchall()
+    if not rows:
+        return CheckResult("kapazitaet_plausibel", "warn", "keine Kapazitaetsdaten")
+    gw = {name: float(v) for name, v in rows}
+    off = [f"{name} {gw[name]:.1f} GW (erwartet {lo}-{hi})" for name, (lo, hi) in PLAUSIBEL_GW.items()
+           if name in gw and not lo <= gw[name] <= hi]
+    return CheckResult("kapazitaet_plausibel", "ok" if not off else "warn", "; ".join(off) or "Bestand im erwarteten Bereich")
+
+
 def run_checks(con, from_key: int, to_key: int, now: datetime | None = None) -> list[CheckResult]:
     return [
         check_rows_per_day(con, from_key, to_key),
@@ -218,6 +268,10 @@ def run_checks(con, from_key: int, to_key: int, now: datetime | None = None) -> 
         check_facts_vs_staging(con, from_key, to_key),
         check_incomplete_hours(con, from_key, to_key),
         check_freshness(con, now, to_key),
+        check_capacity_non_negative(con, from_key, to_key),
+        check_capacity_vs_staging(con, from_key, to_key),
+        check_capacity_month_grid(con, from_key, to_key),
+        check_capacity_plausible(con, from_key, to_key),
     ]
 
 

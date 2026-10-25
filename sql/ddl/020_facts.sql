@@ -52,3 +52,24 @@ BEGIN
     CREATE INDEX ix_fact_preis_datum ON dw.fact_preis (datum_key) INCLUDE (day_ahead_eur_mwh);
 END
 GO
+IF OBJECT_ID(N'dw.fact_kapazitaet') IS NULL
+BEGIN
+    CREATE TABLE dw.fact_kapazitaet (
+        datum_key             int           NOT NULL,
+        bundesland_key        smallint      NOT NULL,
+        energietraeger_key    smallint      NOT NULL,
+        zubau_mw              decimal(12,3) NOT NULL,
+        anzahl_zubau          int           NOT NULL,
+        abgang_mw             decimal(12,3) NOT NULL,
+        anzahl_abgang         int           NOT NULL,
+        anfangsbestand_mw     decimal(14,3) NOT NULL,
+        anfangsbestand_anzahl int           NOT NULL,
+        bestand_mw            decimal(14,3) NOT NULL,
+        bestand_anzahl        int           NOT NULL,
+        CONSTRAINT pk_fact_kapazitaet PRIMARY KEY CLUSTERED (datum_key, bundesland_key, energietraeger_key),
+        CONSTRAINT fk_fact_kapazitaet_datum FOREIGN KEY (datum_key) REFERENCES dw.dim_datum (datum_key),
+        CONSTRAINT fk_fact_kapazitaet_bl FOREIGN KEY (bundesland_key) REFERENCES dw.dim_bundesland (bundesland_key),
+        CONSTRAINT fk_fact_kapazitaet_et FOREIGN KEY (energietraeger_key) REFERENCES dw.dim_energietraeger (energietraeger_key)
+    );
+END
+GO

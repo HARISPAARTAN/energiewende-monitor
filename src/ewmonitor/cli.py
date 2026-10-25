@@ -16,6 +16,7 @@ from .checks import format_results, has_failures, run_checks
 from .config import Settings, load_settings
 from .dims import load_dims
 from .ingest import ingest_fixtures, ingest_range
+from .kapazitaet import write_stg_kapazitaet
 from .load import key_range, load_facts, write_stg
 from .smard import SmardClient
 from .timekeys import BERLIN, date_key
@@ -57,6 +58,24 @@ def _range(settings: Settings, from_: datetime | None, to: datetime | None) -> t
     return start, end
 
 
+def _export_date(value: str | None) -> date | None:
+    """The MaStR export date from --date: exactly eight digits forming a real calendar day, or None."""
+    if value is None:
+        return None
+    if not (len(value) == 8 and value.isascii() and value.isdigit()):
+        raise typer.BadParameter(f"{value!r} ist nicht im Format YYYYMMDD", param_hint="--date")
+    try:
+        return date(int(value[:4]), int(value[4:6]), int(value[6:]))
+    except ValueError as exc:
+        raise typer.BadParameter(f"{value!r} ist kein gültiges Datum ({exc})", param_hint="--date") from exc
+
+
+def _stage_capacity(settings: Settings, con, fixtures: bool) -> None:
+    """Replace stg.mastr_kapazitaet with the capacity seed (the fixture seed with --fixtures)."""
+    seed_path = (settings.fixtures_dir / "mastr" if fixtures else settings.seed_dir) / "kapazitaet_monat.csv"
+    typer.echo(f"kapazitaet staging: {write_stg_kapazitaet(con, mastr.read_seed(seed_path))} Zeilen")
+
+
 def _prepare(settings: Settings):
     db.ensure_database(settings.db)
     con = db.connect(settings.db)
@@ -93,6 +112,7 @@ def load(from_: FromOpt = None, to: ToOpt = None) -> None:
     start, end = _range(settings, from_, to)
     with closing(_prepare(settings)) as con:
         typer.echo(f"dimensionen: {load_dims(con, settings.seed_dir, settings.calendar_start, settings.calendar_end)}")
+        _stage_capacity(settings, con, fixtures=False)
         load_facts(con, settings.root / "sql", date_key(start), date_key(end))
         typer.echo(f"fakten: {date_key(start)}..{date_key(end)}")
 
@@ -119,6 +139,7 @@ def run_all(from_: FromOpt = None, to: ToOpt = None, fixtures: FixturesOpt = Fal
         df = _ingest(settings, con, start, end, fixtures, regions, refresh_days)
         lo, hi = key_range(df) if fixtures and not df.empty else (date_key(start), date_key(end))
         typer.echo(f"dimensionen: {load_dims(con, settings.seed_dir, settings.calendar_start, settings.calendar_end)}")
+        _stage_capacity(settings, con, fixtures)
         load_facts(con, settings.root / "sql", lo, hi)
         # fixture data is historical: judge freshness against the fixture week's end, not today
         now = df["ts_utc"].max().to_pydatetime() if fixtures and not df.empty else None
@@ -137,6 +158,7 @@ def seed_mastr(
     out: Annotated[Path | None, typer.Option("--out", help="Zielpfad der Seed-CSV (Standard: data/seed bzw. data/fixtures)")] = None,
 ) -> None:
     """MaStR-Gesamtdatenexport lesen und data/seed/kapazitaet_monat.csv neu erzeugen (Stunden; nur auf dem Entwicklerrechner)."""
+    export_date = _export_date(date_) or date.today()
     settings = load_settings()
     if fixtures:
         sqlite_path = mastr.sqlite_from_csv_dir(settings.fixtures_dir / "mastr" / "tables",
@@ -151,6 +173,5 @@ def seed_mastr(
         typer.echo("profil: docs/mastr-profil.md")
     mapping = mastr.load_mapping(settings.seed_dir / "mastr_energietraeger_mapping.csv")
     seed, stats = mastr.aggregate(mastr.iter_units(sqlite_path), settings.calendar_start, settings.calendar_end, mapping)
-    export_date = date.fromisoformat(f"{date_[:4]}-{date_[4:6]}-{date_[6:]}") if date_ else date.today()
     mastr.write_seed(seed, target, stats, export_date)
     typer.echo(f"seed: {target} " + " ".join(f"{k}={v}" for k, v in sorted(stats.items())))

@@ -31,4 +31,4 @@ def test_fact_primary_keys(con):
     WHERE k.type = 'PK' AND t.name LIKE 'fact_%' GROUP BY t.name
     """
     counts = dict(con.execute(sql).fetchall())
-    assert counts == {"fact_erzeugung": 3, "fact_last": 2, "fact_preis": 2}
+    assert counts == {"fact_erzeugung": 3, "fact_last": 2, "fact_preis": 2, "fact_kapazitaet": 3}

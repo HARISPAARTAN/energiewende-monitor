@@ -57,10 +57,24 @@ def test_range_rejects_before_scope_start_even_though_calendar_is_older():
         _range(settings, datetime(1995, 1, 1), None)
 
 
-def test_seed_mastr_command_is_registered_and_fixtures_mode_writes_the_fixture_seed(tmp_path, monkeypatch):
+def test_seed_mastr_command_is_registered_and_fixtures_mode_writes_the_fixture_seed(tmp_path):
     names = {c.name or c.callback.__name__.replace("_", "-") for c in app.registered_commands}
     assert "seed-mastr" in names
     result = CliRunner().invoke(app, ["seed-mastr", "--fixtures", "--out", str(tmp_path / "seed.csv")])
     assert result.exit_code == 0, result.output
     assert (tmp_path / "seed.csv").exists()
     assert "zeilen=" in result.output
+
+
+@pytest.mark.parametrize("value", ["2026102", "202610250", "2026-10-25", "abcdefgh", "20261332", "20260230"])
+def test_seed_mastr_rejects_a_malformed_or_impossible_date_before_any_work(tmp_path, value):
+    result = CliRunner().invoke(app, ["seed-mastr", "--fixtures", "--date", value, "--out", str(tmp_path / "seed.csv")])
+    assert result.exit_code == 2
+    assert "--date" in _ANSI.sub("", result.output)
+    assert not (tmp_path / "seed.csv").exists()
+
+
+def test_seed_mastr_uses_a_valid_date_as_export_date(tmp_path):
+    result = CliRunner().invoke(app, ["seed-mastr", "--fixtures", "--date", "20251020", "--out", str(tmp_path / "seed.csv")])
+    assert result.exit_code == 0, result.output
+    assert "# Exportstand: 2025-10-20" in (tmp_path / "seed.csv").read_text(encoding="utf-8")
