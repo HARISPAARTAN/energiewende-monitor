@@ -21,6 +21,7 @@ def write_stg(con, df: pd.DataFrame) -> int:
     """Delete the covered timestamp range of every (filter, region, resolution) in df, then insert df."""
     if df.empty:
         return 0
+    rows = df_rows(df, STG_COLUMNS)  # before the DELETEs, so a conversion error cannot leave them pending
     cur = con.cursor()  # not "with": pyodbc's Cursor.__exit__ commits, which would split the unit of work
     try:
         for (filter_id, region, resolution), group in df.groupby(["filter_id", "region", "resolution"]):
@@ -35,7 +36,7 @@ def write_stg(con, df: pd.DataFrame) -> int:
     finally:
         cur.close()
     # bulk_insert commits the DELETEs and the INSERT together, or rolls both back
-    return bulk_insert(con, "stg.smard_series", STG_COLUMNS, df_rows(df, STG_COLUMNS))
+    return bulk_insert(con, "stg.smard_series", STG_COLUMNS, rows)
 
 
 def load_facts(con, sql_dir: Path, from_key: int, to_key: int) -> None:

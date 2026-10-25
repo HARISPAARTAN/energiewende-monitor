@@ -100,3 +100,19 @@ def test_ingest_fixtures_reads_every_file():
     df = ingest_fixtures(ROOT / "data" / "fixtures")
     assert len(df) == 14 * 676 + 169
     assert df["filter_id"].nunique() == 15
+
+
+def test_ingest_range_forces_chunks_inside_the_refresh_window(tmp_path):
+    s = load_settings(ROOT)
+    old, recent, newer, newest = (local_midnight_ms(d) for d in
+                                  (date(2025, 9, 1), date(2025, 9, 29), date(2025, 10, 13), date(2025, 10, 20)))
+    now_ms = local_midnight_ms(date(2025, 11, 1))
+
+    def forced(refresh_days):
+        client = SyntheticClient([old, recent, newer, newest], tmp_path)
+        ingest_range(s, client, date(2025, 9, 1), date(2025, 10, 26), refresh_days=refresh_days, now_ms=now_ms)
+        assert {call[3] for call in client.calls} == {old, recent, newer, newest}
+        return {call[3] for call in client.calls if call[4]}
+
+    assert forced(30) == {recent, newer, newest}  # recent ends 2025-10-06, inside 30 days; old ends 2025-09-08
+    assert forced(0) == {newer, newest}  # only the two newest chunks

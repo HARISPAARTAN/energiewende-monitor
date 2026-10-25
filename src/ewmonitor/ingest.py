@@ -4,17 +4,19 @@ from __future__ import annotations
 
 import logging
 from collections.abc import Sequence
-from datetime import date, timedelta
+from datetime import UTC, date, datetime, timedelta
 from pathlib import Path
 from typing import NamedTuple
 
 import pandas as pd
 
 from .config import Settings
-from .smard import STG_COLUMNS, latest_chunks, parse_chunk_file, select_chunks
+from .smard import STG_COLUMNS, chunk_end_ms, latest_chunks, parse_chunk_file, select_chunks
 from .timekeys import date_key, local_midnight_ms
 
 log = logging.getLogger(__name__)
+
+DAY_MS = 86_400_000
 
 
 class SeriesSpec(NamedTuple):
@@ -34,12 +36,24 @@ def series_specs(settings: Settings, regions: Sequence[str] | None = None) -> li
 
 
 def ingest_range(
-    settings: Settings, client, start: date, end: date, regions: Sequence[str] | None = None
+    settings: Settings,
+    client,
+    start: date,
+    end: date,
+    regions: Sequence[str] | None = None,
+    refresh_days: int = 60,
+    now_ms: int | None = None,
 ) -> pd.DataFrame:
     """Download (or reuse cached) chunks covering [start, end] local days and return staging rows
     for those days.
+
+    A chunk is re-downloaded (force) when it is one of the two newest, or when it ends within the last
+    `refresh_days` days: SMARD republishes complete weekly chunks weeks after the fact.
     """
     start_ms, end_ms = local_midnight_ms(start), local_midnight_ms(end + timedelta(days=1)) - 1
+    if now_ms is None:
+        now_ms = int(datetime.now(UTC).timestamp() * 1000)
+    refresh_from_ms = now_ms - refresh_days * DAY_MS
     frames: list[pd.DataFrame] = []
     for spec in series_specs(settings, regions):
         index = client.fetch_index(spec.filter_id, spec.region, spec.resolution)
@@ -47,9 +61,8 @@ def ingest_range(
         chunks = select_chunks(index, start_ms, end_ms)
         log.info("%s %s %s: %d chunk(s)", spec.filter_id, spec.region, spec.resolution, len(chunks))
         for ts_ms in chunks:
-            path = client.download_chunk(
-                spec.filter_id, spec.region, spec.resolution, ts_ms, force=ts_ms in latest
-            )
+            force = ts_ms in latest or chunk_end_ms(ts_ms) >= refresh_from_ms
+            path = client.download_chunk(spec.filter_id, spec.region, spec.resolution, ts_ms, force=force)
             frames.append(parse_chunk_file(path))
     if not frames:
         return pd.DataFrame(columns=STG_COLUMNS)
