@@ -1,0 +1,59 @@
+table v_preis
+	lineageTag: c969355d-70d9-58b7-8a25-1c35decb63be
+
+	column region_key
+		dataType: int64
+		formatString: 0
+		lineageTag: d241c842-dfe9-57a6-a4b1-7a6838e67f94
+		summarizeBy: sum
+		sourceColumn: region_key
+
+		annotation SummarizationSetBy = Automatic
+
+	column ts_utc
+		dataType: dateTime
+		formatString: General Date
+		lineageTag: 596fdc7d-6cc3-59d8-8d24-46efc66fe52e
+		summarizeBy: none
+		sourceColumn: ts_utc
+
+		annotation SummarizationSetBy = Automatic
+
+	column datum_key
+		dataType: int64
+		formatString: 0
+		lineageTag: 5cdf92e8-690c-57d1-81b8-ba443072f596
+		summarizeBy: sum
+		sourceColumn: datum_key
+
+		annotation SummarizationSetBy = Automatic
+
+	column zeit_key
+		dataType: int64
+		formatString: 0
+		lineageTag: 4a170890-bb87-5c63-bb54-b5e4b593932a
+		summarizeBy: sum
+		sourceColumn: zeit_key
+
+		annotation SummarizationSetBy = Automatic
+
+	column day_ahead_eur_mwh
+		dataType: decimal
+		lineageTag: 198784df-0eff-5ca9-9e1a-ed2ab81e506f
+		summarizeBy: sum
+		sourceColumn: day_ahead_eur_mwh
+
+		annotation SummarizationSetBy = Automatic
+
+	partition v_preis = m
+		mode: import
+		source =
+				let
+				    Quelle = Sql.Database("127.0.0.1,1433", "energiewende"),
+				    rpt_v_preis = Quelle{[Schema="rpt",Item="v_preis"]}[Data]
+				in
+				    rpt_v_preis
+
+	annotation PBI_NavigationStepName = Navigation
+
+	annotation PBI_ResultType = Table

@@ -1,0 +1,75 @@
+table v_preis_last_stunde
+	lineageTag: cc504fef-e960-5cca-b623-f730b714a234
+
+	column region_key
+		dataType: int64
+		formatString: 0
+		lineageTag: eade01c1-640f-5f92-ac55-7409d83f0bcc
+		summarizeBy: sum
+		sourceColumn: region_key
+
+		annotation SummarizationSetBy = Automatic
+
+	column stunde_utc
+		dataType: dateTime
+		formatString: General Date
+		lineageTag: 384a415e-03a5-5325-b6d4-b2d40267b3de
+		summarizeBy: none
+		sourceColumn: stunde_utc
+
+		annotation SummarizationSetBy = Automatic
+
+	column datum_key
+		dataType: int64
+		formatString: 0
+		lineageTag: 9cdba3ae-b48f-5d9a-9d67-dece811cffb1
+		summarizeBy: sum
+		sourceColumn: datum_key
+
+		annotation SummarizationSetBy = Automatic
+
+	column zeit_key
+		dataType: int64
+		formatString: 0
+		lineageTag: 62b484df-67ae-5c8a-8a64-06f7ff3f2b00
+		summarizeBy: sum
+		sourceColumn: zeit_key
+
+		annotation SummarizationSetBy = Automatic
+
+	column day_ahead_eur_mwh
+		dataType: decimal
+		lineageTag: 54f7f43c-6081-5dbb-a517-3c935980923b
+		summarizeBy: sum
+		sourceColumn: day_ahead_eur_mwh
+
+		annotation SummarizationSetBy = Automatic
+
+	column netzlast_mwh
+		dataType: decimal
+		lineageTag: b99ed4c6-2dfd-51db-a6a1-0b8538547691
+		summarizeBy: sum
+		sourceColumn: netzlast_mwh
+
+		annotation SummarizationSetBy = Automatic
+
+	column residuallast_mwh
+		dataType: decimal
+		lineageTag: a40a1219-0a07-51e7-a95a-f6328c651841
+		summarizeBy: sum
+		sourceColumn: residuallast_mwh
+
+		annotation SummarizationSetBy = Automatic
+
+	partition v_preis_last_stunde = m
+		mode: import
+		source =
+				let
+				    Quelle = Sql.Database("127.0.0.1,1433", "energiewende"),
+				    rpt_v_preis_last_stunde = Quelle{[Schema="rpt",Item="v_preis_last_stunde"]}[Data]
+				in
+				    rpt_v_preis_last_stunde
+
+	annotation PBI_NavigationStepName = Navigation
+
+	annotation PBI_ResultType = Table

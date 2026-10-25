@@ -1,0 +1,29 @@
+model Model
+	culture: de-DE
+	defaultPowerBIDataSourceVersion: powerBI_V3
+	discourageImplicitMeasures
+	sourceQueryCulture: de-DE
+	dataAccessOptions
+		legacyRedirects
+		returnErrorValuesAsNull
+
+annotation __PBI_TimeIntelligenceEnabled = 0
+
+annotation PBI_QueryOrder = ["v_dim_datum","v_dim_zeit","v_dim_energietraeger","v_dim_region","v_dim_bundesland","v_erzeugung","v_last","v_preis","v_preis_last_stunde","v_negative_preisphasen","v_dq_luecken","v_kapazitaet"]
+
+annotation PBI_ProTooling = ["DevMode"]
+
+ref table v_dim_datum
+ref table v_dim_zeit
+ref table v_dim_energietraeger
+ref table v_dim_region
+ref table v_dim_bundesland
+ref table v_erzeugung
+ref table v_last
+ref table v_preis
+ref table v_preis_last_stunde
+ref table v_negative_preisphasen
+ref table v_dq_luecken
+ref table v_kapazitaet
+
+ref cultureInfo de-DE

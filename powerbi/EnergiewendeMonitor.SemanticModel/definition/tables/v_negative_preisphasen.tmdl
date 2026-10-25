@@ -1,0 +1,94 @@
+table v_negative_preisphasen
+	lineageTag: b22482a7-4d40-5125-beb4-84868d02be83
+
+	column region_key
+		dataType: int64
+		formatString: 0
+		lineageTag: fbc8cffa-e163-56ee-a551-e0944f637ed1
+		summarizeBy: sum
+		sourceColumn: region_key
+
+		annotation SummarizationSetBy = Automatic
+
+	column start_datum_key
+		dataType: int64
+		formatString: 0
+		lineageTag: 150da2d7-ff40-5487-8dac-07454a456750
+		summarizeBy: sum
+		sourceColumn: start_datum_key
+
+		annotation SummarizationSetBy = Automatic
+
+	column start_utc
+		dataType: dateTime
+		formatString: General Date
+		lineageTag: 0d6c37aa-2d46-5e1c-acde-adc000b01d99
+		summarizeBy: none
+		sourceColumn: start_utc
+
+		annotation SummarizationSetBy = Automatic
+
+	column ende_utc
+		dataType: dateTime
+		formatString: General Date
+		lineageTag: 10bbb512-eca0-50a3-a87d-1eabbf95f7b2
+		summarizeBy: none
+		sourceColumn: ende_utc
+
+		annotation SummarizationSetBy = Automatic
+
+	column start_lokal
+		dataType: dateTime
+		formatString: General Date
+		lineageTag: f3b34145-8bb5-53b3-98e8-07d87b9d7f6d
+		summarizeBy: none
+		sourceColumn: start_lokal
+
+		annotation SummarizationSetBy = Automatic
+
+	column ende_lokal
+		dataType: dateTime
+		formatString: General Date
+		lineageTag: 699a3961-afcb-595c-b280-34e7d5894847
+		summarizeBy: none
+		sourceColumn: ende_lokal
+
+		annotation SummarizationSetBy = Automatic
+
+	column stunden
+		dataType: int64
+		formatString: 0
+		lineageTag: dcf5af91-2f33-5cc5-ba4b-3c1b7a92b7a0
+		summarizeBy: sum
+		sourceColumn: stunden
+
+		annotation SummarizationSetBy = Automatic
+
+	column min_preis_eur_mwh
+		dataType: decimal
+		lineageTag: cd457840-101b-5dc8-9743-2b5a3d0d3af8
+		summarizeBy: sum
+		sourceColumn: min_preis_eur_mwh
+
+		annotation SummarizationSetBy = Automatic
+
+	column avg_preis_eur_mwh
+		dataType: decimal
+		lineageTag: 5db1d114-fbc0-59e0-bf11-2169a3b234bd
+		summarizeBy: sum
+		sourceColumn: avg_preis_eur_mwh
+
+		annotation SummarizationSetBy = Automatic
+
+	partition v_negative_preisphasen = m
+		mode: import
+		source =
+				let
+				    Quelle = Sql.Database("127.0.0.1,1433", "energiewende"),
+				    rpt_v_negative_preisphasen = Quelle{[Schema="rpt",Item="v_negative_preisphasen"]}[Data]
+				in
+				    rpt_v_negative_preisphasen
+
+	annotation PBI_NavigationStepName = Navigation
+
+	annotation PBI_ResultType = Table

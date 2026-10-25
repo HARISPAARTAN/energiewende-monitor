@@ -1,0 +1,48 @@
+table v_dim_bundesland
+	lineageTag: 0e4dce46-d52d-5cc7-9c17-7cb0b77755e7
+
+	column bundesland_key
+		dataType: int64
+		formatString: 0
+		lineageTag: 61df00e4-6059-5b16-b3fd-7957b8ea03d1
+		summarizeBy: sum
+		sourceColumn: bundesland_key
+
+		annotation SummarizationSetBy = Automatic
+
+	column name_de
+		dataType: string
+		lineageTag: 82dea6e2-cd8f-5c2a-83db-ec0abb9fff71
+		summarizeBy: none
+		sourceColumn: name_de
+
+		annotation SummarizationSetBy = Automatic
+
+	column kuerzel
+		dataType: string
+		lineageTag: 00f5f7ac-adae-5e4a-899f-67f532df8250
+		summarizeBy: none
+		sourceColumn: kuerzel
+
+		annotation SummarizationSetBy = Automatic
+
+	column ist_awz
+		dataType: boolean
+		lineageTag: c49877c1-6f30-5836-a0d2-306b80258d5f
+		summarizeBy: none
+		sourceColumn: ist_awz
+
+		annotation SummarizationSetBy = Automatic
+
+	partition v_dim_bundesland = m
+		mode: import
+		source =
+				let
+				    Quelle = Sql.Database("127.0.0.1,1433", "energiewende"),
+				    rpt_v_dim_bundesland = Quelle{[Schema="rpt",Item="v_dim_bundesland"]}[Data]
+				in
+				    rpt_v_dim_bundesland
+
+	annotation PBI_NavigationStepName = Navigation
+
+	annotation PBI_ResultType = Table

@@ -1,0 +1,64 @@
+table v_dim_region
+	lineageTag: f3c8687b-2dee-5ee2-862d-fd944dda6d59
+
+	column region_key
+		dataType: int64
+		formatString: 0
+		lineageTag: 838caf57-8192-570a-a527-0b0c46ac4c15
+		summarizeBy: sum
+		sourceColumn: region_key
+
+		annotation SummarizationSetBy = Automatic
+
+	column smard_code
+		dataType: string
+		lineageTag: d57fe488-9ccd-5f83-a3c9-c6f23e18806f
+		summarizeBy: none
+		sourceColumn: smard_code
+
+		annotation SummarizationSetBy = Automatic
+
+	column name_de
+		dataType: string
+		lineageTag: 62fe5b0c-49d2-5909-8d7b-252622270f74
+		summarizeBy: none
+		sourceColumn: name_de
+
+		annotation SummarizationSetBy = Automatic
+
+	column name_en
+		dataType: string
+		lineageTag: fb17d697-d5ed-5ea9-af21-f887dbd97550
+		summarizeBy: none
+		sourceColumn: name_en
+
+		annotation SummarizationSetBy = Automatic
+
+	column typ_de
+		dataType: string
+		lineageTag: 6d59fa67-15f6-55ea-ba6d-aa0f3839fd0d
+		summarizeBy: none
+		sourceColumn: typ_de
+
+		annotation SummarizationSetBy = Automatic
+
+	column typ_en
+		dataType: string
+		lineageTag: e4de7b07-8849-5ee1-a73e-608cdc0cb5c1
+		summarizeBy: none
+		sourceColumn: typ_en
+
+		annotation SummarizationSetBy = Automatic
+
+	partition v_dim_region = m
+		mode: import
+		source =
+				let
+				    Quelle = Sql.Database("127.0.0.1,1433", "energiewende"),
+				    rpt_v_dim_region = Quelle{[Schema="rpt",Item="v_dim_region"]}[Data]
+				in
+				    rpt_v_dim_region
+
+	annotation PBI_NavigationStepName = Navigation
+
+	annotation PBI_ResultType = Table

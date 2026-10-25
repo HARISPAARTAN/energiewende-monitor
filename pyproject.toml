@@ -22,7 +22,8 @@ mastr = ["open-mastr>=1.0,<2"]
 ewmonitor = "ewmonitor.cli:app"
 
 [dependency-groups]
-dev = ["pytest>=8.3", "ruff>=0.9", "responses>=0.25"]
+dev = ["pytest>=8.3", "ruff>=0.9", "responses>=0.25", "jsonschema>=4.23", "referencing>=0.35"]
+pbi = ["pythonnet>=3.0.5"]
 
 [build-system]
 requires = ["hatchling"]
@@ -33,7 +34,11 @@ packages = ["src/ewmonitor"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-markers = ["db: needs a running SQL Server (MSSQL_SA_PASSWORD set)"]
+pythonpath = ["."]
+markers = [
+  "db: needs a running SQL Server (MSSQL_SA_PASSWORD set)",
+  "pbi: Power BI project checks (offline, on the committed PBIP files)",
+]
 addopts = "-m 'not db'"
 
 [tool.ruff]
@@ -43,3 +48,6 @@ target-version = "py312"
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP", "B"]
 ignore = ["E501"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["ewmonitor", "tools"]

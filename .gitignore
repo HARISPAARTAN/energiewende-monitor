@@ -10,3 +10,7 @@ data/raw/
 *.log
 *.part
 docs/mastr-profil-fixture.md
+powerbi/**/.pbi/localSettings.json
+powerbi/**/.pbi/cache.abf
+powerbi/**/.pbi/editorSettings.json
+powerbi/**/cache.abf

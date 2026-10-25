@@ -1,0 +1,66 @@
+table v_dq_luecken
+	lineageTag: 1d6223fc-56d8-5be0-b6d6-2d133c246bf3
+
+	column region
+		dataType: string
+		lineageTag: d887bcd3-f566-54d0-ac47-bf6c90ef9f05
+		summarizeBy: none
+		sourceColumn: region
+
+		annotation SummarizationSetBy = Automatic
+
+	column energietraeger
+		dataType: string
+		lineageTag: 904e2425-f7d3-5c78-8e4c-47d05a8f7e35
+		summarizeBy: none
+		sourceColumn: energietraeger
+
+		annotation SummarizationSetBy = Automatic
+
+	column jahr_monat
+		dataType: string
+		lineageTag: 2dba1fa4-343e-53de-9a5f-fb1c52253745
+		summarizeBy: none
+		sourceColumn: jahr_monat
+
+		annotation SummarizationSetBy = Automatic
+
+	column erwartet
+		dataType: int64
+		formatString: 0
+		lineageTag: f4a824b2-8e4b-5097-aa66-25d17d7c986e
+		summarizeBy: sum
+		sourceColumn: erwartet
+
+		annotation SummarizationSetBy = Automatic
+
+	column vorhanden
+		dataType: int64
+		formatString: 0
+		lineageTag: 2327c268-8d9b-5128-9ef7-57aaa0c2f872
+		summarizeBy: sum
+		sourceColumn: vorhanden
+
+		annotation SummarizationSetBy = Automatic
+
+	column fehlend
+		dataType: int64
+		formatString: 0
+		lineageTag: bee51f60-4794-5490-a439-650efb5b24b3
+		summarizeBy: sum
+		sourceColumn: fehlend
+
+		annotation SummarizationSetBy = Automatic
+
+	partition v_dq_luecken = m
+		mode: import
+		source =
+				let
+				    Quelle = Sql.Database("127.0.0.1,1433", "energiewende"),
+				    rpt_v_dq_luecken = Quelle{[Schema="rpt",Item="v_dq_luecken"]}[Data]
+				in
+				    rpt_v_dq_luecken
+
+	annotation PBI_NavigationStepName = Navigation
+
+	annotation PBI_ResultType = Table

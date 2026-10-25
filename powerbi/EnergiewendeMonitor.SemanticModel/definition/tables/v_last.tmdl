@@ -1,0 +1,84 @@
+table v_last
+	lineageTag: f3c78ad7-7f9c-5ec6-8986-66ad81a901b5
+
+	column region_key
+		dataType: int64
+		formatString: 0
+		lineageTag: b9be8675-0d2d-5a0d-886e-a310af944e08
+		summarizeBy: sum
+		sourceColumn: region_key
+
+		annotation SummarizationSetBy = Automatic
+
+	column ts_utc
+		dataType: dateTime
+		formatString: General Date
+		lineageTag: f291a5a5-b796-5e64-9678-a83c8a58cd3a
+		summarizeBy: none
+		sourceColumn: ts_utc
+
+		annotation SummarizationSetBy = Automatic
+
+	column datum_key
+		dataType: int64
+		formatString: 0
+		lineageTag: 738e0bf4-28ec-54b7-83a1-29f073a9f592
+		summarizeBy: sum
+		sourceColumn: datum_key
+
+		annotation SummarizationSetBy = Automatic
+
+	column zeit_key
+		dataType: int64
+		formatString: 0
+		lineageTag: a6b7a923-8841-512f-85c7-c15fb5976b81
+		summarizeBy: sum
+		sourceColumn: zeit_key
+
+		annotation SummarizationSetBy = Automatic
+
+	column aufloesung_min
+		dataType: int64
+		formatString: 0
+		lineageTag: 3ce226b7-7e6b-5d39-b050-ce4f84d98fbe
+		summarizeBy: sum
+		sourceColumn: aufloesung_min
+
+		annotation SummarizationSetBy = Automatic
+
+	column netzlast_mwh
+		dataType: decimal
+		lineageTag: 789d6c98-4177-55d2-86ee-02be8f45bcab
+		summarizeBy: sum
+		sourceColumn: netzlast_mwh
+
+		annotation SummarizationSetBy = Automatic
+
+	column residuallast_mwh
+		dataType: decimal
+		lineageTag: 8d822f72-4036-54f6-9a45-e37a87f9c6dc
+		summarizeBy: sum
+		sourceColumn: residuallast_mwh
+
+		annotation SummarizationSetBy = Automatic
+
+	column pumpspeicher_verbrauch_mwh
+		dataType: decimal
+		lineageTag: 6ba2886e-8eae-56b5-990e-aea257d9bd85
+		summarizeBy: sum
+		sourceColumn: pumpspeicher_verbrauch_mwh
+
+		annotation SummarizationSetBy = Automatic
+
+	partition v_last = m
+		mode: import
+		source =
+				let
+				    Quelle = Sql.Database("127.0.0.1,1433", "energiewende"),
+				    rpt_v_last = Quelle{[Schema="rpt",Item="v_last"]}[Data]
+				in
+				    rpt_v_last
+
+	annotation PBI_NavigationStepName = Navigation
+
+	annotation PBI_ResultType = Table

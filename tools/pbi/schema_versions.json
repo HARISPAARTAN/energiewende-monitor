@@ -1,0 +1,28 @@
+{
+  "pbip": "https://developer.microsoft.com/json-schemas/fabric/pbip/pbipProperties/1.0.0/schema.json",
+  "definition.pbism": {
+    "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/semanticModel/definitionProperties/1.0.0/schema.json",
+    "version": "4.2"
+  },
+  "definition.pbir": {
+    "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definitionProperties/2.0.0/schema.json",
+    "version": "4.0"
+  },
+  "report.json": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/report/3.3.0/schema.json",
+  "version.json": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/versionMetadata/1.0.0/schema.json",
+  "pages.json": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/pagesMetadata/1.1.0/schema.json",
+  "page.json": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/page/2.1.0/schema.json",
+  "visual.json": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.13.0/schema.json",
+  "bookmark.json": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/bookmark/2.1.0/schema.json",
+  "bookmarks.json": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/bookmarksMetadata/1.0.0/schema.json",
+  "tmdl": {"compatibilityLevel": 1606},
+  "baseTheme": {
+    "name": "Fluent2-CY26SU08",
+    "reportVersionAtImport": {"visual": "2.12.0", "report": "3.4.0", "page": "2.3.1"}
+  },
+  "sources": {
+    "json-schemas": "microsoft/json-schemas@5e1199a15b80e3d51198fe017b1a6fb9bb0871a6",
+    "templates": "microsoft/fabric-toolbox@29264d36e5fdf483498faf97013ecf4dd0bd8a10"
+  },
+  "unpublished": []
+}

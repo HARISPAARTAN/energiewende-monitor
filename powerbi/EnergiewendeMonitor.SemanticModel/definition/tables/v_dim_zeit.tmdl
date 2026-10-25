@@ -1,0 +1,67 @@
+table v_dim_zeit
+	lineageTag: 08ccdd44-bd3c-5bd4-9401-de3c534f2abd
+
+	column zeit_key
+		dataType: int64
+		formatString: 0
+		lineageTag: 37719ac3-0ca7-54ac-9f00-20a89ba2fc67
+		summarizeBy: sum
+		sourceColumn: zeit_key
+
+		annotation SummarizationSetBy = Automatic
+
+	column uhrzeit
+		dataType: dateTime
+		formatString: General Date
+		lineageTag: 313f983d-4388-51df-98a5-229b8d898994
+		summarizeBy: none
+		sourceColumn: uhrzeit
+
+		annotation SummarizationSetBy = Automatic
+
+	column stunde
+		dataType: int64
+		formatString: 0
+		lineageTag: 16d9f127-4271-579d-a424-2e5b50a166b5
+		summarizeBy: sum
+		sourceColumn: stunde
+
+		annotation SummarizationSetBy = Automatic
+
+	column viertelstunde
+		dataType: int64
+		formatString: 0
+		lineageTag: b596bfa3-50e9-5740-a919-7995e319b1cf
+		summarizeBy: sum
+		sourceColumn: viertelstunde
+
+		annotation SummarizationSetBy = Automatic
+
+	column tageszeit_de
+		dataType: string
+		lineageTag: 512b0f5e-bf9d-5fcc-9057-3e1c12f481f7
+		summarizeBy: none
+		sourceColumn: tageszeit_de
+
+		annotation SummarizationSetBy = Automatic
+
+	column tageszeit_en
+		dataType: string
+		lineageTag: a9b567ba-208e-59f6-957e-ccbcaff57a9e
+		summarizeBy: none
+		sourceColumn: tageszeit_en
+
+		annotation SummarizationSetBy = Automatic
+
+	partition v_dim_zeit = m
+		mode: import
+		source =
+				let
+				    Quelle = Sql.Database("127.0.0.1,1433", "energiewende"),
+				    rpt_v_dim_zeit = Quelle{[Schema="rpt",Item="v_dim_zeit"]}[Data]
+				in
+				    rpt_v_dim_zeit
+
+	annotation PBI_NavigationStepName = Navigation
+
+	annotation PBI_ResultType = Table
