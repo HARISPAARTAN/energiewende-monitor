@@ -43,8 +43,17 @@ def main(verbose: Annotated[bool, typer.Option("--verbose", "-v")] = False) -> N
 
 
 def _range(settings: Settings, from_: datetime | None, to: datetime | None) -> tuple[date, date]:
-    start = from_.date() if from_ else date.fromisoformat(settings.start)
+    """The requested day range; it must lie inside the calendar dim_datum (scope.start to CALENDAR_END),
+    because every fact row references its day there."""
+    first = date.fromisoformat(settings.start)
+    start = from_.date() if from_ else first
     end = to.date() if to else (datetime.now(BERLIN).date() - timedelta(days=1))
+    if start < first:
+        raise typer.BadParameter(
+            f"--from {start} liegt vor dem Kalenderbeginn {first}; erlaubt ist {first} bis {CALENDAR_END}")
+    if end > CALENDAR_END:
+        raise typer.BadParameter(
+            f"--to {end} liegt nach dem Kalenderende {CALENDAR_END}; erlaubt ist {first} bis {CALENDAR_END}")
     if end < start:
         raise typer.BadParameter("--to liegt vor --from")
     return start, end

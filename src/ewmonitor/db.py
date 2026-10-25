@@ -33,15 +33,25 @@ def ensure_database(cfg: DbConfig) -> None:
 
 def run_sql_file(con: pyodbc.Connection, path: Path, *params) -> None:
     """Execute every GO batch of a script in one transaction; params apply to each batch (use them only in
-    single-batch scripts). On any failure the transaction is rolled back and the error re-raised."""
+    single-batch scripts). On any failure the transaction is rolled back and the error re-raised.
+
+    pyodbc returns from execute() after the first result of a batch (a row count, unless SET NOCOUNT ON), so
+    an error raised by a later statement only surfaces when the remaining results are read. Every batch is
+    therefore drained with nextset() before the commit.
+    """
     batches = split_batches(Path(path).read_text(encoding="utf-8"))
+    cur = con.cursor()  # not "with": pyodbc's Cursor.__exit__ commits
     try:
         for batch in batches:
-            con.execute(batch, *params)
+            cur.execute(batch, *params)
+            while cur.nextset():
+                pass
         con.commit()
     except Exception:
         con.rollback()
         raise
+    finally:
+        cur.close()
     log.info("ran %s", Path(path).name)
 
 

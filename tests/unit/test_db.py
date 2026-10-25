@@ -33,18 +33,44 @@ def test_df_rows_converts_nat_and_na_to_none():
     assert df_rows(df, ["ts", "n"]) == [(None, None), (datetime(2025, 10, 19, 22, 0), 7)]
 
 
-class _FakeConnection:
-    """Records execute/commit/rollback calls and raises on the batch whose index equals fail_on."""
+class _FakeBatchCursor:
+    """Cursor double for run_sql_file: each batch yields `results` result sets; execute raises on the batch
+    whose index equals fail_on, nextset raises while draining the batch whose index equals fail_drain_on."""
 
-    def __init__(self, fail_on: int):
-        self.fail_on = fail_on
-        self.calls: list[tuple] = []
+    def __init__(self, con):
+        self.con = con
+        self.batch = -1
+        self.pending = 0
 
     def execute(self, sql, *params):
-        index = sum(1 for call in self.calls if call[0] == "execute")
-        self.calls.append(("execute", sql, params))
-        if index == self.fail_on:
+        self.batch += 1
+        self.con.calls.append(("execute", sql, params))
+        if self.batch == self.con.fail_on:
             raise RuntimeError("batch failed")
+        self.pending = self.con.results - 1
+
+    def nextset(self):
+        self.con.calls.append(("nextset",))
+        if self.batch == self.con.fail_drain_on:
+            raise RuntimeError("later statement failed")
+        if self.pending > 0:
+            self.pending -= 1
+            return True
+        return False
+
+    def close(self):
+        self.con.calls.append(("close",))
+
+
+class _FakeConnection:
+    def __init__(self, fail_on: int = -1, fail_drain_on: int = -1, results: int = 1):
+        self.fail_on = fail_on
+        self.fail_drain_on = fail_drain_on
+        self.results = results
+        self.calls: list[tuple] = []
+
+    def cursor(self):
+        return _FakeBatchCursor(self)
 
     def commit(self):
         self.calls.append(("commit",))
@@ -61,9 +87,30 @@ def test_run_sql_file_rolls_back_and_reraises_when_a_later_batch_fails(tmp_path)
     with pytest.raises(RuntimeError, match="batch failed"):
         run_sql_file(con, script, 7)
 
-    assert [c[0] for c in con.calls] == ["execute", "execute", "rollback"]
+    assert [c[0] for c in con.calls] == ["execute", "nextset", "execute", "rollback", "close"]
     assert con.calls[0][1:] == ("DELETE FROM t;", (7,))
     assert ("commit",) not in con.calls
+
+
+def test_run_sql_file_drains_every_result_set_before_committing(tmp_path):
+    script = tmp_path / "one_batch.sql"
+    script.write_text("DELETE FROM t; INSERT INTO t VALUES (1);\n", encoding="utf-8")
+    con = _FakeConnection(results=2)
+
+    run_sql_file(con, script)
+
+    assert [c[0] for c in con.calls] == ["execute", "nextset", "nextset", "commit", "close"]
+
+
+def test_run_sql_file_rolls_back_when_a_later_statement_fails_while_draining(tmp_path):
+    script = tmp_path / "one_batch.sql"
+    script.write_text("DELETE FROM t; INSERT INTO t VALUES (1), (1);\n", encoding="utf-8")
+    con = _FakeConnection(fail_drain_on=0, results=2)
+
+    with pytest.raises(RuntimeError, match="later statement failed"):
+        run_sql_file(con, script)
+
+    assert [c[0] for c in con.calls] == ["execute", "nextset", "rollback", "close"]
 
 
 class _FakeCursor:

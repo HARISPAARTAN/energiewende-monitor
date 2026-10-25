@@ -1,3 +1,5 @@
+SET NOCOUNT ON;
+SET XACT_ABORT ON;
 DECLARE @from_key int = ?, @to_key int = ?;
 DELETE FROM dw.fact_preis WHERE datum_key BETWEEN @from_key AND @to_key;
 INSERT INTO dw.fact_preis (region_key, ts_utc, datum_key, zeit_key, day_ahead_eur_mwh)

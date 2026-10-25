@@ -12,6 +12,7 @@ def test_checks_pass_on_the_fixture_week(con):
     assert not has_failures(results), [r for r in results if r.status == "fail"]
     by_name = {r.name: r for r in results}
     assert by_name["viertelstunden_pro_tag"].status == "ok"
+    assert by_name["fakten_vs_staging"].status == "ok", by_name["fakten_vs_staging"].detail
     assert by_name["stunden_aggregat"].status == "ok"
     assert by_name["aktualitaet"].status == "ok"
 

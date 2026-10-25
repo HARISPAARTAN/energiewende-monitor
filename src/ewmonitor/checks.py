@@ -8,6 +8,10 @@ from typing import Literal
 
 Status = Literal["ok", "warn", "fail"]
 
+# The SMARD filter IDs the load scripts pivot or select; tests/unit/test_filter_ids.py ties them to config.toml.
+LAST_FILTER_IDS = (410, 4359, 4387)  # Netzlast, Residuallast, Pumpspeicher-Verbrauch
+PREIS_FILTER_ID = 4169  # Day-Ahead-Preis
+
 
 @dataclass(frozen=True)
 class CheckResult:
@@ -89,6 +93,40 @@ def check_hourly_aggregate(con, from_key: int, to_key: int) -> CheckResult:
                        f"Stunde {row[0]}: Differenz {diff:.3f} MWh")
 
 
+def check_facts_vs_staging(con, from_key: int, to_key: int) -> CheckResult:
+    """Every fact row in the range comes from staging, and every staging row the load maps does arrive.
+
+    The staging side mirrors the rules of sql/load/*.sql exactly:
+    - fact_erzeugung: one row per staging row whose filter_id is in dim_energietraeger and whose region is in
+      dim_region (null values included, the load keeps them).
+    - fact_last: one row per distinct (region, ts_utc, datum_key, zeit_key, resolution) among the staging
+      rows of the consumption filters LAST_FILTER_IDS with a mapped region (the load pivots three series
+      into one row).
+    - fact_preis: one row per staging row of PREIS_FILTER_ID at hourly resolution with a mapped region.
+    """
+    last_ids = ", ".join(str(i) for i in LAST_FILTER_IDS)
+    row = con.execute(f"""
+        SELECT
+          (SELECT COUNT(*) FROM stg.smard_series s
+             JOIN dw.dim_energietraeger e ON e.smard_filter_id = s.filter_id
+             JOIN dw.dim_region r ON r.smard_code = s.region
+            WHERE s.datum_key BETWEEN ? AND ?),
+          (SELECT COUNT(*) FROM dw.fact_erzeugung WHERE datum_key BETWEEN ? AND ?),
+          (SELECT COUNT(*) FROM (
+              SELECT DISTINCT r.region_key, s.ts_utc, s.datum_key, s.zeit_key, s.resolution
+              FROM stg.smard_series s JOIN dw.dim_region r ON r.smard_code = s.region
+              WHERE s.filter_id IN ({last_ids}) AND s.datum_key BETWEEN ? AND ?) x),
+          (SELECT COUNT(*) FROM dw.fact_last WHERE datum_key BETWEEN ? AND ?),
+          (SELECT COUNT(*) FROM stg.smard_series s JOIN dw.dim_region r ON r.smard_code = s.region
+            WHERE s.filter_id = {PREIS_FILTER_ID} AND s.resolution = N'hour' AND s.datum_key BETWEEN ? AND ?),
+          (SELECT COUNT(*) FROM dw.fact_preis WHERE datum_key BETWEEN ? AND ?)
+        """, *([from_key, to_key] * 6)).fetchone()
+    pairs = {"erzeugung": (row[0], row[1]), "last": (row[2], row[3]), "preis": (row[4], row[5])}
+    detail = "; ".join(f"{name}: Staging {stg}, Fakten {fact}" for name, (stg, fact) in pairs.items())
+    ok = all(stg == fact for stg, fact in pairs.values())
+    return CheckResult("fakten_vs_staging", "ok" if ok else "fail", detail)
+
+
 def check_freshness(con, now: datetime | None = None) -> CheckResult:
     latest = _val(con, "SELECT MAX(ts_utc) FROM dw.fact_last")
     now = now or datetime.now(UTC).replace(tzinfo=None)
@@ -106,6 +144,7 @@ def run_checks(con, from_key: int, to_key: int, now: datetime | None = None) -> 
         check_non_negative(con, from_key, to_key),
         check_price_range(con, from_key, to_key),
         check_unmapped_staging(con, from_key, to_key),
+        check_facts_vs_staging(con, from_key, to_key),
         check_hourly_aggregate(con, from_key, to_key),
         check_freshness(con, now),
     ]

@@ -1,3 +1,5 @@
+SET NOCOUNT ON;
+SET XACT_ABORT ON;
 DECLARE @from_key int = ?, @to_key int = ?;
 DELETE FROM dw.fact_last WHERE datum_key BETWEEN @from_key AND @to_key;
 INSERT INTO dw.fact_last (region_key, ts_utc, datum_key, zeit_key, aufloesung_min,
