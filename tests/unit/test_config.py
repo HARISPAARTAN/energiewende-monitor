@@ -78,6 +78,12 @@ def test_db_config_from_env(monkeypatch):
     assert "DATABASE=master" in s.db.connection_string("master")
 
 
+def test_default_server_is_ipv4_loopback(monkeypatch):
+    # docker-compose publishes 1433 on 127.0.0.1 only; "localhost" may resolve to ::1 first and be refused.
+    monkeypatch.delenv("EWM_DB_SERVER", raising=False)
+    assert load_settings(ROOT).db.server == "127.0.0.1,1433"
+
+
 def test_connection_string_quotes_user_and_password():
     cs = _db(user="ewm}user", password="p;w}d").connection_string()
     assert "UID={ewm}}user};" in cs

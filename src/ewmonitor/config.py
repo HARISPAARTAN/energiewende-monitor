@@ -73,7 +73,7 @@ def load_settings(root: Path | None = None) -> Settings:
     data = tomllib.loads((root / "config.toml").read_text(encoding="utf-8"))
     scope, smard, paths = data["scope"], data["smard"], data["paths"]
     db = DbConfig(
-        server=os.environ.get("EWM_DB_SERVER", "localhost,1433"),
+        server=os.environ.get("EWM_DB_SERVER", "127.0.0.1,1433"),
         database=os.environ.get("EWM_DB_NAME", "energiewende"),
         user=os.environ.get("EWM_DB_USER", "sa"),
         password=os.environ.get("MSSQL_SA_PASSWORD", ""),
