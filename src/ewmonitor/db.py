@@ -3,9 +3,7 @@
 from __future__ import annotations
 
 import logging
-import math
 import re
-from datetime import datetime
 from pathlib import Path
 
 import pandas as pd
@@ -49,7 +47,7 @@ def run_ddl(con: pyodbc.Connection, sql_dir: Path) -> None:
 def _py(value):
     if value is None:
         return None
-    if isinstance(value, float) and math.isnan(value):
+    if pd.api.types.is_scalar(value) and pd.isna(value):  # NaN, NaT, NA
         return None
     if isinstance(value, pd.Timestamp):
         return value.to_pydatetime()
@@ -76,15 +74,3 @@ def bulk_insert(
     con.commit()
     log.info("inserted %d rows into %s", len(rows), table)
     return len(rows)
-
-
-__all__ = [
-    "connect",
-    "ensure_database",
-    "run_sql_file",
-    "run_ddl",
-    "bulk_insert",
-    "df_rows",
-    "split_batches",
-    "datetime",
-]

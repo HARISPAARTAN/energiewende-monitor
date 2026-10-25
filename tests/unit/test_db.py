@@ -21,3 +21,11 @@ def test_df_rows_converts_nan_and_timestamps():
     rows = df_rows(df, ["ts", "v", "k"])
     assert rows == [(datetime(2025, 10, 19, 22, 0), None, 20251020)]
     assert type(rows[0][2]) is int
+
+
+def test_df_rows_converts_nat_and_na_to_none():
+    df = pd.DataFrame({
+        "ts": pd.Series([pd.NaT, pd.Timestamp("2025-10-19 22:00:00")], dtype="datetime64[ns]"),
+        "n": pd.array([pd.NA, 7], dtype="Int64"),
+    })
+    assert df_rows(df, ["ts", "n"]) == [(None, None), (datetime(2025, 10, 19, 22, 0), 7)]

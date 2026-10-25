@@ -1,0 +1,13 @@
+energietraeger_key,smard_filter_id,name_de,name_en,kategorie_de,kategorie_en,sortierung,farbe_hex
+1,4068,Photovoltaik,Solar PV,Erneuerbar,Renewable,1,#F2A93B
+2,4067,Wind Onshore,Wind onshore,Erneuerbar,Renewable,2,#3D8BDB
+3,1225,Wind Offshore,Wind offshore,Erneuerbar,Renewable,3,#1F5F9E
+4,4066,Biomasse,Biomass,Erneuerbar,Renewable,4,#5B9A3C
+5,1226,Wasserkraft,Hydro,Erneuerbar,Renewable,5,#2BB3B1
+6,1228,Sonstige Erneuerbare,Other renewables,Erneuerbar,Renewable,6,#8CC46B
+7,4071,Erdgas,Natural gas,Konventionell,Conventional,7,#B07AA1
+8,4069,Steinkohle,Hard coal,Konventionell,Conventional,8,#6E6E6E
+9,1223,Braunkohle,Lignite,Konventionell,Conventional,9,#8C6D3F
+10,1224,Kernenergie,Nuclear,Konventionell,Conventional,10,#E05A5A
+11,4070,Pumpspeicher,Pumped storage,Konventionell,Conventional,11,#4C78A8
+12,1227,Sonstige Konventionelle,Other conventional,Konventionell,Conventional,12,#9E9E9E

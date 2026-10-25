@@ -1,0 +1,6 @@
+region_key,smard_code,name_de,name_en,typ_de,typ_en
+1,DE-LU,Marktgebiet Deutschland/Luxemburg,Bidding zone Germany/Luxembourg,Marktgebiet,Bidding zone
+2,50Hertz,Regelzone 50Hertz,Control area 50Hertz,Regelzone,Control area
+3,Amprion,Regelzone Amprion,Control area Amprion,Regelzone,Control area
+4,TenneT,Regelzone TenneT,Control area TenneT,Regelzone,Control area
+5,TransnetBW,Regelzone TransnetBW,Control area TransnetBW,Regelzone,Control area

@@ -1,0 +1,18 @@
+bundesland_key,name_de,kuerzel,ist_awz
+1,Baden-Württemberg,BW,0
+2,Bayern,BY,0
+3,Berlin,BE,0
+4,Brandenburg,BB,0
+5,Bremen,HB,0
+6,Hamburg,HH,0
+7,Hessen,HE,0
+8,Mecklenburg-Vorpommern,MV,0
+9,Niedersachsen,NI,0
+10,Nordrhein-Westfalen,NW,0
+11,Rheinland-Pfalz,RP,0
+12,Saarland,SL,0
+13,Sachsen,SN,0
+14,Sachsen-Anhalt,ST,0
+15,Schleswig-Holstein,SH,0
+16,Thüringen,TH,0
+17,Ausschließliche Wirtschaftszone,AWZ,1
