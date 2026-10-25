@@ -2,6 +2,14 @@
 start = "2023-01-01"
 regions = ["DE-LU"]
 
+[calendar]
+start = "1990-01-01"
+end = "2030-12-31"
+
+[mastr]
+output_dir = "data/raw/mastr"
+tables = ["wind", "solar", "biomass", "hydro", "gsgk", "combustion", "nuclear", "storage"]
+
 [smard]
 base_url = "https://www.smard.de/app/chart_data"
 generation = [1223, 1224, 1225, 1226, 1227, 1228, 4066, 4067, 4068, 4069, 4070, 4071]

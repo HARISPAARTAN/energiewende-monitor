@@ -3,7 +3,6 @@ week, so whole-table assertions hold and the developer database is never written
 
 import os
 from dataclasses import replace
-from datetime import date
 
 import pytest
 
@@ -49,5 +48,5 @@ def fixture_week_loaded(con, settings):
     con.commit()
     df = ingest_fixtures(settings.fixtures_dir)
     write_stg(con, df)
-    load_dims(con, settings.seed_dir, date.fromisoformat(settings.start), date(2030, 12, 31))
+    load_dims(con, settings.seed_dir, settings.calendar_start, settings.calendar_end)
     load_facts(con, sql_dir, *key_range(df))

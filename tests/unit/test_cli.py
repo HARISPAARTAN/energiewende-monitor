@@ -36,7 +36,7 @@ def test_all_help_shows_fixtures_option():
 
 def test_range_rejects_from_before_the_calendar_start():
     settings = load_settings()
-    with pytest.raises(typer.BadParameter, match=r"vor dem Kalenderbeginn 2023-01-01.*2023-01-01 bis 2030-12-31"):
+    with pytest.raises(typer.BadParameter, match=r"vor dem Datenbeginn 2023-01-01.*2023-01-01 bis 2030-12-31"):
         _range(settings, datetime(2022, 12, 1), datetime(2023, 1, 31))
 
 
@@ -49,3 +49,9 @@ def test_range_rejects_to_after_the_calendar_end():
 def test_range_accepts_the_calendar_bounds():
     settings = load_settings()
     assert _range(settings, datetime(2023, 1, 1), datetime(2030, 12, 31)) == (date(2023, 1, 1), date(2030, 12, 31))
+
+
+def test_range_rejects_before_scope_start_even_though_calendar_is_older():
+    settings = load_settings()
+    with pytest.raises(typer.BadParameter, match="2023-01-01"):
+        _range(settings, datetime(1995, 1, 1), None)

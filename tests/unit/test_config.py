@@ -1,3 +1,4 @@
+from datetime import date
 from pathlib import Path
 
 import pytest
@@ -33,6 +34,14 @@ def _write_config(root: Path, **lists: str) -> None:
         f"""[scope]
 start = "2023-01-01"
 regions = {values["regions"]}
+
+[calendar]
+start = "1990-01-01"
+end = "2030-12-31"
+
+[mastr]
+output_dir = "data/raw/mastr"
+tables = ["wind", "solar"]
 
 [smard]
 base_url = "https://example.invalid/chart_data"
@@ -117,3 +126,13 @@ def test_non_list_config_value_raises(tmp_path, key, value):
     _write_config(tmp_path, **{key: value})
     with pytest.raises(ValueError, match=rf"\b{key}\b"):
         load_settings(tmp_path)
+
+
+def test_calendar_and_mastr_settings(tmp_path):
+    from ewmonitor.config import load_settings
+    settings = load_settings()
+    assert settings.calendar_start == date(1990, 1, 1)
+    assert settings.calendar_end == date(2030, 12, 31)
+    assert settings.calendar_start < date.fromisoformat(settings.start)
+    assert settings.mastr_output_dir == settings.root / "data" / "raw" / "mastr"
+    assert settings.mastr_tables == ("wind", "solar", "biomass", "hydro", "gsgk", "combustion", "nuclear", "storage")

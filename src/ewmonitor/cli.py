@@ -29,8 +29,6 @@ RefreshOpt = Annotated[int, typer.Option(
     "--refresh-days", min=0,
     help="Chunks, die in den letzten N Tagen enden, neu laden (SMARD veröffentlicht Wochen nachträglich neu)")]
 
-CALENDAR_END = date(2030, 12, 31)
-
 
 @app.callback()
 def main(verbose: Annotated[bool, typer.Option("--verbose", "-v")] = False) -> None:
@@ -44,17 +42,15 @@ def main(verbose: Annotated[bool, typer.Option("--verbose", "-v")] = False) -> N
 
 
 def _range(settings: Settings, from_: datetime | None, to: datetime | None) -> tuple[date, date]:
-    """The requested day range; it must lie inside the calendar dim_datum (scope.start to CALENDAR_END),
-    because every fact row references its day there."""
-    first = date.fromisoformat(settings.start)
+    """The requested day range: not before [scope] start (SMARD data begins there) and not after the
+    calendar end, because every fact row references its day in dim_datum."""
+    first, last = date.fromisoformat(settings.start), settings.calendar_end
     start = from_.date() if from_ else first
     end = to.date() if to else (datetime.now(BERLIN).date() - timedelta(days=1))
     if start < first:
-        raise typer.BadParameter(
-            f"--from {start} liegt vor dem Kalenderbeginn {first}; erlaubt ist {first} bis {CALENDAR_END}")
-    if end > CALENDAR_END:
-        raise typer.BadParameter(
-            f"--to {end} liegt nach dem Kalenderende {CALENDAR_END}; erlaubt ist {first} bis {CALENDAR_END}")
+        raise typer.BadParameter(f"--from {start} liegt vor dem Datenbeginn {first}; erlaubt ist {first} bis {last}")
+    if end > last:
+        raise typer.BadParameter(f"--to {end} liegt nach dem Kalenderende {last}; erlaubt ist {first} bis {last}")
     if end < start:
         raise typer.BadParameter("--to liegt vor --from")
     return start, end
@@ -95,7 +91,7 @@ def load(from_: FromOpt = None, to: ToOpt = None) -> None:
     settings = load_settings()
     start, end = _range(settings, from_, to)
     with closing(_prepare(settings)) as con:
-        typer.echo(f"dimensionen: {load_dims(con, settings.seed_dir, date.fromisoformat(settings.start), CALENDAR_END)}")
+        typer.echo(f"dimensionen: {load_dims(con, settings.seed_dir, settings.calendar_start, settings.calendar_end)}")
         load_facts(con, settings.root / "sql", date_key(start), date_key(end))
         typer.echo(f"fakten: {date_key(start)}..{date_key(end)}")
 
@@ -121,7 +117,7 @@ def run_all(from_: FromOpt = None, to: ToOpt = None, fixtures: FixturesOpt = Fal
     with closing(_prepare(settings)) as con:
         df = _ingest(settings, con, start, end, fixtures, regions, refresh_days)
         lo, hi = key_range(df) if fixtures and not df.empty else (date_key(start), date_key(end))
-        typer.echo(f"dimensionen: {load_dims(con, settings.seed_dir, date.fromisoformat(settings.start), CALENDAR_END)}")
+        typer.echo(f"dimensionen: {load_dims(con, settings.seed_dir, settings.calendar_start, settings.calendar_end)}")
         load_facts(con, settings.root / "sql", lo, hi)
         # fixture data is historical: judge freshness against the fixture week's end, not today
         now = df["ts_utc"].max().to_pydatetime() if fixtures and not df.empty else None

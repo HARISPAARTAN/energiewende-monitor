@@ -48,4 +48,4 @@ def test_seed_files_are_consistent():
     region = pd.read_csv(SEED / "dim_region.csv")
     assert region["smard_code"].tolist() == ["DE-LU", "50Hertz", "Amprion", "TenneT", "TransnetBW"]
     bl = pd.read_csv(SEED / "dim_bundesland.csv")
-    assert len(bl) == 17 and bl["kuerzel"].is_unique and int(bl["ist_awz"].sum()) == 1
+    assert len(bl) == 18 and bl["kuerzel"].is_unique and int(bl["ist_awz"].sum()) == 1

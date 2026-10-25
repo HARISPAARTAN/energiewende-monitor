@@ -5,6 +5,7 @@ from __future__ import annotations
 import os
 import tomllib
 from dataclasses import dataclass, field
+from datetime import date
 from pathlib import Path
 
 
@@ -54,6 +55,10 @@ class Settings:
     raw_dir: Path
     seed_dir: Path
     fixtures_dir: Path
+    calendar_start: date
+    calendar_end: date
+    mastr_output_dir: Path
+    mastr_tables: tuple[str, ...]
 
 
 def _toml_list(data: dict, section: str, key: str) -> list:
@@ -72,6 +77,10 @@ def load_settings(root: Path | None = None) -> Settings:
     root = (root or Path(__file__).resolve().parents[2]).resolve()
     data = tomllib.loads((root / "config.toml").read_text(encoding="utf-8"))
     scope, smard, paths = data["scope"], data["smard"], data["paths"]
+    calendar, mastr = data["calendar"], data["mastr"]
+    calendar_start, calendar_end = date.fromisoformat(str(calendar["start"])), date.fromisoformat(str(calendar["end"]))
+    if calendar_start > date.fromisoformat(str(scope["start"])):
+        raise ValueError("config.toml: [calendar] start muss vor oder auf [scope] start liegen")
     db = DbConfig(
         server=os.environ.get("EWM_DB_SERVER", "127.0.0.1,1433"),
         database=os.environ.get("EWM_DB_NAME", "energiewende"),
@@ -94,4 +103,8 @@ def load_settings(root: Path | None = None) -> Settings:
         raw_dir=root / paths["raw"],
         seed_dir=root / paths["seed"],
         fixtures_dir=root / paths["fixtures"],
+        calendar_start=calendar_start,
+        calendar_end=calendar_end,
+        mastr_output_dir=root / mastr["output_dir"],
+        mastr_tables=tuple(_toml_list(data, "mastr", "tables")),
     )
