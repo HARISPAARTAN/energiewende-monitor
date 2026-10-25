@@ -7,6 +7,8 @@ English version: [README.en.md](README.en.md).
 
 **Stand:** Meilenstein 1 (Datenpipeline, SQL-Schema, Tests, CI) ist fertig. Power-BI-Modell und Bericht folgen.
 
+Datenstand: 2026-10-25 (ab 2023-01-01, DE-LU; Ladezeit 3 Minuten auf einem Laptop).
+
 ## Was der Monitor zeigt
 
 - Stromerzeugung nach Energieträger, Netzlast, Residuallast und Pumpspeicher-Verbrauch im Marktgebiet DE-LU,

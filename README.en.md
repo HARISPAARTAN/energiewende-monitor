@@ -7,6 +7,8 @@ German version: [README.md](README.md).
 
 **Status:** milestone 1 (data pipeline, SQL schema, tests, CI) is complete. The Power BI model and report follow.
 
+Data as of: 2026-10-25 (from 2023-01-01, DE-LU; load time 3 minutes on a laptop).
+
 ## What the monitor shows
 
 - Generation by source, grid load, residual load and pumped-storage consumption for bidding zone DE-LU,
