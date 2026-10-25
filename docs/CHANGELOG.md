@@ -27,7 +27,7 @@ Abgleich der DAX-Seite) steht noch aus, danach folgt der Tag.
   `tests/pbi/test_reconcile.py` (Marker `live`, überspringt ohne geöffnetes Desktop oder ADOMD), `tools/pbi/fetch_adomd.py`
   für den ADOMD-Client ohne Systeminstallation. Die SQL-Werte stehen mit Datum in `docs/kpi-glossar.md`.
 - `tools/pbi/make_public_variant.py`: Kopie des Projekts ohne Rolle als `EnergiewendeMonitor (öffentlich)` für "Im Web veröffentlichen".
-- `docs/kpi-glossar.md`: Definition, Formel, Einheit, Quelle und Hinweise für alle 26 Kennzahlen; `docs/screenshots/SHOTLIST.md`.
+- `docs/kpi-glossar.md`: Definition, Formel, Einheit, Quelle und Hinweise für alle 26 Kennzahlen; `docs/screenshots/SHOTLIST.md`, `docs/owner-validierung.md` (Klickfolge und Fehlerschleife der Desktop-Sitzung).
 - README und README.en: Abschnitte Bericht und Entwicklung (`uv sync --extra mastr`). CI: `lint-and-unit` führt zusätzlich
   `pytest tests/pbi -m "pbi and not live"` aus. Version 0.3.0 (`pyproject.toml`, `ewmonitor.__version__`).
 

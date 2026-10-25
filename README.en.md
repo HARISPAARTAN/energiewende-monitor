@@ -185,7 +185,7 @@ Model view and the field-parameter slicer in action:
 ![Model](docs/screenshots/06-modell.png)
 ![Measure selection](docs/screenshots/07-kennzahl-auswahl.png)
 
-(The images are taken in the validation session with Power BI Desktop; list: [docs/screenshots/SHOTLIST.md](docs/screenshots/SHOTLIST.md).)
+(The images are taken in the validation session with Power BI Desktop; list: [docs/screenshots/SHOTLIST.md](docs/screenshots/SHOTLIST.md), procedure: [docs/owner-validierung.md](docs/owner-validierung.md), in German.)
 
 **Open the project.** Power BI Desktop with the preview features `Power BI Project (.pbip) save option` and `Store semantic model using TMDL format`
 (File, Options, Preview features), then open `powerbi/EnergiewendeMonitor.pbip`. The report opens without data, because no cache is

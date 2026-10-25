@@ -192,7 +192,7 @@ Modellansicht und der Feldparameter-Slicer in Aktion:
 ![Modell](docs/screenshots/06-modell.png)
 ![Kennzahl-Auswahl](docs/screenshots/07-kennzahl-auswahl.png)
 
-(Die Bilder entstehen in der Validierungssitzung mit Power BI Desktop, Liste: [docs/screenshots/SHOTLIST.md](docs/screenshots/SHOTLIST.md).)
+(Die Bilder entstehen in der Validierungssitzung mit Power BI Desktop, Liste: [docs/screenshots/SHOTLIST.md](docs/screenshots/SHOTLIST.md), Ablauf: [docs/owner-validierung.md](docs/owner-validierung.md).)
 
 **Projekt öffnen.** Power BI Desktop mit den Vorschaufunktionen `Power BI Project (.pbip) save option` und
 `Store semantic model using TMDL format` (Datei, Optionen, Vorschaufeatures), dann `powerbi/EnergiewendeMonitor.pbip` öffnen. Der Bericht öffnet
