@@ -15,6 +15,7 @@ class Column:
     is_key: bool = False
     format_string: str | None = None
     summarize_by: str | None = None
+    sort_by_column: str | None = None
 
 
 @dataclass
@@ -32,6 +33,7 @@ class Table:
     measures: dict[str, Measure] = field(default_factory=dict)
     data_category: str | None = None
     partition_source: str | None = None
+    hierarchies: dict[str, list[str]] = field(default_factory=dict)  # hierarchy name -> level column names
     raw: str | None = None
 
 
@@ -54,6 +56,8 @@ class Model:
     tables: dict[str, Table]
     relationships: list[Relationship]
     roles: list[Role]
+    culture: str | None = None
+    discourage_implicit_measures: bool = False
 
 
 def _unquote(name: str) -> str:
@@ -171,7 +175,12 @@ def load_model(definition_dir: Path) -> Model:
                     _prop(cbody, "isKey") == "true",
                     _prop(cbody, "formatString"),
                     _prop(cbody, "summarizeBy"),
+                    _unquote(_prop(cbody, "sortByColumn") or "") or None,
                 )
+            for hname, _hfirst, hbody, _ in _blocks(inner, "hierarchy"):
+                t.hierarchies[hname] = [
+                    _unquote(_prop(lbody, "column") or "") for _lname, _lfirst, lbody, _ in _blocks("\n".join(hbody), "level")
+                ]
             for mname, mfirst, mbody, _ in _blocks(inner, "measure"):
                 t.measures[mname] = Measure(mname, _measure_expression(mfirst, mbody), _prop(mbody, "formatString"), descs.get(mname))
             for _pname, _pfirst, pbody, _ in _blocks(inner, "partition"):
@@ -192,4 +201,8 @@ def load_model(definition_dir: Path) -> Model:
                 if m:
                     role.table_permissions[_unquote(m.group(1))] = m.group(2).strip()
             roles.append(role)
-    return Model(tables, rels, roles)
+    model_path = Path(definition_dir) / "model.tmdl"
+    model_text = model_path.read_text(encoding="utf-8") if model_path.exists() else ""
+    culture = next((_prop(body, "culture") for _n, _e, body, _i in _blocks(model_text, "model")), None)
+    discourage = next((_prop(body, "discourageImplicitMeasures") == "true" for _n, _e, body, _i in _blocks(model_text, "model")), False)
+    return Model(tables, rels, roles, culture, discourage)

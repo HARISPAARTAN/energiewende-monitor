@@ -87,7 +87,7 @@ table Kennzahlen
 		lineageTag: 6c4e0c8a-3f7c-552b-a49e-81b33dddb8f0
 
 	/// Change of the renewables share in percentage points.
-	measure 'EE-Anteil Δ Vorjahr (pp)' = ([EE-Anteil %] - [EE-Anteil Vorjahr %]) * 100
+	measure 'EE-Anteil Δ Vorjahr (pp)' = IF(ISBLANK([EE-Anteil Vorjahr %]), BLANK(), ([EE-Anteil %] - [EE-Anteil Vorjahr %]) * 100)
 		formatString: +0.0 "pp";-0.0 "pp";0.0 "pp"
 		displayFolder: Erzeugung
 		lineageTag: de1f303b-ad4f-52bd-9d72-59193c7ca06f
@@ -119,18 +119,22 @@ table Kennzahlen
 	/// Installed capacity at the last month with capacity data on or before the end of the selected period
 	/// (month-end stock = Anfangsbestand + Zubau - Abgang).
 	measure 'Installierte Leistung (MW)' =
-			VAR LetzterMonat = CALCULATE(MAX(Kapazität[Datum Key]), REMOVEFILTERS(Datum), KEEPFILTERS(Datum[Datum] <= MAX(Datum[Datum])))
+			VAR EndeDatum = MAX(Datum[Datum])
+			VAR LetzterMonat = CALCULATE(MAX(Kapazität[Datum Key]), REMOVEFILTERS(Datum), Datum[Datum] <= EndeDatum)
 			RETURN CALCULATE(SUM(Kapazität[Bestand MW]), REMOVEFILTERS(Datum), Kapazität[Datum Key] = LetzterMonat)
 		formatString: #,0
 		displayFolder: Ausbau
 		lineageTag: aa3cf45d-df42-50c3-93e3-81a3cb981224
 
-	/// Full-load hours: generation in the period divided by the average month-end installed capacity of the period.
+	/// Full-load hours: generation in the period divided by the average month-end installed capacity over the months of the period that have generation data.
 	/// Grid-reserve and emergency units are included (see KPI glossary).
 	measure 'Volllaststunden (h)' =
-			VAR Monate = CALCULATETABLE(VALUES(Kapazität[Datum Key]), REMOVEFILTERS(Datum), KEEPFILTERS(Datum[Datum] >= MIN(Datum[Datum]) && Datum[Datum] <= MAX(Datum[Datum])))
-			VAR Mittel = CALCULATE(AVERAGEX(Monate, CALCULATE(SUM(Kapazität[Bestand MW]))), REMOVEFILTERS(Datum))
-			RETURN DIVIDE([Erzeugung (MWh)], Mittel)
+			VAR ErzStart = CALCULATE(MIN(Erzeugung[Datum Key]))
+			VAR ErzEnde = CALCULATE(MAX(Erzeugung[Datum Key]))
+			VAR MonatStart = INT(ErzStart / 100) * 100 + 1
+			VAR MonateMitBestand = CALCULATETABLE(VALUES(Kapazität[Datum Key]), REMOVEFILTERS(Datum), Kapazität[Datum Key] >= MonatStart && Kapazität[Datum Key] <= ErzEnde)
+			VAR MittlererBestand = CALCULATE(AVERAGEX(MonateMitBestand, CALCULATE(SUM(Kapazität[Bestand MW]))), REMOVEFILTERS(Datum))
+			RETURN DIVIDE([Erzeugung (MWh)], MittlererBestand)
 		formatString: #,0
 		displayFolder: Ausbau
 		lineageTag: 9c724651-2c63-5792-b093-bec58146ee8c
@@ -161,8 +165,7 @@ table Kennzahlen
 		dataType: int64
 		isHidden
 		summarizeBy: none
-		isNameInferred
-		sourceColumn: [Spalte]
+		sourceColumn: [Value]
 		lineageTag: 45ea69c2-ce1d-52f6-a72b-c61dc485f0c3
 
 		annotation SummarizationSetBy = Automatic

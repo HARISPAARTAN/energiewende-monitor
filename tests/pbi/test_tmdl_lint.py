@@ -13,7 +13,17 @@ MEASURES = [
     "Day-Ahead Min (€/MWh)", "Negative Preisstunden", "Erzeugung Vorjahr (MWh)", "Erzeugung Δ Vorjahr %",
     "EE-Anteil Vorjahr %", "EE-Anteil Δ Vorjahr (pp)", "Netzlast Vormonat (MWh)", "Netzlast Δ Vormonat %", "Zubau (MW)",
     "Zubau YTD (MW)", "Installierte Leistung (MW)", "Volllaststunden (h)", "Anzahl Einheiten Zubau", "Datenstand", "Zeilen",
+    "Datenstand MaStR",
 ]
+RELATIONSHIPS = {
+    ("Erzeugung.Datum Key", "Datum.Datum Key"), ("Erzeugung.Zeit Key", "Zeit.Zeit Key"),
+    ("Erzeugung.Region Key", "Region.Region Key"), ("Erzeugung.Energieträger Key", "Energieträger.Energieträger Key"),
+    ("Last.Datum Key", "Datum.Datum Key"), ("Last.Zeit Key", "Zeit.Zeit Key"), ("Last.Region Key", "Region.Region Key"),
+    ("Preis.Datum Key", "Datum.Datum Key"), ("Preis.Zeit Key", "Zeit.Zeit Key"), ("Preis.Region Key", "Region.Region Key"),
+    ("Last Stunde.Datum Key", "Datum.Datum Key"), ("Last Stunde.Region Key", "Region.Region Key"),
+    ("Kapazität.Datum Key", "Datum.Datum Key"), ("Kapazität.Bundesland Key", "Bundesland.Bundesland Key"),
+    ("Kapazität.Energieträger Key", "Energieträger.Energieträger Key"), ("Preisphasen.Start Datum Key", "Datum.Datum Key"),
+}
 TABLES = ["Erzeugung", "Last", "Preis", "Kapazität", "Datum", "Zeit", "Energieträger", "Region", "Bundesland", "Kennzahlen",
           "Kennzahl-Auswahl", "Last Stunde", "Preisphasen", "Datenlücken"]
 
@@ -27,14 +37,14 @@ def test_tables_present(model):
     assert set(TABLES) <= set(model.tables)
 
 
-def test_all_24_measures_exist_with_format_and_description(model):
+def test_all_25_measures_exist_with_format_and_description(model):
     kz = model.tables["Kennzahlen"].measures
     missing = [m for m in MEASURES if m not in kz]
     assert not missing, missing
     for name in MEASURES:
         m = kz[name]
         assert m.description, name
-        if name != "Datenstand":
+        if name not in ("Datenstand", "Datenstand MaStR"):  # text results carry no formatString
             assert m.format_string, name
 
 
@@ -58,7 +68,8 @@ def test_unqualified_dax_references_are_measures(model):
 
 
 def test_relationships_bind_existing_columns_single_direction(model):
-    assert len(model.relationships) >= 11
+    assert len(model.relationships) == 16
+    assert {(r.from_column, r.to_column) for r in model.relationships} == RELATIONSHIPS
     for r in model.relationships:
         ft, fc = r.from_column.split(".", 1)
         tt, tc = r.to_column.split(".", 1)
@@ -108,3 +119,46 @@ def test_every_field_parameter_entry_is_a_measure(model):
     fp = model.tables["Kennzahl-Auswahl"]
     names = set(re.findall(r"NAMEOF\('Kennzahlen'\[([^\]]+)\]\)", fp.partition_source or ""))
     assert len(names) == 4 and names <= set(model.tables["Kennzahlen"].measures), names
+
+
+def test_sort_by_columns(model):
+    expected = {
+        ("Datum", "Monat Name"): "Monat", ("Datum", "Monat Name (EN)"): "Monat",
+        ("Datum", "Wochentag"): "Wochentag Nr", ("Datum", "Wochentag (EN)"): "Wochentag Nr",
+        ("Zeit", "Tageszeit"): "Tageszeit Nr", ("Zeit", "Tageszeit (EN)"): "Tageszeit Nr",
+        ("Energieträger", "Energieträger"): "Sortierung", ("Energieträger", "Energieträger (EN)"): "Sortierung",
+        ("Preis", "Preis Klasse (10 €)"): "Preis Klasse Sortierung",
+    }
+    for (table, col), sort_col in expected.items():
+        column = model.tables[table].columns[col]
+        assert column.sort_by_column == sort_col, (table, col)
+        assert sort_col in model.tables[table].columns, (table, sort_col)
+
+
+def test_kalender_hierarchy_and_culture(model):
+    assert model.tables["Datum"].hierarchies["Kalender"] == ["Jahr", "Quartal", "Monat Name", "Datum"]
+    assert model.culture == "de-DE"
+    assert model.discourage_implicit_measures
+    assert (MODEL_DIR / "cultures" / "de-DE.tmdl").exists()
+
+
+def test_no_description_property_only_triple_slash():
+    # descriptions are written as /// lines; a `description:` property would be a second, conflicting source
+    for path in MODEL_DIR.rglob("*.tmdl"):
+        for line in path.read_text(encoding="utf-8").splitlines():
+            assert not line.strip().startswith("description:"), path.name
+
+
+def test_no_aggregate_inside_calculate_filter_comparison(model):
+    # a boolean CALCULATE filter may not call MAX/MIN (engine error "used in a True/False expression");
+    # hoist the aggregate into a VAR and compare against the variable
+    cmp_agg = re.compile(r"(?:<=|>=|<>|<|>|=)\s*(?:MAX|MIN)\(|(?:MAX|MIN)\([^()]*(?:\([^()]*\)[^()]*)*\)\s*(?:<=|>=|<>|<|>|=)")
+    for m in model.tables["Kennzahlen"].measures.values():
+        for line in m.expression.splitlines():
+            body = re.sub(r"^\s*VAR\s+\w+\s*=\s*", "", line)
+            if "CALCULATE" in body:
+                assert not cmp_agg.search(body), (m.name, line)
+    # the guard itself must bite on the pattern it targets
+    assert cmp_agg.search("CALCULATE(SUM(x[a]), d[Datum] <= MAX(d[Datum]))")
+    assert cmp_agg.search("CALCULATETABLE(VALUES(x[a]), MIN(d[Datum]) <= d[Datum])")
+    assert not cmp_agg.search("CALCULATE(MAX(x[a]), REMOVEFILTERS(d), d[Datum] <= Bis)")

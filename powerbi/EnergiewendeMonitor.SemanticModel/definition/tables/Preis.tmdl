@@ -52,7 +52,7 @@ table Preis
 		annotation SummarizationSetBy = Automatic
 
 	/// Day-ahead price rounded down to a 10 EUR/MWh bin, for the price histogram.
-	column 'Preis Klasse (10 €)' = INT(FLOOR(Preis[Day-Ahead €/MWh], 10))
+	column 'Preis Klasse (10 €)' = IF(ISBLANK(Preis[Day-Ahead €/MWh]), BLANK(), INT(Preis[Day-Ahead €/MWh] / 10) * 10)
 		dataType: int64
 		formatString: #,0 "€"
 		lineageTag: 061bc869-f1bb-55a8-ba23-1d95ff345b5a
@@ -62,7 +62,7 @@ table Preis
 		annotation SummarizationSetBy = Automatic
 
 	/// Numeric sort key of the price bin.
-	column 'Preis Klasse Sortierung' = INT(FLOOR(Preis[Day-Ahead €/MWh], 10))
+	column 'Preis Klasse Sortierung' = IF(ISBLANK(Preis[Day-Ahead €/MWh]), BLANK(), INT(Preis[Day-Ahead €/MWh] / 10) * 10)
 		dataType: int64
 		formatString: 0
 		isHidden
