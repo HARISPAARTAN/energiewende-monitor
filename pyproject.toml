@@ -1,6 +1,6 @@
 [project]
 name = "ewmonitor"
-version = "0.2.0"
+version = "0.3.0"
 description = "Energiewende-Monitor: SMARD- und Marktstammdatenregister-Daten als Star-Schema in SQL Server, Basis für ein öffentliches Power-BI-Modell."
 readme = "README.md"
 requires-python = ">=3.12"
@@ -38,6 +38,7 @@ pythonpath = ["."]
 markers = [
   "db: needs a running SQL Server (MSSQL_SA_PASSWORD set)",
   "pbi: Power BI project checks (offline, on the committed PBIP files)",
+  "live: needs an open Power BI Desktop with the project and the ADOMD client (reconciliation)",
 ]
 addopts = "-m 'not db'"
 

@@ -5,8 +5,9 @@
 Deutsche Strommarktdaten (SMARD) als Star-Schema in SQL Server, Basis für ein öffentliches Power-BI-Modell.
 English version: [README.en.md](README.en.md).
 
-**Stand:** Meilenstein 2 ist fertig: Datenpipeline, SQL-Schema, Tests, CI und installierte Leistung aus dem
-Marktstammdatenregister. Power-BI-Modell und Bericht folgen.
+**Stand:** Meilenstein 3 (Version 0.3.0): Datenpipeline, SQL-Schema, Tests, CI, installierte Leistung aus dem
+Marktstammdatenregister sowie Power-BI-Modell und Bericht als PBIP-Projekt (Abschnitt [Bericht](#bericht)). Die erste
+Validierung in Power BI Desktop und die Screenshots folgen in einer eigenen Sitzung; das Veröffentlichen ist Meilenstein 4.
 
 Datenstand: SMARD 2026-10-25 (ab 2023-01-01, DE-LU; Ladezeit ca. 3 Minuten auf einem Laptop);
 Marktstammdatenregister Exportstand 2026-10-25.
@@ -60,7 +61,11 @@ ohne Netzwerk.
   Für die Kapazitäten: laufender Bestand nach Zubau und Abgang, lückenloses Monatsraster bis zum letzten Monat,
   AWZ- und UNB-Zeilen, die vier Kapazitätsprüfungen auf dem Fixture-Seed und die Idempotenz von
   `dw.fact_kapazitaet`.
-- GitHub Actions führt beides gegen einen SQL-Server-Container aus (`.github/workflows/ci.yml`).
+- `uv run pytest tests/pbi -m "pbi and not live"` (offline): Schemaprüfung der TMDL- und PBIR-Dateien gegen die
+  vendorten Microsoft-Schemas, Lint von Modell, Kennzahlen und Seiten, Glossar, öffentliche Variante und die Definition des
+  Abgleichs. Optional: `uv run python tools/pbi/fetch_tom.py` und `uv run --group pbi pytest tests/pbi/test_tmdl_tom.py` parsen das Modell mit
+  Microsofts TOM; `tests/pbi/test_reconcile.py` (Marker `live`) vergleicht neun Kennzahlen mit SQL, sobald Desktop offen ist.
+- GitHub Actions führt Lint, Unit- und Power-BI-Tests und die Datenqualität gegen einen SQL-Server-Container aus (`.github/workflows/ci.yml`).
 
 ## Fehlerbehandlung
 
@@ -125,8 +130,9 @@ Regeln (Begründung in `docs/decisions/ADR-004-mastr-seed.md`):
   nicht den damaligen Bestand. Beispiele: Kernenergie steht von 1990 bis Ende 2021 konstant bei 8,1 GW
   (2010 waren rund 20,5 GW am Netz); Wind an Land hat Ende 2010 24,0 GW statt rund 27 GW.
 - Notstromaggregate und Netzreserve bleiben in Meilenstein 2 im Bestand: 3,0 GW Mineralölprodukte und 0,6 GW
-  Erdgas tragen `Notstromaggregat = 1`, 7,45 GW Steinkohle `NetzreserveZugeordnet = 1`. Ob sie herausgerechnet
-  werden, entscheidet Meilenstein 3.
+  Erdgas tragen `Notstromaggregat = 1`, 7,45 GW Steinkohle `NetzreserveZugeordnet = 1`. Meilenstein 3 lässt sie im
+  Bestand; sie blähen die Kapazitätsbasis auf und drücken die Volllaststunden dieser Energieträger (siehe
+  [docs/kpi-glossar.md](docs/kpi-glossar.md)).
 
 Seed neu erzeugen (nur auf dem Entwicklerrechner, nicht in CI):
 
@@ -150,6 +156,82 @@ Ersatz für den echten Seed. Der Exportstand im Seed kommt aus dem Dateinamen de
 Hinweis: `ewmonitor all --fixtures` ersetzt die Kapazitätsdaten der Entwicklerdatenbank (`EWM_DB_NAME`) durch den
 Fixture-Seed. Vor einer Power-BI-Aktualisierung deshalb `ewmonitor load` erneut ausführen.
 
+## Bericht
+
+Das Power-BI-Projekt liegt als PBIP im Repository: `powerbi/EnergiewendeMonitor.pbip` mit dem Semantikmodell als TMDL
+(`EnergiewendeMonitor.SemanticModel/`) und dem Bericht im PBIR-Format (`EnergiewendeMonitor.Report/`). Beide werden
+code-first erzeugt und geprüft (`tools/pbi/`, `tests/pbi/`); Desktop liest die Dateien direkt. Das Modell hat 14 Tabellen
+(vier Fakten, `Last Stunde`, `Preisphasen`, `Datenlücken`, fünf Dimensionen, `Kennzahlen`, `Kennzahl-Auswahl`),
+26 Kennzahlen mit englischer Beschreibung, eine Rolle (`Landesbehörde BW`, Zeilensicherheit auf `Bundesland[Kürzel] = "BW"`) und das
+Thema `Energiewende`. Jede Kennzahl ist in [docs/kpi-glossar.md](docs/kpi-glossar.md) mit Formel, Einheit, Quelle und
+Hinweisen beschrieben.
+
+Die fünf Seiten (16:9, 1280 mal 720, deutsche Beschriftung):
+
+1. **Überblick**: Filter für Jahr, Monat, Kennzahl-Auswahl und Kategorie; fünf Kennzahlenkarten (Erzeugung, EE-Anteil, Day-Ahead Ø,
+   negative Preisstunden, installierte Leistung), Erzeugung je Monat nach Energieträger, EE-Anteil gegen das Vorjahr und ein Liniendiagramm,
+   das der Feldparameter `Kennzahl-Auswahl` umschaltet. Zwei Lesezeichen, `Erneuerbar` und `Konventionell`, filtern die Kategorie; weil
+   Lesezeichen in einem veröffentlichten Bericht nicht erreichbar sind, gibt es denselben Filter zusätzlich als Slicer
+   `Kategorie`. Ein Rechtsklick auf einen Monat springt per Drillthrough zu Erzeugung & Last.
+2. **Erzeugung & Last**: Netzlast, Residuallast und erneuerbare Erzeugung je Tag, das Tagesprofil nach Uhrzeit, eine Heatmap der
+   mittleren Residuallast nach Tageszeit und Wochentag und die Erzeugung nach Energieträger; Zielseite des Drillthroughs.
+3. **Preise**: Histogramm der Stundenpreise in Klassen zu 10 EUR/MWh, negative Preisstunden je Monat, Day-Ahead-Preis gegen Residuallast
+   je Stunde und die zehn längsten negativen Preisphasen (die Tabelle hat einen TopN-10-Filter).
+4. **Ausbau**: installierte Leistung nach Bundesland, Zubau nach Monat und Energieträger, Volllaststunden nach Energieträger und Jahr
+   (Aussagekraft und Grenzen: Abschnitt [Kapazitäten (MaStR)](#kapazitäten-mastr) und das Glossar).
+5. **Datenqualität & Quellen**: Datenstand SMARD und MaStR, Zeilenzahl, fehlende Viertelstunden je Monat, Quellen und Lizenzen.
+
+![Überblick](docs/screenshots/01-ueberblick.png)
+![Erzeugung & Last](docs/screenshots/02-erzeugung-last.png)
+![Preise](docs/screenshots/03-preise.png)
+![Ausbau](docs/screenshots/04-ausbau.png)
+![Datenqualität & Quellen](docs/screenshots/05-datenqualitaet.png)
+
+Modellansicht und der Feldparameter-Slicer in Aktion:
+
+![Modell](docs/screenshots/06-modell.png)
+![Kennzahl-Auswahl](docs/screenshots/07-kennzahl-auswahl.png)
+
+(Die Bilder entstehen in der Validierungssitzung mit Power BI Desktop, Liste: [docs/screenshots/SHOTLIST.md](docs/screenshots/SHOTLIST.md).)
+
+**Projekt öffnen.** Power BI Desktop mit den Vorschaufunktionen `Power BI Project (.pbip) save option` und
+`Store semantic model using TMDL format` (Datei, Optionen, Vorschaufeatures), dann `powerbi/EnergiewendeMonitor.pbip` öffnen. Der Bericht öffnet
+ohne Daten, weil kein Cache im Repository liegt (`.pbi/cache.abf` ist git-ignoriert). Die lokale Datenbank muss laufen
+(`docker compose up -d`, danach `uv run --env-file .env ewmonitor load`), dann Start, Aktualisieren.
+
+**SQL-Zugangsdaten.** Die Quelle ist `Sql.Database("127.0.0.1,1433", "energiewende")` auf den Ansichten des Schemas `rpt`. Beim
+ersten Aktualisieren fragt Desktop nach den Zugangsdaten: Reiter Datenbank, Benutzer `sa`, das Kennwort aus der `.env`
+(von Hand eingeben), Ebene `127.0.0.1`. Das Kennwort steht in keiner Projektdatei. Fragt Desktop nach der Verschlüsselung,
+mit OK bestätigen.
+
+**Öffentliche Variante.** `uv run python tools/pbi/make_public_variant.py` kopiert das Projekt nach `build/public/` als
+`EnergiewendeMonitor (öffentlich)` und entfernt die Rolle. Tabellen, Beziehungen, Kennzahlen und Seiten bleiben byte-gleich. Diese
+Kopie ist die, die per "Im Web veröffentlichen" freigegeben wird (ADR-002, kein RLS); das Hauptprojekt behält die Rolle.
+
+**Abgleich Modell und Warehouse.** Neun Kennzahlen (Erzeugung, EE-Anteil, negative Preisstunden, Day-Ahead Ø, installierte Leistung
+zweimal, Zubau, Volllaststunden, Zeilen) werden gegen SQL geprüft:
+
+```bash
+uv run --env-file .env python -m tools.pbi.reconcile sql           # die neun SQL-Werte (sql/queries/reconcile_m3.sql)
+uv run python -m tools.pbi.reconcile dax-queries                   # die neun DAX-Abfragen
+uv run python tools/pbi/fetch_adomd.py                             # einmalig: ADOMD-Client nach build/adomd/ (alternativ DAX Studio)
+uv run --env-file .env --group pbi pytest tests/pbi/test_reconcile.py -m live -q   # mit geöffnetem Desktop
+```
+
+Der letzte Befehl braucht ein geöffnetes Desktop mit dem Projekt und überspringt sich sonst mit Begründung. Ohne ADOMD:
+die neun DAX-Abfragen in der DAX-Abfrageansicht von Desktop ausführen und mit der SQL-Ausgabe von Hand vergleichen; die Ergebnisse stehen
+im Glossar unter [Abgleich](docs/kpi-glossar.md#abgleich-mit-dem-data-warehouse).
+
+## Entwicklung
+
+`uv sync --dev` installiert die Entwicklungswerkzeuge, lässt aber die optionale Abhängigkeit `open-mastr` weg (und entfernt sie, wenn
+sie schon installiert war). Wer den Seed neu erzeugt, nutzt `uv sync --dev --extra mastr`. Für die optionalen Power-BI-Prüfungen
+(TMDL-Parser, ADOMD-Abgleich) kommt `--group pbi` hinzu (pythonnet).
+
+Qualitätstore: `uv run ruff check .`, `uv run pytest tests/unit tests/pbi -m "not live" -q`,
+`uv run --env-file .env pytest tests/dq -m db -q`, `uv lock --check`. CI führt Lint, Unit- und Power-BI-Tests
+(`pytest tests/pbi -m "pbi and not live"`, offline auf den committeten Dateien) und die Datenqualitätsprüfung gegen SQL Server aus.
+
 ## Datenquellen und Lizenzen
 
 - SMARD, Bundesnetzagentur: Lizenz CC BY 4.0, Quellenangabe `Bundesnetzagentur | SMARD.de`.
@@ -171,4 +253,5 @@ Prognosen, keine Redispatch-Daten. Der MaStR-Export und die Rohdaten im Cache si
 
 ## Lizenz
 
-Code: MIT. Daten: siehe Datenquellen.
+Code: MIT. Daten: siehe Datenquellen. Die Vorlagen für die Berichtselemente stammen aus microsoft/fabric-toolbox (MIT),
+siehe `tools/pbi/templates/README.md` und `tools/pbi/templates/LICENSE-fabric-toolbox.txt`.

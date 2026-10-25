@@ -5,8 +5,9 @@
 German electricity-market data (SMARD) as a star schema in SQL Server, the basis for a public Power BI model.
 German version: [README.md](README.md).
 
-**Status:** milestone 2 is complete: data pipeline, SQL schema, tests, CI and installed capacity from the
-Marktstammdatenregister. The Power BI model and report follow.
+**Status:** milestone 3 (version 0.3.0): data pipeline, SQL schema, tests, CI, installed capacity from the
+Marktstammdatenregister, and the Power BI model and report as a PBIP project (section [Report](#report)). The first validation in
+Power BI Desktop and the screenshots follow in a session of their own; publishing is milestone 4.
 
 Data as of: SMARD 2026-10-25 (from 2023-01-01, DE-LU; load time about 3 minutes on a laptop);
 Marktstammdatenregister export of 2026-10-25.
@@ -57,7 +58,11 @@ are downloaded again, because SMARD republishes past weeks). `ewmonitor all --fi
   staging and facts there and loads the test week; the database from `EWM_DB_NAME` is left untouched.
   For capacity: running stock after additions and retirements, a gap-free month grid up to the last month,
   AWZ and UNB rows, the four capacity checks on the fixture seed and idempotent `dw.fact_kapazitaet` loads.
-- GitHub Actions runs both against a SQL Server container (`.github/workflows/ci.yml`).
+- `uv run pytest tests/pbi -m "pbi and not live"` (offline): schema validation of the TMDL and PBIR files against the vendored
+  Microsoft schemas, lint of model, measures and pages, glossary, public variant and the definition of the reconciliation. Optional:
+  `uv run python tools/pbi/fetch_tom.py` and `uv run --group pbi pytest tests/pbi/test_tmdl_tom.py` parse the model with Microsoft's TOM;
+  `tests/pbi/test_reconcile.py` (marker `live`) compares nine measures with SQL as soon as Desktop is open.
+- GitHub Actions runs lint, unit and Power BI tests and the data quality suite against a SQL Server container (`.github/workflows/ci.yml`).
 
 ## Error handling
 
@@ -121,7 +126,8 @@ Rules (reasoning in `docs/decisions/ADR-004-mastr-seed.md`):
   2010); wind onshore shows 24.0 GW at the end of 2010 instead of about 27 GW.
 - Emergency generators and grid-reserve plants stay in the stock in milestone 2: 3.0 GW of petroleum products
   and 0.6 GW of natural gas carry `Notstromaggregat = 1`, 7.45 GW of hard coal `NetzreserveZugeordnet = 1`.
-  Whether to exclude them is decided in milestone 3.
+  Milestone 3 keeps them in the stock; they inflate the capacity basis and depress the full-load hours of those energy sources
+  (see [docs/kpi-glossar.md](docs/kpi-glossar.md)).
 
 Regenerating the seed (developer machine only, not in CI):
 
@@ -144,6 +150,79 @@ download); budget 15 GB. Runtime on 2026-10-25: download 12 minutes, open-mastr 
 Note: `ewmonitor all --fixtures` replaces the capacity data of the developer database (`EWM_DB_NAME`) with the
 fixture seed. Run `ewmonitor load` again before a Power BI refresh.
 
+## Report
+
+The Power BI project is committed as a PBIP: `powerbi/EnergiewendeMonitor.pbip` with the semantic model as TMDL
+(`EnergiewendeMonitor.SemanticModel/`) and the report in PBIR format (`EnergiewendeMonitor.Report/`). Both are generated and
+linted code-first (`tools/pbi/`, `tests/pbi/`); Desktop reads the files directly. The model has 14 tables (four facts,
+`Last Stunde`, `Preisphasen`, `Datenlücken`, five dimensions, `Kennzahlen`, `Kennzahl-Auswahl`), 26 measures with English
+descriptions, one role (`Landesbehörde BW`, row-level security on `Bundesland[Kürzel] = "BW"`) and the `Energiewende` theme. Every
+measure is described in [docs/kpi-glossar.md](docs/kpi-glossar.md) (German) with formula, unit, source and notes.
+
+The five pages (16:9, 1280 by 720, German labels):
+
+1. **Überblick** (overview): slicers for year, month, measure selection and category; five KPI cards (generation, renewables share,
+   day-ahead average, negative price hours, installed capacity), generation per month by energy source, renewables share against the
+   previous year and a line chart switched by the `Kennzahl-Auswahl` field parameter. Two bookmarks, `Erneuerbar` and `Konventionell`, filter the
+   category; because bookmarks are unreachable in a published report, the same filter is also a `Kategorie` slicer. A right-click on a month drills
+   through to Erzeugung & Last.
+2. **Erzeugung & Last** (generation and load): grid load, residual load and renewable generation per day, the daily profile by time of day, a heat
+   map of average residual load by time of day and weekday, and generation by source; the drillthrough target.
+3. **Preise** (prices): histogram of hourly prices in 10 EUR/MWh classes, negative price hours per month, day-ahead price against residual load
+   per hour and the ten longest negative price phases (the table has a TopN 10 filter).
+4. **Ausbau** (expansion): installed capacity by federal state, additions by month and source, full-load hours by source and year (meaning and
+   limits: section [Capacity (MaStR)](#capacity-mastr) and the glossary).
+5. **Datenqualität & Quellen** (data quality and sources): data as of for SMARD and MaStR, row count, missing quarter-hours per month, sources and licences.
+
+![Overview](docs/screenshots/01-ueberblick.png)
+![Generation and load](docs/screenshots/02-erzeugung-last.png)
+![Prices](docs/screenshots/03-preise.png)
+![Expansion](docs/screenshots/04-ausbau.png)
+![Data quality and sources](docs/screenshots/05-datenqualitaet.png)
+
+Model view and the field-parameter slicer in action:
+
+![Model](docs/screenshots/06-modell.png)
+![Measure selection](docs/screenshots/07-kennzahl-auswahl.png)
+
+(The images are taken in the validation session with Power BI Desktop; list: [docs/screenshots/SHOTLIST.md](docs/screenshots/SHOTLIST.md).)
+
+**Open the project.** Power BI Desktop with the preview features `Power BI Project (.pbip) save option` and `Store semantic model using TMDL format`
+(File, Options, Preview features), then open `powerbi/EnergiewendeMonitor.pbip`. The report opens without data, because no cache is
+committed (`.pbi/cache.abf` is git-ignored). The local database must be running (`docker compose up -d`, then
+`uv run --env-file .env ewmonitor load`), then Home, Refresh.
+
+**SQL credentials.** The source is `Sql.Database("127.0.0.1,1433", "energiewende")` on the views of schema `rpt`. On the first refresh Desktop asks
+for credentials: tab Database, user `sa`, the password from `.env` (typed by hand), level `127.0.0.1`. The password is in no project file. If
+Desktop asks about encryption, confirm with OK.
+
+**Public variant.** `uv run python tools/pbi/make_public_variant.py` copies the project to `build/public/` as `EnergiewendeMonitor (öffentlich)` and removes the
+role. Tables, relationships, measures and pages stay byte-identical. This copy is the one published to web (ADR-002, no RLS); the main project keeps the role.
+
+**Reconciling model and warehouse.** Nine measures (generation, renewables share, negative price hours, day-ahead average, installed capacity
+twice, additions, full-load hours, row count) are checked against SQL:
+
+```bash
+uv run --env-file .env python -m tools.pbi.reconcile sql           # the nine SQL values (sql/queries/reconcile_m3.sql)
+uv run python -m tools.pbi.reconcile dax-queries                   # the nine DAX queries
+uv run python tools/pbi/fetch_adomd.py                             # once: ADOMD client into build/adomd/ (or install DAX Studio)
+uv run --env-file .env --group pbi pytest tests/pbi/test_reconcile.py -m live -q   # with Desktop open
+```
+
+The last command needs Desktop open with the project and skips itself with a reason otherwise. Without ADOMD, run the nine DAX queries in
+Desktop's DAX query view and compare with the SQL output by hand; the results go into the glossary under
+[Abgleich](docs/kpi-glossar.md#abgleich-mit-dem-data-warehouse).
+
+## Development
+
+`uv sync --dev` installs the development tools but leaves out the optional `open-mastr` dependency (and removes it if it was already
+installed). To regenerate the seed use `uv sync --dev --extra mastr`. For the optional Power BI checks (TMDL parser, ADOMD reconciliation) add
+`--group pbi` (pythonnet).
+
+Quality gates: `uv run ruff check .`, `uv run pytest tests/unit tests/pbi -m "not live" -q`,
+`uv run --env-file .env pytest tests/dq -m db -q`, `uv lock --check`. CI runs lint, the unit and Power BI tests
+(`pytest tests/pbi -m "pbi and not live"`, offline on the committed files) and the data-quality suite against SQL Server.
+
 ## Data sources and licences
 
 - SMARD, Bundesnetzagentur: CC BY 4.0, attribution `Bundesnetzagentur | SMARD.de`.
@@ -164,4 +243,5 @@ forecasts, no Redispatch data. The MaStR export and the raw cache are not part o
 
 ## Licence
 
-Code: MIT. Data: see data sources.
+Code: MIT. Data: see data sources. The templates for the report visuals come from microsoft/fabric-toolbox (MIT), see
+`tools/pbi/templates/README.md` and `tools/pbi/templates/LICENSE-fabric-toolbox.txt`.

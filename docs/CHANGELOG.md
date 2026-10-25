@@ -1,5 +1,36 @@
 # Changelog
 
+## v0.3.0 (2026-10-25) Meilenstein 3 Modell und Bericht
+
+Stand: Dateien und Prüfungen sind fertig; die erste Validierung in Power BI Desktop (Aktualisieren, Seiten, Screenshots,
+Abgleich der DAX-Seite) steht noch aus, danach folgt der Tag.
+
+- Power-BI-Projekt als PBIP (`powerbi/EnergiewendeMonitor.pbip`): Semantikmodell als TMDL, Bericht als PBIR, beide code-first
+  erzeugt (`tools/pbi/`). Schemas von Microsoft sind vendort (`tools/pbi/schemas/`, `schema_versions.json`), die Visualvorlagen
+  stammen aus microsoft/fabric-toolbox (MIT, `tools/pbi/templates/`). Quelle des Modells: `Sql.Database("127.0.0.1,1433",
+  "energiewende")` auf den `rpt`-Ansichten, Importmodus, SQL-Anmeldung nur in Desktop.
+- Modell: 14 Tabellen (Erzeugung, Last, Preis, Kapazität, `Last Stunde`, `Preisphasen`, `Datenlücken`, Datum als Datumstabelle, Zeit,
+  Energieträger, Region, Bundesland, `Kennzahlen`, Feldparameter `Kennzahl-Auswahl`), 26 Kennzahlen mit englischer Beschreibung und
+  Formatzeichenfolge, Rolle `Landesbehörde BW`, Kultur de-DE. Berechnete Spalten `Preis Klasse (10 €)` (Abrunden mit INT, BLANK-sicher)
+  und `Tageszeit Nr`.
+- Kapazitätskennzahlen: `Installierte Leistung (MW)` nimmt den Bestand des letzten Monats mit Daten am oder vor dem Periodenende;
+  `Volllaststunden (h)` teilt die Erzeugung durch den durchschnittlichen Monatsendbestand der Monate mit Erzeugungsdaten. Netzreserve
+  und Notstromaggregate bleiben im Bestand und sind im Glossar vermerkt. Dazu `Preisstunden` und `Datenstand MaStR`.
+- Bericht: fünf Seiten (`Überblick`, `Erzeugung & Last`, `Preise`, `Ausbau`, `Datenqualität & Quellen`, 1280 mal 720), Thema
+  `Energiewende`, Drillthrough von Überblick nach Erzeugung & Last, Lesezeichen `Erneuerbar` und `Konventionell` sowie ein Slicer
+  `Kategorie` (Lesezeichen sind im veröffentlichten Bericht nicht erreichbar), TopN-10-Filter auf den Preisphasen,
+  Feldparameter-Liniendiagramm, Heatmap, Histogramm der Preisklassen.
+- Tests `tests/pbi/` (offline, Marker `pbi`): Schemaprüfung aller TMDL- und PBIR-Dateien, Lint von Modell, Kennzahlen, Beziehungen,
+  Rolle und Seiten, optionaler Parse mit Microsofts TOM (`test_tmdl_tom.py`, `tools/pbi/fetch_tom.py`).
+- Abgleich Modell und Warehouse: `sql/queries/reconcile_m3.sql` (R1 bis R9, R5 bis R8 folgen der DAX-Logik), DAX-Abfragen und
+  ADOMD-Zugriff in `tools/pbi/reconcile.py` (`python -m tools.pbi.reconcile sql|dax-queries|compare`), Live-Test
+  `tests/pbi/test_reconcile.py` (Marker `live`, überspringt ohne geöffnetes Desktop oder ADOMD), `tools/pbi/fetch_adomd.py`
+  für den ADOMD-Client ohne Systeminstallation. Die SQL-Werte stehen mit Datum in `docs/kpi-glossar.md`.
+- `tools/pbi/make_public_variant.py`: Kopie des Projekts ohne Rolle als `EnergiewendeMonitor (öffentlich)` für "Im Web veröffentlichen".
+- `docs/kpi-glossar.md`: Definition, Formel, Einheit, Quelle und Hinweise für alle 26 Kennzahlen; `docs/screenshots/SHOTLIST.md`.
+- README und README.en: Abschnitte Bericht und Entwicklung (`uv sync --extra mastr`). CI: `lint-and-unit` führt zusätzlich
+  `pytest tests/pbi -m "pbi and not live"` aus. Version 0.3.0 (`pyproject.toml`, `ewmonitor.__version__`).
+
 ## v0.2.0 (2026-10-25) Meilenstein 2 Kapazitäten
 
 - Kalender aus `config.toml` (`[calendar]`, 1990-01-01 bis 2030-12-31); `dim_datum` deckt die MaStR-Historie ab,

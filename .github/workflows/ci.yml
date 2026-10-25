@@ -21,6 +21,7 @@ jobs:
       - run: uv run pytest tests/unit -q
         env:
           TZ: Europe/Berlin
+      - run: uv run pytest tests/pbi -m "pbi and not live" -q
 
   dq:
     runs-on: ubuntu-24.04
