@@ -184,7 +184,7 @@
             "altText": {
               "expr": {
                 "Literal": {
-                  "Value": "'Scatter plot of query duration against CPU time. Bubble size represents total data scanned and color represents query status.'"
+                  "Value": "'Diagramm: Day-Ahead-Preis vs. Residuallast (Stunden)'"
                 }
               }
             }

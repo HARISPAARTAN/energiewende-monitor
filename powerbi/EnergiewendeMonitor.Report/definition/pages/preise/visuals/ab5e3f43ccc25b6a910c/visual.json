@@ -350,7 +350,7 @@
             "altText": {
               "expr": {
                 "Literal": {
-                  "Value": "''"
+                  "Value": "'Diagramm: Negative Preisstunden je Monat'"
                 }
               }
             }

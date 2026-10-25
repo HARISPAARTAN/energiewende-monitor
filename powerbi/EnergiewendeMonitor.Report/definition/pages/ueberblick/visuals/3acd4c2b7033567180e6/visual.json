@@ -5,7 +5,7 @@
     "height": 90,
     "tabOrder": 6,
     "width": 236,
-    "x": 780,
+    "x": 528,
     "y": 100,
     "z": 6
   },
@@ -65,11 +65,11 @@
                       "Entity": "Kennzahlen"
                     }
                   },
-                  "Property": "Negative Preisstunden"
+                  "Property": "Day-Ahead Ø (€/MWh)"
                 }
               },
-              "nativeQueryRef": "Negative Preisstunden",
-              "queryRef": "Kennzahlen.Negative Preisstunden"
+              "nativeQueryRef": "Day-Ahead Ø (€/MWh)",
+              "queryRef": "Kennzahlen.Day-Ahead Ø (€/MWh)"
             }
           ]
         }
@@ -135,6 +135,19 @@
           }
         }
       ],
+      "general": [
+        {
+          "properties": {
+            "altText": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Kennzahl: Day-Ahead Ø'"
+                }
+              }
+            }
+          }
+        }
+      ],
       "title": [
         {
           "properties": {
@@ -148,7 +161,7 @@
             "text": {
               "expr": {
                 "Literal": {
-                  "Value": "'Negative Preisstunden'"
+                  "Value": "'Day-Ahead Ø'"
                 }
               }
             }

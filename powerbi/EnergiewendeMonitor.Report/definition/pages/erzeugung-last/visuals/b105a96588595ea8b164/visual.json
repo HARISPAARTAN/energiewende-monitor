@@ -4,7 +4,7 @@
   "position": {
     "height": 300,
     "tabOrder": 1,
-    "width": 1232,
+    "width": 608,
     "x": 24,
     "y": 100,
     "z": 1
@@ -43,14 +43,14 @@
                 "Column": {
                   "Expression": {
                     "SourceRef": {
-                      "Entity": "Zeit"
+                      "Entity": "Datum"
                     }
                   },
-                  "Property": "Uhrzeit"
+                  "Property": "Datum"
                 }
               },
-              "nativeQueryRef": "Uhrzeit",
-              "queryRef": "Zeit.Uhrzeit"
+              "nativeQueryRef": "Datum",
+              "queryRef": "Datum.Datum"
             }
           ]
         },
@@ -178,7 +178,7 @@
             "altText": {
               "expr": {
                 "Literal": {
-                  "Value": "'Distinct queries whose start-to-end execution interval overlaps each hour. Selecting a point or time range filters the full page.'"
+                  "Value": "'Diagramm: Netzlast, Residuallast und Erneuerbare je Tag (MWh)'"
                 }
               }
             }
@@ -232,7 +232,7 @@
             "text": {
               "expr": {
                 "Literal": {
-                  "Value": "'Netzlast, Residuallast und Erneuerbare je Viertelstunde (MWh)'"
+                  "Value": "'Netzlast, Residuallast und Erneuerbare je Tag (MWh)'"
                 }
               }
             }

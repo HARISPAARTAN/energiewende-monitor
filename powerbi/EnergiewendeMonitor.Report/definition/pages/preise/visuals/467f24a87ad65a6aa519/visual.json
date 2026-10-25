@@ -289,11 +289,11 @@
                       "Entity": "Kennzahlen"
                     }
                   },
-                  "Property": "Zeilen"
+                  "Property": "Preisstunden"
                 }
               },
-              "nativeQueryRef": "Zeilen",
-              "queryRef": "Kennzahlen.Zeilen"
+              "nativeQueryRef": "Preisstunden",
+              "queryRef": "Kennzahlen.Preisstunden"
             }
           ]
         }
@@ -350,7 +350,7 @@
             "altText": {
               "expr": {
                 "Literal": {
-                  "Value": "''"
+                  "Value": "'Diagramm: Verteilung der Stundenpreise (Klassen à 10 €)'"
                 }
               }
             }

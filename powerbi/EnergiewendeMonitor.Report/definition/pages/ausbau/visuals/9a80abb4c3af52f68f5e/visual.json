@@ -140,6 +140,23 @@
             }
           ]
         }
+      },
+      "sortDefinition": {
+        "sort": [
+          {
+            "direction": "Descending",
+            "field": {
+              "Measure": {
+                "Expression": {
+                  "SourceRef": {
+                    "Entity": "Kennzahlen"
+                  }
+                },
+                "Property": "Installierte Leistung (MW)"
+              }
+            }
+          }
+        ]
       }
     },
     "visualContainerObjects": {
@@ -150,6 +167,19 @@
               "expr": {
                 "Literal": {
                   "Value": "6D"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "general": [
+        {
+          "properties": {
+            "altText": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Diagramm: Installierte Leistung nach Bundesland (MW)'"
                 }
               }
             }

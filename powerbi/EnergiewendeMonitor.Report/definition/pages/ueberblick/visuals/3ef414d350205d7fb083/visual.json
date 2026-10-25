@@ -5,7 +5,7 @@
     "height": 90,
     "tabOrder": 4,
     "width": 236,
-    "x": 276,
+    "x": 24,
     "y": 100,
     "z": 4
   },
@@ -65,11 +65,11 @@
                       "Entity": "Kennzahlen"
                     }
                   },
-                  "Property": "EE-Anteil %"
+                  "Property": "Erzeugung (MWh)"
                 }
               },
-              "nativeQueryRef": "EE-Anteil %",
-              "queryRef": "Kennzahlen.EE-Anteil %"
+              "nativeQueryRef": "Erzeugung (MWh)",
+              "queryRef": "Kennzahlen.Erzeugung (MWh)"
             }
           ]
         }
@@ -135,6 +135,19 @@
           }
         }
       ],
+      "general": [
+        {
+          "properties": {
+            "altText": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Kennzahl: Erzeugung'"
+                }
+              }
+            }
+          }
+        }
+      ],
       "title": [
         {
           "properties": {
@@ -148,7 +161,7 @@
             "text": {
               "expr": {
                 "Literal": {
-                  "Value": "'EE-Anteil'"
+                  "Value": "'Erzeugung'"
                 }
               }
             }

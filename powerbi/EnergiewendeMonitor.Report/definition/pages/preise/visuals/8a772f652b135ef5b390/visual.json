@@ -1,5 +1,110 @@
 {
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.13.0/schema.json",
+  "filterConfig": {
+    "filters": [
+      {
+        "field": {
+          "Column": {
+            "Expression": {
+              "SourceRef": {
+                "Entity": "Preisphasen"
+              }
+            },
+            "Property": "Start (lokal)"
+          }
+        },
+        "filter": {
+          "From": [
+            {
+              "Expression": {
+                "Subquery": {
+                  "Query": {
+                    "From": [
+                      {
+                        "Entity": "Preisphasen",
+                        "Name": "p",
+                        "Type": 0
+                      }
+                    ],
+                    "OrderBy": [
+                      {
+                        "Direction": 2,
+                        "Expression": {
+                          "Aggregation": {
+                            "Expression": {
+                              "Column": {
+                                "Expression": {
+                                  "SourceRef": {
+                                    "Source": "p"
+                                  }
+                                },
+                                "Property": "Stunden"
+                              }
+                            },
+                            "Function": 0
+                          }
+                        }
+                      }
+                    ],
+                    "Select": [
+                      {
+                        "Column": {
+                          "Expression": {
+                            "SourceRef": {
+                              "Source": "p"
+                            }
+                          },
+                          "Property": "Start (lokal)"
+                        },
+                        "Name": "field"
+                      }
+                    ],
+                    "Top": 10,
+                    "Version": 2
+                  }
+                }
+              },
+              "Name": "subquery",
+              "Type": 2
+            },
+            {
+              "Entity": "Preisphasen",
+              "Name": "p",
+              "Type": 0
+            }
+          ],
+          "Version": 2,
+          "Where": [
+            {
+              "Condition": {
+                "In": {
+                  "Expressions": [
+                    {
+                      "Column": {
+                        "Expression": {
+                          "SourceRef": {
+                            "Source": "p"
+                          }
+                        },
+                        "Property": "Start (lokal)"
+                      }
+                    }
+                  ],
+                  "Table": {
+                    "SourceRef": {
+                      "Source": "subquery"
+                    }
+                  }
+                }
+              }
+            }
+          ]
+        },
+        "name": "bb27d84d685a554fb243",
+        "type": "TopN"
+      }
+    ]
+  },
   "name": "8a772f652b135ef5b390",
   "position": {
     "height": 290,
@@ -94,6 +199,23 @@
             }
           ]
         }
+      },
+      "sortDefinition": {
+        "sort": [
+          {
+            "direction": "Descending",
+            "field": {
+              "Column": {
+                "Expression": {
+                  "SourceRef": {
+                    "Entity": "Preisphasen"
+                  }
+                },
+                "Property": "Stunden"
+              }
+            }
+          }
+        ]
       }
     },
     "visualContainerObjects": {
@@ -136,6 +258,19 @@
               "expr": {
                 "Literal": {
                   "Value": "true"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "general": [
+        {
+          "properties": {
+            "altText": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Tabelle: Längste negative Preisphasen'"
                 }
               }
             }

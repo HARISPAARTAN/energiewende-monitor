@@ -68,6 +68,12 @@ table Kennzahlen
 		displayFolder: Preise
 		lineageTag: 396f620a-7719-5869-9352-1aadfd55933b
 
+	/// Number of hourly price rows in context (histogram basis).
+	measure Preisstunden = COUNTROWS(Preis)
+		formatString: #,0
+		displayFolder: Preise
+		lineageTag: 5821cfcf-4511-5df5-b9c5-315a5b9d0ebc
+
 	/// Generation in the same period one year earlier.
 	measure 'Erzeugung Vorjahr (MWh)' = CALCULATE([Erzeugung (MWh)], SAMEPERIODLASTYEAR(Datum[Datum]))
 		formatString: #,0

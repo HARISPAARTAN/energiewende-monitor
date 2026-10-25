@@ -2,11 +2,11 @@
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.13.0/schema.json",
   "name": "b53b578fa8d05bfb8971",
   "position": {
-    "height": 234,
+    "height": 240,
     "tabOrder": 10,
     "width": 456,
     "x": 800,
-    "y": 462,
+    "y": 206,
     "z": 10
   },
   "visual": {
@@ -15,10 +15,17 @@
       "legend": [
         {
           "properties": {
+            "position": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Bottom'"
+                }
+              }
+            },
             "show": {
               "expr": {
                 "Literal": {
-                  "Value": "false"
+                  "Value": "true"
                 }
               }
             }
@@ -51,17 +58,31 @@
           "projections": [
             {
               "field": {
-                "Column": {
+                "Measure": {
                   "Expression": {
                     "SourceRef": {
-                      "Entity": "Kennzahl-Auswahl"
+                      "Entity": "Kennzahlen"
                     }
                   },
-                  "Property": "Kennzahl-Auswahl Fields"
+                  "Property": "EE-Anteil %"
                 }
               },
-              "nativeQueryRef": "Kennzahl-Auswahl Fields",
-              "queryRef": "Kennzahl-Auswahl.Kennzahl-Auswahl Fields"
+              "nativeQueryRef": "EE-Anteil %",
+              "queryRef": "Kennzahlen.EE-Anteil %"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "Kennzahlen"
+                    }
+                  },
+                  "Property": "EE-Anteil Vorjahr %"
+                }
+              },
+              "nativeQueryRef": "EE-Anteil Vorjahr %",
+              "queryRef": "Kennzahlen.EE-Anteil Vorjahr %"
             }
           ]
         }
@@ -143,7 +164,7 @@
             "altText": {
               "expr": {
                 "Literal": {
-                  "Value": "'Distinct queries whose start-to-end execution interval overlaps each hour. Selecting a point or time range filters the full page.'"
+                  "Value": "'Diagramm: EE-Anteil vs. Vorjahr'"
                 }
               }
             }
@@ -197,7 +218,7 @@
             "text": {
               "expr": {
                 "Literal": {
-                  "Value": "'Kennzahl-Auswahl je Monat'"
+                  "Value": "'EE-Anteil vs. Vorjahr'"
                 }
               }
             }

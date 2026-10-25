@@ -10,7 +10,7 @@ MODEL_DIR = Path(__file__).resolve().parents[2] / "powerbi" / "EnergiewendeMonit
 MEASURES = [
     "Erzeugung (MWh)", "Erzeugung Erneuerbar (MWh)", "EE-Anteil %", "Netzlast (MWh)", "Residuallast (MWh)",
     "Residuallast Minimum (MWh/15 min)", "Residuallast Ø (MWh/15 min)", "Day-Ahead Ø (€/MWh)", "Day-Ahead Max (€/MWh)",
-    "Day-Ahead Min (€/MWh)", "Negative Preisstunden", "Erzeugung Vorjahr (MWh)", "Erzeugung Δ Vorjahr %",
+    "Day-Ahead Min (€/MWh)", "Negative Preisstunden", "Preisstunden", "Erzeugung Vorjahr (MWh)", "Erzeugung Δ Vorjahr %",
     "EE-Anteil Vorjahr %", "EE-Anteil Δ Vorjahr (pp)", "Netzlast Vormonat (MWh)", "Netzlast Δ Vormonat %", "Zubau (MW)",
     "Zubau YTD (MW)", "Installierte Leistung (MW)", "Volllaststunden (h)", "Anzahl Einheiten Zubau", "Datenstand", "Zeilen",
     "Datenstand MaStR",
@@ -37,7 +37,7 @@ def test_tables_present(model):
     assert set(TABLES) <= set(model.tables)
 
 
-def test_all_25_measures_exist_with_format_and_description(model):
+def test_all_26_measures_exist_with_format_and_description(model):
     kz = model.tables["Kennzahlen"].measures
     missing = [m for m in MEASURES if m not in kz]
     assert not missing, missing

@@ -135,6 +135,19 @@
           }
         }
       ],
+      "general": [
+        {
+          "properties": {
+            "altText": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Kennzahl: Datenstand MaStR (Monat)'"
+                }
+              }
+            }
+          }
+        }
+      ],
       "title": [
         {
           "properties": {

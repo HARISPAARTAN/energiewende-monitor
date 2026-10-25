@@ -142,6 +142,19 @@
           }
         }
       ],
+      "general": [
+        {
+          "properties": {
+            "altText": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Tabelle: Volllaststunden nach Energieträger und Jahr'"
+                }
+              }
+            }
+          }
+        }
+      ],
       "lockAspect": [
         {
           "properties": {

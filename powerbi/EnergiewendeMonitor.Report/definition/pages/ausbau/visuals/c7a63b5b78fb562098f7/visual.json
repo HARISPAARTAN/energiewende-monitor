@@ -190,6 +190,19 @@
           }
         }
       ],
+      "general": [
+        {
+          "properties": {
+            "altText": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Diagramm: Zubau nach Monat und Energieträger (MW)'"
+                }
+              }
+            }
+          }
+        }
+      ],
       "title": [
         {
           "properties": {

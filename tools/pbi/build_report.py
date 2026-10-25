@@ -14,7 +14,7 @@ from pathlib import Path
 HERE = Path(__file__).parent
 sys.path.insert(0, str(HERE.parent.parent))  # lets `python tools/pbi/build_report.py` import the tools package
 
-from tools.pbi.pbir import SCHEMAS, Visual, stable_name  # noqa: E402
+from tools.pbi.pbir import SCHEMAS, Visual, field_ref, stable_name  # noqa: E402
 
 REPORT_DIR = HERE.parent.parent / "powerbi" / "EnergiewendeMonitor.Report" / "definition"
 SPEC = HERE / "pages.json"
@@ -37,6 +37,17 @@ def _column(entity: str, prop: str) -> dict:
     return {"Column": {"Expression": {"SourceRef": {"Entity": entity}}, "Property": prop}}
 
 
+def _heatmap(spec: dict) -> list[dict]:
+    """Cell background gradient on a matrix value field (conditional formatting by `FillRule`)."""
+    entity, prop, kind = spec["field"]
+    colour = lambda c: {"color": _lit("'" + c + "'")["expr"]}  # noqa: E731
+    rule = {"linearGradient2": {"min": colour(spec["min"]), "max": colour(spec["max"]),
+                                "nullColoringStrategy": {"strategy": _lit("'noColor'")["expr"]}}}
+    fill = {"solid": {"color": {"expr": {"FillRule": {"Input": field_ref(entity, prop, kind), "FillRule": rule}}}}}
+    return [{"properties": {"backColor": fill},
+             "selector": {"data": [{"dataViewWildcard": {"matchingOption": 1}}], "metadata": f"{entity}.{prop}"}}]
+
+
 def _formatting(spec: dict) -> dict:
     """Visual-level objects: card font size, legend at the bottom, series colours from Energieträger[Farbe]."""
     objects: dict = {}
@@ -44,12 +55,14 @@ def _formatting(spec: dict) -> dict:
     kind = spec["type"]
     if kind == "card":
         objects["labels"] = [{"properties": {"fontSize": _lit("28D")}}]
-    if kind in CHARTS and (len(roles.get("Series", [])) or len(roles.get("Y", [])) > 1):
+    if kind in CHARTS and (len(roles.get("Series", [])) or len(roles.get("Y", [])) > 1 or spec.get("legend")):
         objects["legend"] = [{"properties": {"show": _lit("true"), "position": _lit("'Bottom'")}}]
     if kind == "columnChart":
         objects["labels"] = [{"properties": {"show": _lit("false")}}]
     if kind in COLOURED_BY_FARBE and any(f[:2] == ["Energieträger", "Energieträger"] for f in roles.get("Series", [])):
         objects["dataPoint"] = [{"properties": {"fill": {"solid": {"color": {"expr": _column("Energieträger", "Farbe")}}}}}]
+    if spec.get("heatmap"):
+        objects["values"] = _heatmap(spec["heatmap"])
     for key, items in spec.get("objects", {}).items():
         objects[key] = items
     return objects
@@ -88,7 +101,8 @@ def _visual_json(pid: str, index: int, spec: dict) -> dict:
         return v
     roles = {role: [tuple(f) for f in fields] for role, fields in spec["roles"].items()}
     return Visual.from_template(spec["type"], name, spec["x"], spec["y"], spec["w"], spec["h"], spec.get("title"),
-                                roles, z=index, extra_objects=_formatting(spec))
+                                roles, z=index, extra_objects=_formatting(spec), alt=spec.get("alt"),
+                                sort=spec.get("sort"), top_n=spec.get("top_n"))
 
 
 def _bookmark_json(page_ids: set[str], bm: dict) -> dict:
@@ -121,6 +135,9 @@ def _bookmark_json(page_ids: set[str], bm: dict) -> dict:
 
 
 def _register_theme(theme: str) -> None:
+    resource = REPORT_DIR.parent / "StaticResources" / "RegisteredResources" / theme
+    if not resource.is_file():
+        raise FileNotFoundError(f"theme {theme!r} from pages.json is not at {resource}")
     path = REPORT_DIR / "report.json"
     rep = json.loads(path.read_text(encoding="utf-8-sig"))
     rep["themeCollection"]["customTheme"] = {

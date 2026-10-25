@@ -2,38 +2,40 @@
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.13.0/schema.json",
   "name": "62b3a89ae1e85fffaa13",
   "position": {
-    "height": 280,
+    "height": 300,
     "tabOrder": 2,
-    "width": 600,
-    "x": 24,
-    "y": 416,
+    "width": 608,
+    "x": 648,
+    "y": 100,
     "z": 2
   },
   "visual": {
     "drillFilterOtherVisuals": true,
-    "objects": {},
+    "objects": {
+      "legend": [
+        {
+          "properties": {
+            "position": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Bottom'"
+                }
+              }
+            },
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
     "query": {
       "queryState": {
-        "Columns": {
-          "projections": [
-            {
-              "active": true,
-              "field": {
-                "Column": {
-                  "Expression": {
-                    "SourceRef": {
-                      "Entity": "Datum"
-                    }
-                  },
-                  "Property": "Wochentag"
-                }
-              },
-              "nativeQueryRef": "Wochentag",
-              "queryRef": "Datum.Wochentag"
-            }
-          ]
-        },
-        "Rows": {
+        "Category": {
           "projections": [
             {
               "active": true,
@@ -44,15 +46,15 @@
                       "Entity": "Zeit"
                     }
                   },
-                  "Property": "Tageszeit"
+                  "Property": "Uhrzeit"
                 }
               },
-              "nativeQueryRef": "Tageszeit",
-              "queryRef": "Zeit.Tageszeit"
+              "nativeQueryRef": "Uhrzeit",
+              "queryRef": "Zeit.Uhrzeit"
             }
           ]
         },
-        "Values": {
+        "Y": {
           "projections": [
             {
               "field": {
@@ -62,17 +64,161 @@
                       "Entity": "Kennzahlen"
                     }
                   },
-                  "Property": "Residuallast Ø (MWh/15 min)"
+                  "Property": "Netzlast (MWh)"
                 }
               },
-              "nativeQueryRef": "Residuallast Ø (MWh/15 min)",
-              "queryRef": "Kennzahlen.Residuallast Ø (MWh/15 min)"
+              "nativeQueryRef": "Netzlast (MWh)",
+              "queryRef": "Kennzahlen.Netzlast (MWh)"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "Kennzahlen"
+                    }
+                  },
+                  "Property": "Residuallast (MWh)"
+                }
+              },
+              "nativeQueryRef": "Residuallast (MWh)",
+              "queryRef": "Kennzahlen.Residuallast (MWh)"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "Kennzahlen"
+                    }
+                  },
+                  "Property": "Erzeugung Erneuerbar (MWh)"
+                }
+              },
+              "nativeQueryRef": "Erzeugung Erneuerbar (MWh)",
+              "queryRef": "Kennzahlen.Erzeugung Erneuerbar (MWh)"
             }
           ]
         }
       }
     },
     "visualContainerObjects": {
+      "background": [
+        {
+          "properties": {
+            "color": {
+              "solid": {
+                "color": {
+                  "expr": {
+                    "Literal": {
+                      "Value": "'#FFFFFF'"
+                    }
+                  }
+                }
+              }
+            },
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
+            "transparency": {
+              "expr": {
+                "Literal": {
+                  "Value": "0D"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "border": [
+        {
+          "properties": {
+            "color": {
+              "solid": {
+                "color": {
+                  "expr": {
+                    "Literal": {
+                      "Value": "'#D7DCE0'"
+                    }
+                  }
+                }
+              }
+            },
+            "radius": {
+              "expr": {
+                "Literal": {
+                  "Value": "4D"
+                }
+              }
+            },
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
+            "width": {
+              "expr": {
+                "Literal": {
+                  "Value": "1D"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "general": [
+        {
+          "properties": {
+            "altText": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Diagramm: Tagesprofil: Summe je Uhrzeit im gewählten Zeitraum (MWh)'"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "padding": [
+        {
+          "properties": {
+            "bottom": {
+              "expr": {
+                "Literal": {
+                  "Value": "8D"
+                }
+              }
+            },
+            "left": {
+              "expr": {
+                "Literal": {
+                  "Value": "8D"
+                }
+              }
+            },
+            "right": {
+              "expr": {
+                "Literal": {
+                  "Value": "8D"
+                }
+              }
+            },
+            "top": {
+              "expr": {
+                "Literal": {
+                  "Value": "8D"
+                }
+              }
+            }
+          }
+        }
+      ],
       "title": [
         {
           "properties": {
@@ -86,7 +232,49 @@
             "text": {
               "expr": {
                 "Literal": {
-                  "Value": "'Residuallast Ø nach Tageszeit und Wochentag'"
+                  "Value": "'Tagesprofil: Summe je Uhrzeit im gewählten Zeitraum (MWh)'"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "visualHeader": [
+        {
+          "properties": {
+            "background": {
+              "solid": {
+                "color": {
+                  "expr": {
+                    "Literal": {
+                      "Value": "'#FFFFFF'"
+                    }
+                  }
+                }
+              }
+            },
+            "foreground": {
+              "solid": {
+                "color": {
+                  "expr": {
+                    "Literal": {
+                      "Value": "'#66717A'"
+                    }
+                  }
+                }
+              }
+            },
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
+            "transparency": {
+              "expr": {
+                "Literal": {
+                  "Value": "100D"
                 }
               }
             }
@@ -94,6 +282,6 @@
         }
       ]
     },
-    "visualType": "pivotTable"
+    "visualType": "lineChart"
   }
 }

@@ -156,6 +156,19 @@
           }
         }
       ],
+      "general": [
+        {
+          "properties": {
+            "altText": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Tabelle: Fehlende Viertelstunden je Monat'"
+                }
+              }
+            }
+          }
+        }
+      ],
       "lockAspect": [
         {
           "properties": {
