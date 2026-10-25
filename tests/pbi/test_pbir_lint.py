@@ -1,4 +1,5 @@
 import copy
+import csv
 import json
 from collections import Counter
 from pathlib import Path
@@ -16,6 +17,7 @@ PAGES = ["Überblick", "Erzeugung & Last", "Preise", "Ausbau", "Datenqualität &
 CATEGORIES = {"Erneuerbar", "Konventionell"}  # Energieträger[Kategorie] values (kategorie_de in the dimension)
 DRILLTHROUGH_FIELD = ("Datum", "Jahr-Monat", "Column")
 BOOKMARK_FIELD = ("Energieträger", "Kategorie", "Column")
+SEED = ROOT.parent / "data" / "seed" / "dim_energietraeger.csv"
 PHASES_TITLE = "Längste negative Preisphasen"
 TEMPLATE_ALT_PHRASES = ("CPU", "Distinct queries", "query duration", "Scatter plot of", "SQL")
 
@@ -195,11 +197,55 @@ def test_key_bindings(report):
     assert ("Kennzahlen", "Zeilen", "Measure") not in hist.bound_fields()
 
 
-def test_field_parameter_chart_shows_its_legend(report):
+def test_field_parameter_chart_binds_the_parameter_with_the_schema_shape(report):
     v = by_title(report, "Überblick", "Kennzahl-Auswahl je Monat")
-    assert ("Kennzahl-Auswahl", "Kennzahl-Auswahl Fields", "Column") in v.bound_fields()
+    y = v.raw["visual"]["query"]["queryState"]["Y"]
+    # the parameter column goes into `fieldParameters`, never in as a plain (text) projection
+    assert [list(iter_fields(fp["parameterExpr"])) for fp in y["fieldParameters"]] == [[("Kennzahl-Auswahl", "Kennzahl-Auswahl", "Column")]]
+    assert (y["fieldParameters"][0]["index"], y["fieldParameters"][0]["length"]) == (0, 1)
+    assert [list(iter_fields(p["field"])) for p in y["projections"]] == [[("Kennzahlen", "Erzeugung (MWh)", "Measure")]]
+    assert ("Kennzahl-Auswahl", "Kennzahl-Auswahl Fields", "Column") not in v.bound_fields()
     legend = v.raw["visual"]["objects"]["legend"][0]["properties"]
     assert legend["show"]["expr"]["Literal"]["Value"] == "true"
+
+
+def carrier_colour_problems(visual):
+    """One dataPoint per seed carrier: a scopeId comparison on Energieträger[Energieträger] and the seed's hex colour."""
+    with SEED.open(encoding="utf-8", newline="") as fh:
+        expected = {r["name_de"]: r["farbe_hex"].upper() for r in csv.DictReader(fh)}
+    found, out = {}, []
+    for point in visual.raw["visual"].get("objects", {}).get("dataPoint", []):
+        scope = point.get("selector", {}).get("data", [{}])[0].get("scopeId", {}).get("Comparison")
+        if not scope or list(iter_fields(scope["Left"])) != [("Energieträger", "Energieträger", "Column")]:
+            out.append(f"{visual.name}: a dataPoint is not scoped to Energieträger[Energieträger]")
+            continue
+        found[scope["Right"]["Literal"]["Value"].strip("'")] = point["properties"]["fill"]["solid"]["color"]["expr"]["Literal"]["Value"].strip("'").upper()
+    if found != expected:
+        out.append(f"{visual.name}: series colours {found} differ from the seed {expected}")
+    return out
+
+
+def test_energietraeger_charts_use_the_seed_colours(report):
+    coloured = [v for p in report.pages for v in p.visuals
+                if v.visual_type in ("stackedAreaChart", "columnChart")
+                and ("Energieträger", "Energieträger", "Column") in v.bound_fields()]
+    assert len(coloured) == 3
+    assert [msg for v in coloured for msg in carrier_colour_problems(v)] == []
+
+
+def test_no_template_colour_literals_survive(report):
+    """Backgrounds, borders and header colours come from the theme (no literal solid colour in the container objects; theme-bound colours are fine), and none
+    of the template's hard-coded colours (red fill, mint background, white, border grey) remain."""
+    for p in report.pages:
+        for v in p.visuals:
+            text = json.dumps(v.raw, ensure_ascii=False)
+            for bad in ("#F6465A", "#EDF8F5", "#FFFFFF", "#D7DCE0", "#66717A"):
+                assert bad not in text, (p.display_name, v.name, bad)
+            for entries in v.raw.get("visual", {}).get("visualContainerObjects", {}).values():
+                for entry in entries:
+                    for prop, value in entry.get("properties", {}).items():
+                        literal = isinstance(value, dict) and "Literal" in json.dumps(value.get("solid", {}))
+                        assert not literal, (p.display_name, v.name, prop)
 
 
 def test_ueberblick_has_a_kategorie_slicer_for_readers(report):
@@ -294,11 +340,22 @@ def test_mutation_measure_node_turned_into_column_is_caught(report, model):
 
 def test_mutation_unknown_column_in_objects_is_caught(report, model):
     v = _visual(report, "Überblick", "Erzeugung nach Energieträger je Monat (MWh)")
-    assert ("Energieträger", "Farbe", "Column") in v.bound_fields() and field_problems(v.raw, model) == []
+    assert ("Energieträger", "Energieträger", "Column") in v.bound_fields() and field_problems(v.raw, model) == []
+    assert carrier_colour_problems(v) == []
     for ref in find_values(v.raw["visual"]["objects"], "Column"):
-        if ref.get("Property") == "Farbe":
-            ref["Property"] = "Farbe2"
+        ref["Property"] = "Farbe2"
     assert field_problems(v.raw, model)
+
+
+def test_mutation_missing_or_wrong_carrier_colour_is_caught(report):
+    v = _visual(report, "Überblick", "Erzeugung nach Energieträger je Monat (MWh)")
+    assert carrier_colour_problems(v) == []
+    missing = copy.deepcopy(v)
+    del missing.raw["visual"]["objects"]["dataPoint"][0]
+    assert carrier_colour_problems(missing)
+    wrong = copy.deepcopy(v)
+    wrong.raw["visual"]["objects"]["dataPoint"][0]["properties"]["fill"]["solid"]["color"]["expr"]["Literal"]["Value"] = "'#000000'"
+    assert carrier_colour_problems(wrong)
 
 
 def test_mutation_drillthrough_field_is_caught(report, model):

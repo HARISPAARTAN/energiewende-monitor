@@ -55,20 +55,36 @@
           ]
         },
         "Y": {
-          "projections": [
+          "fieldParameters": [
             {
-              "field": {
+              "index": 0,
+              "length": 1,
+              "parameterExpr": {
                 "Column": {
                   "Expression": {
                     "SourceRef": {
                       "Entity": "Kennzahl-Auswahl"
                     }
                   },
-                  "Property": "Kennzahl-Auswahl Fields"
+                  "Property": "Kennzahl-Auswahl"
+                }
+              }
+            }
+          ],
+          "projections": [
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "Kennzahlen"
+                    }
+                  },
+                  "Property": "Erzeugung (MWh)"
                 }
               },
-              "nativeQueryRef": "Kennzahl-Auswahl Fields",
-              "queryRef": "Kennzahl-Auswahl.Kennzahl-Auswahl Fields"
+              "nativeQueryRef": "Erzeugung (MWh)",
+              "queryRef": "Kennzahlen.Erzeugung (MWh)"
             }
           ]
         }
@@ -78,17 +94,6 @@
       "background": [
         {
           "properties": {
-            "color": {
-              "solid": {
-                "color": {
-                  "expr": {
-                    "Literal": {
-                      "Value": "'#FFFFFF'"
-                    }
-                  }
-                }
-              }
-            },
             "show": {
               "expr": {
                 "Literal": {
@@ -109,17 +114,6 @@
       "border": [
         {
           "properties": {
-            "color": {
-              "solid": {
-                "color": {
-                  "expr": {
-                    "Literal": {
-                      "Value": "'#D7DCE0'"
-                    }
-                  }
-                }
-              }
-            },
             "radius": {
               "expr": {
                 "Literal": {
@@ -214,28 +208,6 @@
       "visualHeader": [
         {
           "properties": {
-            "background": {
-              "solid": {
-                "color": {
-                  "expr": {
-                    "Literal": {
-                      "Value": "'#FFFFFF'"
-                    }
-                  }
-                }
-              }
-            },
-            "foreground": {
-              "solid": {
-                "color": {
-                  "expr": {
-                    "Literal": {
-                      "Value": "'#66717A'"
-                    }
-                  }
-                }
-              }
-            },
             "show": {
               "expr": {
                 "Literal": {

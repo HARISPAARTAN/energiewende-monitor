@@ -8,8 +8,8 @@ table Kennzahlen
 		displayFolder: Erzeugung
 		lineageTag: f6e20a74-cb1a-5217-95bc-f3b2d8cd78ec
 
-	/// Generation of renewable carriers only.
-	measure 'Erzeugung Erneuerbar (MWh)' = CALCULATE([Erzeugung (MWh)], Energieträger[Kategorie] = "Erneuerbar")
+	/// Generation of renewable carriers only; respects an outer Kategorie filter (KEEPFILTERS), so it is blank when only conventional carriers are selected.
+	measure 'Erzeugung Erneuerbar (MWh)' = CALCULATE([Erzeugung (MWh)], KEEPFILTERS(Energieträger[Kategorie] = "Erneuerbar"))
 		formatString: #,0
 		displayFolder: Erzeugung
 		lineageTag: e511cc3e-f86b-5985-8079-72218f4b122a
@@ -133,14 +133,18 @@ table Kennzahlen
 		lineageTag: aa3cf45d-df42-50c3-93e3-81a3cb981224
 
 	/// Full-load hours: generation in the period divided by the average month-end installed capacity over the months of the period that have generation data.
-	/// Grid-reserve and emergency units are included (see KPI glossary).
+	/// Grid-reserve and emergency units are included (see KPI glossary). National only; blank under a Bundesland selection or the RLS role.
 	measure 'Volllaststunden (h)' =
-			VAR ErzStart = CALCULATE(MIN(Erzeugung[Datum Key]))
-			VAR ErzEnde = CALCULATE(MAX(Erzeugung[Datum Key]))
-			VAR MonatStart = INT(ErzStart / 100) * 100 + 1
-			VAR MonateMitBestand = CALCULATETABLE(VALUES(Kapazität[Datum Key]), REMOVEFILTERS(Datum), Kapazität[Datum Key] >= MonatStart && Kapazität[Datum Key] <= ErzEnde)
-			VAR MittlererBestand = CALCULATE(AVERAGEX(MonateMitBestand, CALCULATE(SUM(Kapazität[Bestand MW]))), REMOVEFILTERS(Datum))
-			RETURN DIVIDE([Erzeugung (MWh)], MittlererBestand)
+			IF(
+				ISFILTERED(Bundesland[Bundesland]) || CALCULATE(COUNTROWS(Bundesland), REMOVEFILTERS(Bundesland)) < 18,
+				BLANK(),
+				VAR ErzStart = CALCULATE(MIN(Erzeugung[Datum Key]))
+				VAR ErzEnde = CALCULATE(MAX(Erzeugung[Datum Key]))
+				VAR MonatStart = INT(ErzStart / 100) * 100 + 1
+				VAR MonateMitBestand = CALCULATETABLE(VALUES(Kapazität[Datum Key]), REMOVEFILTERS(Datum), Kapazität[Datum Key] >= MonatStart && Kapazität[Datum Key] <= ErzEnde)
+				VAR MittlererBestand = CALCULATE(AVERAGEX(MonateMitBestand, CALCULATE(SUM(Kapazität[Bestand MW]))), REMOVEFILTERS(Datum))
+				RETURN DIVIDE([Erzeugung (MWh)], MittlererBestand)
+			)
 		formatString: #,0
 		displayFolder: Ausbau
 		lineageTag: 9c724651-2c63-5792-b093-bec58146ee8c

@@ -162,3 +162,17 @@ def test_no_aggregate_inside_calculate_filter_comparison(model):
     assert cmp_agg.search("CALCULATE(SUM(x[a]), d[Datum] <= MAX(d[Datum]))")
     assert cmp_agg.search("CALCULATETABLE(VALUES(x[a]), MIN(d[Datum]) <= d[Datum])")
     assert not cmp_agg.search("CALCULATE(MAX(x[a]), REMOVEFILTERS(d), d[Datum] <= Bis)")
+
+
+def test_volllaststunden_are_blank_unless_all_bundeslaender_are_visible(model):
+    # the generation has no relationship to Bundesland: under a state selection or the RLS role the ratio would mix a
+    # national numerator with a state denominator. 18 = rows of dim_bundesland (16 Länder, AWZ, Unbekannt).
+    m = model.tables["Kennzahlen"].measures["Volllaststunden (h)"]
+    flat = re.sub(r"\s+", " ", m.expression)
+    assert flat.startswith("IF( ISFILTERED(Bundesland[Bundesland]) || CALCULATE(COUNTROWS(Bundesland), REMOVEFILTERS(Bundesland)) < 18, BLANK(),"), flat[:200]
+    assert "national only" in m.description.lower() and "RLS" in m.description
+
+
+def test_renewable_generation_respects_an_outer_kategorie_filter(model):
+    m = model.tables["Kennzahlen"].measures["Erzeugung Erneuerbar (MWh)"]
+    assert 'KEEPFILTERS(Energieträger[Kategorie] = "Erneuerbar")' in m.expression

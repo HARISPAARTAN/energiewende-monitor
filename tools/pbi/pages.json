@@ -12,7 +12,7 @@
       {"type": "card", "x": 1032, "y": 100, "w": 224, "h": 90, "title": "Installierte Leistung", "roles": {"Values": [["Kennzahlen", "Installierte Leistung (MW)", "Measure"]]}},
       {"type": "stackedAreaChart", "x": 24, "y": 206, "w": 760, "h": 490, "title": "Erzeugung nach Energieträger je Monat (MWh)", "roles": {"Category": [["Datum", "Jahr-Monat", "Column"]], "Series": [["Energieträger", "Energieträger", "Column"]], "Y": [["Kennzahlen", "Erzeugung (MWh)", "Measure"]]}},
       {"type": "lineChart", "x": 800, "y": 206, "w": 456, "h": 240, "title": "EE-Anteil vs. Vorjahr", "roles": {"Category": [["Datum", "Jahr-Monat", "Column"]], "Y": [["Kennzahlen", "EE-Anteil %", "Measure"], ["Kennzahlen", "EE-Anteil Vorjahr %", "Measure"]]}},
-      {"type": "lineChart", "x": 800, "y": 462, "w": 456, "h": 234, "title": "Kennzahl-Auswahl je Monat", "legend": true, "roles": {"Category": [["Datum", "Jahr-Monat", "Column"]], "Y": [["Kennzahl-Auswahl", "Kennzahl-Auswahl Fields", "Column"]]}}
+      {"type": "lineChart", "x": 800, "y": 462, "w": 456, "h": 234, "title": "Kennzahl-Auswahl je Monat", "legend": true, "field_parameters": {"Y": {"parameter": ["Kennzahl-Auswahl", "Kennzahl-Auswahl"], "default": ["Kennzahlen", "Erzeugung (MWh)", "Measure"]}}, "roles": {"Category": [["Datum", "Jahr-Monat", "Column"]]}}
     ]},
     {"id": "erzeugung-last", "displayName": "Erzeugung & Last", "drillthrough": [["Datum", "Jahr-Monat"]], "visuals": [
       {"type": "slicer", "x": 24, "y": 24, "w": 300, "h": 60, "title": null, "roles": {"Values": [["Datum", "Datum", "Column"]]}, "objects": {"data": [{"properties": {"mode": {"expr": {"Literal": {"Value": "'Between'"}}}}}]}},

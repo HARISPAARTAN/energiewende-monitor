@@ -6,6 +6,7 @@ Only page folders carrying the annotation `ewm:generated` are replaced; `bookmar
 
 from __future__ import annotations
 
+import csv
 import json
 import shutil
 import sys
@@ -20,7 +21,9 @@ REPORT_DIR = HERE.parent.parent / "powerbi" / "EnergiewendeMonitor.Report" / "de
 SPEC = HERE / "pages.json"
 GENERATED = "ewm:generated"
 CHARTS = {"lineChart", "stackedAreaChart", "columnChart", "clusteredColumnChart", "clusteredBarChart", "scatterChart"}
-COLOURED_BY_FARBE = {"stackedAreaChart", "columnChart"}
+COLOURED_BY_CARRIER = {"stackedAreaChart", "columnChart"}
+SEED = HERE.parent.parent / "data" / "seed" / "dim_energietraeger.csv"
+CARRIER = ("Energieträger", "Energieträger")  # the model column that holds name_de of the seed
 
 
 def _lit(value: str) -> dict:
@@ -37,6 +40,26 @@ def _column(entity: str, prop: str) -> dict:
     return {"Column": {"Expression": {"SourceRef": {"Entity": entity}}, "Property": prop}}
 
 
+def carrier_colours() -> list[tuple[str, str]]:
+    """(name_de, farbe_hex) of every Energieträger in seed order. A new carrier needs a row in the seed, otherwise
+    its series gets no explicit colour."""
+    with SEED.open(encoding="utf-8", newline="") as fh:
+        rows = list(csv.DictReader(fh))
+    return [(r["name_de"], r["farbe_hex"].upper()) for r in rows]
+
+
+def _series_colours(entity: str, prop: str) -> list[dict]:
+    """One dataPoint entry per carrier in the shape Desktop writes for manual series colours: a `scopeId` comparison
+    on the series column and a literal fill."""
+    items = []
+    for name, hexcode in carrier_colours():
+        scope = {"Comparison": {"ComparisonKind": 0, "Left": _column(entity, prop),
+                                "Right": {"Literal": {"Value": "'" + name.replace("'", "''") + "'"}}}}
+        items.append({"properties": {"fill": {"solid": {"color": _lit("'" + hexcode + "'")}}},
+                      "selector": {"data": [{"scopeId": scope}]}})
+    return items
+
+
 def _heatmap(spec: dict) -> list[dict]:
     """Cell background gradient on a matrix value field (conditional formatting by `FillRule`)."""
     entity, prop, kind = spec["field"]
@@ -49,7 +72,7 @@ def _heatmap(spec: dict) -> list[dict]:
 
 
 def _formatting(spec: dict) -> dict:
-    """Visual-level objects: card font size, legend at the bottom, series colours from Energieträger[Farbe]."""
+    """Visual-level objects: card font size, legend at the bottom, one fill per Energieträger from the seed."""
     objects: dict = {}
     roles = spec.get("roles", {})
     kind = spec["type"]
@@ -59,8 +82,8 @@ def _formatting(spec: dict) -> dict:
         objects["legend"] = [{"properties": {"show": _lit("true"), "position": _lit("'Bottom'")}}]
     if kind == "columnChart":
         objects["labels"] = [{"properties": {"show": _lit("false")}}]
-    if kind in COLOURED_BY_FARBE and any(f[:2] == ["Energieträger", "Energieträger"] for f in roles.get("Series", [])):
-        objects["dataPoint"] = [{"properties": {"fill": {"solid": {"color": {"expr": _column("Energieträger", "Farbe")}}}}}]
+    if kind in COLOURED_BY_CARRIER and any(f[:2] == list(CARRIER) for f in roles.get("Series", [])):
+        objects["dataPoint"] = _series_colours(*CARRIER)
     if spec.get("heatmap"):
         objects["values"] = _heatmap(spec["heatmap"])
     for key, items in spec.get("objects", {}).items():
@@ -100,9 +123,11 @@ def _visual_json(pid: str, index: int, spec: dict) -> dict:
         v["position"]["z"] = v["position"]["tabOrder"] = index
         return v
     roles = {role: [tuple(f) for f in fields] for role, fields in spec["roles"].items()}
+    parameters = {role: {"parameter": tuple(p["parameter"]), "default": tuple(p["default"])}
+                  for role, p in spec.get("field_parameters", {}).items()}
     return Visual.from_template(spec["type"], name, spec["x"], spec["y"], spec["w"], spec["h"], spec.get("title"),
                                 roles, z=index, extra_objects=_formatting(spec), alt=spec.get("alt"),
-                                sort=spec.get("sort"), top_n=spec.get("top_n"))
+                                sort=spec.get("sort"), top_n=spec.get("top_n"), field_parameters=parameters)
 
 
 def _bookmark_json(page_ids: set[str], bm: dict) -> dict:

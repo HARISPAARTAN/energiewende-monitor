@@ -80,6 +80,31 @@ def default_alt_text(visual_type: str, title: str | None) -> str | None:
     return f"{ALT_PREFIX.get(visual_type, 'Diagramm')}: {title}" if title else None
 
 
+def strip_hardcoded_colours(node) -> None:
+    """Remove every literal solid colour (fill, background, border, header colours) a captured template carries, so the
+    report theme applies. Theme-bound colours (`ThemeDataColor`) and gradients are kept."""
+    if isinstance(node, dict):
+        for key in [k for k, v in node.items() if isinstance(v, dict) and _is_literal_solid(v)]:
+            del node[key]
+        for value in node.values():
+            strip_hardcoded_colours(value)
+    elif isinstance(node, list):
+        for value in node:
+            strip_hardcoded_colours(value)
+
+
+def _is_literal_solid(value: dict) -> bool:
+    colour = (value.get("solid") or {}).get("color") if set(value) == {"solid"} else None
+    return isinstance(colour, dict) and "Literal" in colour.get("expr", {})
+
+
+def _field_parameter_role(parameter: tuple[str, str], default: tuple[str, str, str]) -> dict:
+    """A role bound to a field parameter in the shape of the schema's `fieldParameters`: the parameter column, the
+    position and length in the well, and the projection of the parameter's default measure that Desktop resolves it to."""
+    return {"projections": [projection(*default)],
+            "fieldParameters": [{"parameterExpr": field_ref(parameter[0], parameter[1], "Column"), "index": 0, "length": 1}]}
+
+
 def _top_n_filter(name: str, spec: dict) -> dict:
     """Visual-level TopN filter in the shape Desktop writes: the filtered field is the item column, the ranking
     field is aggregated in a subquery ordered descending with `Top`, and the filter keeps the items In that subquery."""
@@ -109,9 +134,11 @@ class Visual:
     @staticmethod
     def from_template(visual_type: str, name: str, x: float, y: float, w: float, h: float, title: str | None,
                       roles: dict[str, list[tuple[str, str, str]]], z: int = 0, extra_objects: dict | None = None,
-                      alt: str | None = None, sort: dict | None = None, top_n: dict | None = None) -> dict:
+                      alt: str | None = None, sort: dict | None = None, top_n: dict | None = None,
+                      field_parameters: dict[str, dict] | None = None) -> dict:
         """alt: alt text (None derives a German one from the title, "" leaves none); sort: {"field": [e, p, kind],
-        "direction": "Descending"}; top_n: {"field": [e, p], "by": [e, p, aggregation], "n": 10}."""
+        "direction": "Descending"}; top_n: {"field": [e, p], "by": [e, p, aggregation], "n": 10};
+        field_parameters: {role: {"parameter": (entity, column), "default": (entity, measure, "Measure")}}."""
         if visual_type not in ROLES:
             raise ValueError(f"unknown visual type {visual_type!r}")
         bad = set(roles) - ROLES[visual_type]
@@ -119,6 +146,7 @@ class Visual:
             raise ValueError(f"{visual_type} has no role(s) {sorted(bad)}; allowed: {sorted(ROLES[visual_type])}")
         tpl = json.loads((TEMPLATES / f"{visual_type}.json").read_text(encoding="utf-8-sig"))
         v = copy.deepcopy(tpl)
+        strip_hardcoded_colours(v["visual"])
         v["$schema"] = SCHEMAS["visual.json"]
         v["name"] = name
         v["position"] = {"x": x, "y": y, "z": z, "width": w, "height": h, "tabOrder": z}
@@ -128,6 +156,8 @@ class Visual:
         for role, fields in roles.items():
             active = role in ("Category", "Rows", "Columns") or visual_type == "slicer"
             state[role] = {"projections": [projection(e, p, k, active and k == "Column") for e, p, k in fields]}
+        for role, fp in (field_parameters or {}).items():
+            state[role] = _field_parameter_role(fp["parameter"], fp["default"])
         v["visual"].setdefault("visualContainerObjects", {})["title"] = _title(title)
         _set_alt_text(v, default_alt_text(visual_type, title) if alt is None else alt)
         if sort:
@@ -139,7 +169,7 @@ class Visual:
             objects = v["visual"].setdefault("objects", {})
             for key, items in extra_objects.items():
                 # merge into the template's first entry so its other captured properties survive
-                if objects.get(key) and items:
+                if objects.get(key) and items and key != "dataPoint":
                     objects[key][0].setdefault("properties", {}).update(items[0].get("properties", {}))
                 else:
                     objects[key] = items

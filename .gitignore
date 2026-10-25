@@ -14,3 +14,4 @@ powerbi/**/.pbi/localSettings.json
 powerbi/**/.pbi/cache.abf
 powerbi/**/.pbi/editorSettings.json
 powerbi/**/cache.abf
+powerbi/**/.pbi/unappliedChanges.json
