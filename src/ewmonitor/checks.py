@@ -81,8 +81,8 @@ def check_unmapped_staging(con, from_key: int, to_key: int) -> CheckResult:
 
 def check_incomplete_hours(con, from_key: int, to_key: int) -> CheckResult:
     """Hours of rpt.v_last_stunde in the range with fewer than four quarter-hour values for any fact_last
-    measure; the view returns NULL for such a measure. SMARD publishes the newest quarter-hours with a delay,
-    so a few incomplete hours at the end are normal: warn, never fail."""
+    measure; the view returns NULL for such a measure. These are gaps in the source data, mostly recent ones
+    that SMARD may still fill: warn, never fail."""
     row = con.execute("""
         SELECT COUNT(*),
                SUM(CASE WHEN viertelstunden_netzlast_mwh < 4 OR viertelstunden_residuallast_mwh < 4

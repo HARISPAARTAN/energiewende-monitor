@@ -19,7 +19,14 @@ RESET_TABLES = ("stg.smard_series", "dw.fact_erzeugung", "dw.fact_last", "dw.fac
 @pytest.fixture(scope="session")
 def settings():
     base = load_settings()
-    return replace(base, db=replace(base.db, database=os.environ.get("EWM_DQ_DB_NAME", "energiewende_dq")))
+    dq_name = os.environ.get("EWM_DQ_DB_NAME", "energiewende_dq")
+    if dq_name.lower() == base.db.database.lower():
+        pytest.exit(
+            f"EWM_DQ_DB_NAME ({dq_name!r}) equals the developer database (settings.db.database); "
+            "the DQ suite truncates its tables, so it needs a separate database.",
+            returncode=2,
+        )
+    return replace(base, db=replace(base.db, database=dq_name))
 
 
 @pytest.fixture(scope="session")

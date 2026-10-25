@@ -56,7 +56,7 @@ ohne Netzwerk.
 ## Fehlerbehandlung
 
 HTTP-Fehler, die vorübergehend sein können (Verbindungsabbruch, Zeitüberschreitung, 429, 5xx, ungültiges JSON),
-werden dreimal mit Wartezeit wiederholt. Ein Chunk, der danach noch fehlschlägt, bricht den Lauf ab: Das Staging
+werden mit Wartezeit wiederholt (bis zu drei Versuche). Ein Chunk, der danach noch fehlschlägt, bricht den Lauf ab: Das Staging
 wird je Reihe und Zeitraum ersetzt, ein übersprungener Chunk würde gute Zeilen dieser Woche löschen. Liefert SMARD
 für eine konfigurierte Reihe keinen Index (404), hat sie keine Chunks; das wird als WARNING protokolliert.
 Datenbankfehler brechen den Lauf ab und rollen den Schritt zurück; `--from`/`--to` außerhalb des Kalenders
@@ -67,7 +67,7 @@ Datenbankfehler brechen den Lauf ab und rollen den Schritt zurück; `--from`/`--
 `ewmonitor check` prüft: Viertelstunden je Tag für Erzeugung und Last (innerhalb der jeweils geladenen Spanne),
 Nullwerte in Erzeugung und Last, keine negative Erzeugung, 23, 24 oder 25 Stundenpreise je Tag, Preise zwischen
 -500 und 4000 EUR/MWh, Zuordnung aller Staging-Zeilen, Abgleich Staging gegen Fakten je Faktentabelle,
-unvollständige Stunden der Last (nur Warnung, das noch unveröffentlichte Ende ist normal) und Aktualität
+unvollständige Stunden der Last (nur Warnung; Lücken in den Quelldaten, meist jüngere, die SMARD noch nachliefern kann) und Aktualität
 (Warnung ab 45 Tagen). Fehlende Viertelstunden je Monat liefert die View `rpt.v_dq_luecken`.
 
 Die View `rpt.v_last_stunde` fasst die Last je UTC-Stunde zusammen. Eine Messgröße hat dort nur dann einen Wert,

@@ -53,8 +53,8 @@ are downloaded again, because SMARD republishes past weeks). `ewmonitor all --fi
 
 ## Error handling
 
-HTTP failures that may be transient (connection drops, timeouts, 429, 5xx, invalid JSON) are retried three times
-with a backoff. A chunk that still fails stops the run: staging is replaced per series and time range, so a
+HTTP failures that may be transient (connection drops, timeouts, 429, 5xx, invalid JSON) are retried with a
+backoff (up to three attempts). A chunk that still fails stops the run: staging is replaced per series and time range, so a
 skipped chunk would delete that week's good rows. When SMARD has no index (404) for a configured series, the
 series has no chunks and a WARNING is logged. Database errors stop the run and roll the step back; `--from`/`--to`
 outside the calendar (`scope.start` to 2030-12-31) are rejected.
@@ -64,7 +64,7 @@ outside the calendar (`scope.start` to 2030-12-31) are rejected.
 `ewmonitor check` verifies quarter-hours per day for generation and load (inside each series' loaded span), null
 values in generation and load, no negative generation, 23, 24 or 25 hourly prices per day, prices between -500 and
 4000 EUR/MWh, mapping of every staging row, staging reconciled with facts per fact table, incomplete load hours
-(warning only, the not yet published tail is normal) and freshness (warning after 45 days). Missing quarter-hours
+(warning only; gaps in the source data, mostly recent ones that SMARD may still fill) and freshness (warning after 45 days). Missing quarter-hours
 per month come from the view `rpt.v_dq_luecken`.
 
 The view `rpt.v_last_stunde` aggregates the load per UTC hour. A measure has a value there only when all four

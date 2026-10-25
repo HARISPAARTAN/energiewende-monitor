@@ -7,7 +7,8 @@
   INSERT das DELETE festschreiben. `--from`/`--to` außerhalb des Kalenders werden abgelehnt.
 - Neue Prüfung `fakten_vs_staging` (Staging gegen Fakten je Faktentabelle) sowie `last_viertelstunden_pro_tag`,
   `last_nullwerte`, `preis_stunden_pro_tag`; `stunden_aggregat` ersetzt durch `unvollstaendige_stunden` (Warnung).
-- `rpt.v_last_stunde` liefert eine Messgröße nur bei vier Viertelstundenwerten, sonst NULL, und zählt die Werte.
+- `rpt.v_last_stunde` liefert eine Messgröße nur bei vier Viertelstundenwerten, sonst NULL (unvollständige Stunden),
+  und zählt die Werte in den neuen Spalten `viertelstunden_*`; `stunde_utc` ist jetzt `datetime2(0)` (vorher `datetime`).
 - `rpt.v_negative_preisphasen` mit `start_datum_key`, exklusivem `ende_utc` und Ortszeit;
   `rpt.v_dim_bundesland` ohne aufgefülltes Kürzel.
 - DQ-Tests in eigener Datenbank (`EWM_DQ_DB_NAME`, Standard `energiewende_dq`).
