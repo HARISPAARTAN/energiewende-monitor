@@ -1,4 +1,5 @@
 import json
+import logging
 from datetime import date
 from pathlib import Path
 
@@ -19,6 +20,9 @@ class StubClient:
 
     def fetch_index(self, filter_id, region, resolution):
         return [] if filter_id == 1224 else list(self.index)
+
+    def is_cached(self, filter_id, region, resolution, ts_ms):
+        return False
 
     def download_chunk(self, filter_id, region, resolution, ts_ms, force=False):
         self.calls.append((filter_id, region, resolution, ts_ms, force))
@@ -116,3 +120,30 @@ def test_ingest_range_forces_chunks_inside_the_refresh_window(tmp_path):
 
     assert forced(30) == {recent, newer, newest}  # recent ends 2025-10-06, inside 30 days; old ends 2025-09-08
     assert forced(0) == {newer, newest}  # only the two newest chunks
+
+
+class CachedStubClient(StubClient):
+    """Reports every chunk that is not forced as cached."""
+
+    def is_cached(self, filter_id, region, resolution, ts_ms):
+        return True
+
+
+def test_ingest_range_logs_each_downloaded_chunk_and_a_summary(caplog):
+    s = load_settings(ROOT)
+    with caplog.at_level(logging.INFO, logger="ewmonitor.ingest"):
+        ingest_range(s, StubClient(), date(2025, 10, 20), date(2025, 10, 26))
+    messages = [r.getMessage() for r in caplog.records if r.levelno == logging.INFO]
+    assert "chunk 410 DE-LU quarterhour 2025-10-20: 676 rows downloaded" in messages
+    assert sum(m.startswith("chunk ") for m in messages) == 15
+    assert messages[-1] == "ingest: 16 series, 15 chunks downloaded, 0 chunks from cache, 9633 rows staged"
+
+
+def test_ingest_range_summary_counts_cached_chunks(caplog):
+    s = load_settings(ROOT)
+    later = [local_midnight_ms(date(2025, 10, 27)), local_midnight_ms(date(2025, 11, 3))]
+    with caplog.at_level(logging.INFO, logger="ewmonitor.ingest"):
+        ingest_range(s, CachedStubClient([WEEK_TS, *later]), date(2025, 10, 20), date(2025, 10, 26))
+    messages = [r.getMessage() for r in caplog.records if r.levelno == logging.INFO]
+    assert not any(m.startswith("chunk ") for m in messages)  # cached chunks log at DEBUG
+    assert messages[-1] == "ingest: 16 series, 0 chunks downloaded, 15 chunks from cache, 9633 rows staged"

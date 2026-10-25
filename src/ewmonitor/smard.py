@@ -90,7 +90,13 @@ def _is_transient(exc: requests.RequestException) -> bool:
     if isinstance(exc, requests.HTTPError):
         status = exc.response.status_code if exc.response is not None else 0
         return status == 429 or 500 <= status <= 599
-    return isinstance(exc, (requests.ConnectionError, requests.Timeout, requests.JSONDecodeError))
+    return isinstance(exc, (requests.ConnectionError, requests.Timeout, requests.JSONDecodeError,
+                            requests.exceptions.ChunkedEncodingError))
+
+
+def _is_not_found(exc: BaseException) -> bool:
+    cause = exc.__cause__
+    return isinstance(cause, requests.HTTPError) and cause.response is not None and cause.response.status_code == 404
 
 
 class SmardClient:
@@ -113,11 +119,27 @@ class SmardClient:
         self.timeout_s = timeout_s
 
     def fetch_index(self, filter_id: int, region: str, resolution: str) -> list[int]:
+        """Chunk start timestamps of a series. An index SMARD does not have (404) means no chunks: a WARNING,
+        not an abort, so one missing series does not stop the others."""
         url = f"{self.base_url}/{filter_id}/{region}/index_{resolution}.json"
-        return [int(ts) for ts in self._get_json(url)["timestamps"]]
+        try:
+            payload = self._get_json(url)
+        except RuntimeError as exc:
+            if _is_not_found(exc):
+                log.warning("index not found (404), series %s %s %s has no chunks: %s",
+                            filter_id, region, resolution, url)
+                return []
+            raise
+        return [int(ts) for ts in payload["timestamps"]]
 
     def chunk_path(self, filter_id: int, region: str, resolution: str, ts_ms: int) -> Path:
         return self.cache_dir / chunk_name(filter_id, region, resolution, ts_ms)
+
+    def is_cached(self, filter_id: int, region: str, resolution: str, ts_ms: int) -> bool:
+        """True when the cache file exists and was written after the chunk was complete (see download_chunk)."""
+        path = self.chunk_path(filter_id, region, resolution, ts_ms)
+        complete_ms = chunk_end_ms(ts_ms) + PUBLICATION_LAG_MS
+        return path.exists() and path.stat().st_mtime_ns >= complete_ms * 1_000_000
 
     def download_chunk(
         self, filter_id: int, region: str, resolution: str, ts_ms: int, force: bool = False
@@ -128,18 +150,24 @@ class SmardClient:
         the chunk was complete: local midnight seven days after the chunk start (`chunk_end_ms`) plus
         PUBLICATION_LAG_MS. A chunk cached while SMARD was still filling its week is therefore downloaded
         again on the next run, however much later that run is. The payload goes to a sibling ".part" file
-        that then replaces the cache file, so an interrupted write never leaves a truncated chunk behind.
+        that then replaces the cache file, so an interrupted write never leaves a truncated chunk behind, and
+        the ".part" file is removed when the write fails. A payload without a "series" list is never cached.
         """
         path = self.chunk_path(filter_id, region, resolution, ts_ms)
-        complete_ms = chunk_end_ms(ts_ms) + PUBLICATION_LAG_MS
-        if not force and path.exists() and path.stat().st_mtime_ns >= complete_ms * 1_000_000:
+        if not force and self.is_cached(filter_id, region, resolution, ts_ms):
             return path
         url = f"{self.base_url}/{filter_id}/{region}/{chunk_name(filter_id, region, resolution, ts_ms)}"
         payload = self._get_json(url)
+        if not isinstance(payload, dict) or not isinstance(payload.get("series"), list):
+            raise ValueError(f"{path.name}: unexpected payload from {url}, 'series' is not a list; not cached")
         path.parent.mkdir(parents=True, exist_ok=True)
         part = path.with_name(path.name + ".part")
-        part.write_text(json.dumps(payload), encoding="utf-8")
-        part.replace(path)
+        try:
+            part.write_text(json.dumps(payload), encoding="utf-8")
+            part.replace(path)
+        except BaseException:
+            part.unlink(missing_ok=True)
+            raise
         return path
 
     def _get_json(self, url: str) -> dict:

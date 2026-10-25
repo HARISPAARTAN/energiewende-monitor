@@ -12,7 +12,7 @@ import pandas as pd
 
 from .config import Settings
 from .smard import STG_COLUMNS, chunk_end_ms, latest_chunks, parse_chunk_file, select_chunks
-from .timekeys import date_key, local_midnight_ms
+from .timekeys import BERLIN, date_key, local_midnight_ms, ms_to_utc
 
 log = logging.getLogger(__name__)
 
@@ -49,26 +49,45 @@ def ingest_range(
 
     A chunk is re-downloaded (force) when it is one of the two newest, or when it ends within the last
     `refresh_days` days: SMARD republishes complete weekly chunks weeks after the fact.
+
+    Logs one INFO line per downloaded chunk (series, chunk start, rows) and a summary at the end.
     """
     start_ms, end_ms = local_midnight_ms(start), local_midnight_ms(end + timedelta(days=1)) - 1
     if now_ms is None:
         now_ms = int(datetime.now(UTC).timestamp() * 1000)
     refresh_from_ms = now_ms - refresh_days * DAY_MS
     frames: list[pd.DataFrame] = []
-    for spec in series_specs(settings, regions):
+    specs = series_specs(settings, regions)
+    downloaded = from_cache = 0
+    for spec in specs:
         index = client.fetch_index(spec.filter_id, spec.region, spec.resolution)
         latest = latest_chunks(index)
         chunks = select_chunks(index, start_ms, end_ms)
-        log.info("%s %s %s: %d chunk(s)", spec.filter_id, spec.region, spec.resolution, len(chunks))
+        log.debug("%s %s %s: %d chunk(s)", spec.filter_id, spec.region, spec.resolution, len(chunks))
         for ts_ms in chunks:
             force = ts_ms in latest or chunk_end_ms(ts_ms) >= refresh_from_ms
+            cached = not force and client.is_cached(spec.filter_id, spec.region, spec.resolution, ts_ms)
             path = client.download_chunk(spec.filter_id, spec.region, spec.resolution, ts_ms, force=force)
-            frames.append(parse_chunk_file(path))
-    if not frames:
-        return pd.DataFrame(columns=STG_COLUMNS)
-    df = pd.concat(frames, ignore_index=True)
-    mask = (df["datum_key"] >= date_key(start)) & (df["datum_key"] <= date_key(end))
-    return df[mask].reset_index(drop=True)
+            frame = parse_chunk_file(path)
+            frames.append(frame)
+            chunk_start = ms_to_utc(ts_ms).astimezone(BERLIN).date()
+            if cached:
+                from_cache += 1
+                log.debug("chunk %s %s %s %s: %d rows (cache)", spec.filter_id, spec.region, spec.resolution,
+                          chunk_start, len(frame))
+            else:
+                downloaded += 1
+                log.info("chunk %s %s %s %s: %d rows downloaded", spec.filter_id, spec.region, spec.resolution,
+                         chunk_start, len(frame))
+    if frames:
+        df = pd.concat(frames, ignore_index=True)
+        mask = (df["datum_key"] >= date_key(start)) & (df["datum_key"] <= date_key(end))
+        df = df[mask].reset_index(drop=True)
+    else:
+        df = pd.DataFrame(columns=STG_COLUMNS)
+    log.info("ingest: %d series, %d chunks downloaded, %d chunks from cache, %d rows staged",
+             len(specs), downloaded, from_cache, len(df))
+    return df
 
 
 def ingest_fixtures(fixtures_dir: Path) -> pd.DataFrame:

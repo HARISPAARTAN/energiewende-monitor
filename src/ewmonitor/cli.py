@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import logging
 import sys
+from contextlib import closing
 from datetime import date, datetime, timedelta
 from typing import Annotated
 
@@ -84,7 +85,7 @@ def ingest(from_: FromOpt = None, to: ToOpt = None, fixtures: FixturesOpt = Fals
     """SMARD-Chunks laden (Cache in data/raw) und nach stg.smard_series schreiben."""
     settings = load_settings()
     start, end = _range(settings, from_, to)
-    with _prepare(settings) as con:
+    with closing(_prepare(settings)) as con:
         _ingest(settings, con, start, end, fixtures, regions, refresh_days)
 
 
@@ -93,7 +94,7 @@ def load(from_: FromOpt = None, to: ToOpt = None) -> None:
     """DDL anwenden, Dimensionen laden, Fakten für den Zeitraum aus dem Staging neu aufbauen."""
     settings = load_settings()
     start, end = _range(settings, from_, to)
-    with _prepare(settings) as con:
+    with closing(_prepare(settings)) as con:
         typer.echo(f"dimensionen: {load_dims(con, settings.seed_dir, date.fromisoformat(settings.start), CALENDAR_END)}")
         load_facts(con, settings.root / "sql", date_key(start), date_key(end))
         typer.echo(f"fakten: {date_key(start)}..{date_key(end)}")
@@ -104,7 +105,7 @@ def check(from_: FromOpt = None, to: ToOpt = None) -> None:
     """Datenqualität prüfen; Exit-Code 1 bei mindestens einem fail."""
     settings = load_settings()
     start, end = _range(settings, from_, to)
-    with db.connect(settings.db) as con:
+    with closing(db.connect(settings.db)) as con:
         results = run_checks(con, date_key(start), date_key(end))
     typer.echo(format_results(results))
     if has_failures(results):
@@ -117,12 +118,13 @@ def run_all(from_: FromOpt = None, to: ToOpt = None, fixtures: FixturesOpt = Fal
     """ingest + load + check in einem Lauf. Mit --fixtures ergibt sich der Zeitraum aus den Fixture-Daten."""
     settings = load_settings()
     start, end = _range(settings, from_, to)
-    with _prepare(settings) as con:
+    with closing(_prepare(settings)) as con:
         df = _ingest(settings, con, start, end, fixtures, regions, refresh_days)
         lo, hi = key_range(df) if fixtures and not df.empty else (date_key(start), date_key(end))
         typer.echo(f"dimensionen: {load_dims(con, settings.seed_dir, date.fromisoformat(settings.start), CALENDAR_END)}")
         load_facts(con, settings.root / "sql", lo, hi)
-        now = datetime(2025, 11, 1) if fixtures else None
+        # fixture data is historical: judge freshness against the fixture week's end, not today
+        now = df["ts_utc"].max().to_pydatetime() if fixtures and not df.empty else None
         results = run_checks(con, lo, hi, now=now)
     typer.echo(format_results(results))
     if has_failures(results):

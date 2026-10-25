@@ -1,4 +1,5 @@
 import json
+import logging
 import os
 from datetime import date
 from pathlib import Path
@@ -136,7 +137,7 @@ def test_download_chunk_interrupted_write_keeps_the_cached_file(tmp_path, monkey
     with pytest.raises(OSError, match="disk full"):
         client.download_chunk(410, "DE-LU", "quarterhour", 1000, force=True)
     assert json.loads(path.read_text(encoding="utf-8"))["series"] == [[1000, 1.0]]
-    assert [p.name for p in tmp_path.glob("*.json")] == [path.name]
+    assert [p.name for p in tmp_path.iterdir()] == [path.name]  # no .part file left behind
 
 
 def test_client_needs_at_least_one_attempt(tmp_path):
@@ -176,11 +177,41 @@ def test_download_chunk_retries_an_invalid_json_body(tmp_path):
 
 
 @responses.activate
-def test_fetch_index_does_not_retry_a_404(tmp_path):
+def test_fetch_index_404_means_no_chunks_with_a_warning(tmp_path, caplog):
     url = f"{BASE}/410/DE-LU/index_quarterhour.json"
     responses.get(url, status=404)
     client = SmardClient(BASE, tmp_path, retries=3, backoff_s=0)
+    with caplog.at_level(logging.WARNING, logger="ewmonitor.smard"):
+        assert client.fetch_index(410, "DE-LU", "quarterhour") == []
+    assert len(responses.calls) == 1  # not retried
+    assert any(r.levelno == logging.WARNING and "404" in r.getMessage() for r in caplog.records)
+
+
+@responses.activate
+def test_download_chunk_404_still_aborts(tmp_path):
+    url = f"{BASE}/410/DE-LU/410_DE-LU_quarterhour_1000.json"
+    responses.get(url, status=404)
+    client = SmardClient(BASE, tmp_path, retries=3, backoff_s=0)
     with pytest.raises(RuntimeError, match="failed after 1 attempts") as excinfo:
-        client.fetch_index(410, "DE-LU", "quarterhour")
+        client.download_chunk(410, "DE-LU", "quarterhour", 1000)
     assert isinstance(excinfo.value.__cause__, requests.HTTPError)
-    assert len(responses.calls) == 1
+
+
+@responses.activate
+def test_fetch_index_retries_a_chunked_encoding_error(tmp_path):
+    url = f"{BASE}/410/DE-LU/index_quarterhour.json"
+    responses.get(url, body=requests.exceptions.ChunkedEncodingError("connection broken"))
+    responses.get(url, json={"timestamps": [1, 2]})
+    client = SmardClient(BASE, tmp_path, retries=3, backoff_s=0)
+    assert client.fetch_index(410, "DE-LU", "quarterhour") == [1, 2]
+    assert len(responses.calls) == 2
+
+
+@responses.activate
+def test_download_chunk_rejects_a_payload_without_series_and_caches_nothing(tmp_path):
+    url = f"{BASE}/410/DE-LU/410_DE-LU_quarterhour_1000.json"
+    responses.get(url, json={"meta_data": {}})
+    client = SmardClient(BASE, tmp_path, retries=1, backoff_s=0)
+    with pytest.raises(ValueError, match=r"410_DE-LU_quarterhour_1000\.json.*'series' is not a list"):
+        client.download_chunk(410, "DE-LU", "quarterhour", 1000)
+    assert list(tmp_path.iterdir()) == []

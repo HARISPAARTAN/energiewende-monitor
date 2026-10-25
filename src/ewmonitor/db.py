@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import logging
 import re
+from contextlib import closing
 from pathlib import Path
 
 import pandas as pd
@@ -13,6 +14,7 @@ from .config import DbConfig
 
 log = logging.getLogger(__name__)
 _GO = re.compile(r"^\s*GO\s*;?\s*$", re.IGNORECASE | re.MULTILINE)
+_DB_NAME = re.compile(r"[A-Za-z0-9_]+")
 
 
 def split_batches(sql: str) -> list[str]:
@@ -24,10 +26,22 @@ def connect(cfg: DbConfig, database: str | None = None, autocommit: bool = False
     return pyodbc.connect(cfg.connection_string(database), autocommit=autocommit)
 
 
+def quote_name(name: str) -> str:
+    """A database name as a bracketed T-SQL identifier (QUOTENAME semantics); only [A-Za-z0-9_] is accepted."""
+    if not _DB_NAME.fullmatch(name):
+        raise ValueError(f"Datenbankname {name!r} ungültig: erlaubt sind nur A-Z, a-z, 0-9 und _")
+    return "[" + name.replace("]", "]]") + "]"
+
+
 def ensure_database(cfg: DbConfig) -> None:
-    """CREATE DATABASE cannot run inside a transaction, hence autocommit against master."""
-    with connect(cfg, database="master", autocommit=True) as con:
-        con.execute(f"IF DB_ID(N'{cfg.database}') IS NULL CREATE DATABASE [{cfg.database}];")
+    """Create the database if it is missing, in SIMPLE recovery (the loads replace whole ranges, a full log
+    only grows). CREATE DATABASE cannot run inside a transaction, hence autocommit against master."""
+    quoted = quote_name(cfg.database)
+    with closing(connect(cfg, database="master", autocommit=True)) as con:
+        if con.execute("SELECT DB_ID(?)", cfg.database).fetchval() is None:
+            con.execute(f"CREATE DATABASE {quoted};")
+            con.execute(f"ALTER DATABASE {quoted} SET RECOVERY SIMPLE;")
+            log.info("database %s created (recovery SIMPLE)", cfg.database)
     log.info("database %s ready", cfg.database)
 
 

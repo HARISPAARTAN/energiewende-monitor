@@ -5,6 +5,9 @@ on:
     branches: [main]
   pull_request:
 
+permissions:
+  contents: read
+
 jobs:
   lint-and-unit:
     runs-on: ubuntu-24.04
@@ -13,7 +16,7 @@ jobs:
       - uses: astral-sh/setup-uv@v6
         with:
           python-version: "3.13"
-      - run: uv sync --dev
+      - run: uv sync --locked --dev
       - run: uv run ruff check .
       - run: uv run pytest tests/unit -q
         env:
@@ -52,7 +55,7 @@ jobs:
           sudo dpkg -i packages-microsoft-prod.deb
           sudo apt-get update
           sudo ACCEPT_EULA=Y apt-get install -y msodbcsql18 unixodbc-dev
-      - run: uv sync --dev
+      - run: uv sync --locked --dev
       - run: uv run ewmonitor all --fixtures
       - run: uv run pytest tests/dq -m db -q
         env:

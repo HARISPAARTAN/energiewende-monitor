@@ -66,13 +66,16 @@ def check_price_range(con, from_key: int, to_key: int) -> CheckResult:
 
 
 def check_unmapped_staging(con, from_key: int, to_key: int) -> CheckResult:
-    n = _val(con, """
+    """Staging rows in the range whose region is not in dim_region, or whose filter is neither a load/price
+    filter nor in dim_energietraeger."""
+    known = ", ".join(str(i) for i in (*LAST_FILTER_IDS, PREIS_FILTER_ID))
+    n = _val(con, f"""
         SELECT COUNT(*) FROM stg.smard_series s
         WHERE s.datum_key BETWEEN ? AND ?
-          AND NOT EXISTS (SELECT 1 FROM dw.dim_region r WHERE r.smard_code = s.region)
-           OR (s.datum_key BETWEEN ? AND ? AND s.filter_id NOT IN (410, 4359, 4387, 4169)
-               AND NOT EXISTS (SELECT 1 FROM dw.dim_energietraeger e WHERE e.smard_filter_id = s.filter_id))
-        """, from_key, to_key, from_key, to_key)
+          AND (NOT EXISTS (SELECT 1 FROM dw.dim_region r WHERE r.smard_code = s.region)
+               OR (s.filter_id NOT IN ({known})
+                   AND NOT EXISTS (SELECT 1 FROM dw.dim_energietraeger e WHERE e.smard_filter_id = s.filter_id)))
+        """, from_key, to_key)
     return CheckResult("staging_zugeordnet", "ok" if n == 0 else "warn", f"{n} Staging-Zeilen ohne Dimension")
 
 
@@ -183,14 +186,23 @@ def check_facts_vs_staging(con, from_key: int, to_key: int) -> CheckResult:
     return CheckResult("fakten_vs_staging", "ok" if ok else "fail", detail)
 
 
-def check_freshness(con, now: datetime | None = None) -> CheckResult:
-    latest = _val(con, "SELECT MAX(ts_utc) FROM dw.fact_last")
+def check_freshness(con, now: datetime | None = None, to_key: int | None = None) -> CheckResult:
+    """Age of the newest Netzlast value that is not NULL, up to the end of the checked range (to_key): SMARD
+    chunks carry the whole week with NULLs for quarter-hours not yet published, so the newest timestamp alone
+    would hide a feed that stopped. `now` is naive UTC (all --fixtures passes the fixture week's end); a
+    reference time before the newest value is reported as a warning, never as fresh."""
+    latest = _val(con, "SELECT MAX(ts_utc) FROM dw.fact_last WHERE netzlast_mwh IS NOT NULL AND datum_key <= ?",
+                  to_key if to_key is not None else 99991231)
     now = now or datetime.now(UTC).replace(tzinfo=None)
     if latest is None:
-        return CheckResult("aktualitaet", "warn", "keine Daten geladen")
+        return CheckResult("aktualitaet", "warn", "keine Netzlast-Werte geladen")
     age = now - latest
+    if age < timedelta(0):
+        return CheckResult("aktualitaet", "warn",
+                           f"letzter Netzlast-Wert {latest:%Y-%m-%d %H:%M} UTC liegt nach der Referenzzeit "
+                           f"{now:%Y-%m-%d %H:%M} UTC")
     return CheckResult("aktualitaet", "ok" if age <= timedelta(days=45) else "warn",
-                       f"letzter Zeitstempel {latest:%Y-%m-%d %H:%M} UTC ({age.days} Tage alt)")
+                       f"letzter Netzlast-Wert {latest:%Y-%m-%d %H:%M} UTC ({age.days} Tage alt)")
 
 
 def run_checks(con, from_key: int, to_key: int, now: datetime | None = None) -> list[CheckResult]:
@@ -205,7 +217,7 @@ def run_checks(con, from_key: int, to_key: int, now: datetime | None = None) -> 
         check_unmapped_staging(con, from_key, to_key),
         check_facts_vs_staging(con, from_key, to_key),
         check_incomplete_hours(con, from_key, to_key),
-        check_freshness(con, now),
+        check_freshness(con, now, to_key),
     ]
 
 

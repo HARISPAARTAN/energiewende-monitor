@@ -14,7 +14,7 @@ CREATE OR ALTER VIEW rpt.v_dim_region AS
 SELECT region_key, smard_code, name_de, name_en, typ_de, typ_en FROM dw.dim_region;
 GO
 CREATE OR ALTER VIEW rpt.v_dim_bundesland AS
-SELECT bundesland_key, name_de, kuerzel, ist_awz FROM dw.dim_bundesland;
+SELECT bundesland_key, name_de, RTRIM(kuerzel) AS kuerzel, ist_awz FROM dw.dim_bundesland;
 GO
 CREATE OR ALTER VIEW rpt.v_erzeugung AS
 SELECT region_key, energietraeger_key, ts_utc, datum_key, zeit_key, aufloesung_min, erzeugung_mwh
@@ -49,19 +49,28 @@ SELECT p.region_key, p.ts_utc AS stunde_utc, p.datum_key, p.zeit_key, p.day_ahea
 FROM dw.fact_preis p
 LEFT JOIN rpt.v_last_stunde l ON l.region_key = p.region_key AND l.stunde_utc = p.ts_utc;
 GO
+-- Runs of consecutive negative hourly prices. ende_utc is exclusive: the first hour after the run.
+-- start_lokal / ende_lokal are Europe/Berlin wall-clock times (Power Query cannot convert DST-aware).
 CREATE OR ALTER VIEW rpt.v_negative_preisphasen AS
 WITH neg AS (
-    SELECT region_key, ts_utc, day_ahead_eur_mwh,
+    SELECT region_key, ts_utc, datum_key, day_ahead_eur_mwh,
            ROW_NUMBER() OVER (PARTITION BY region_key ORDER BY ts_utc) AS rn
     FROM dw.fact_preis
     WHERE day_ahead_eur_mwh < 0
 ), grp AS (
-    SELECT region_key, ts_utc, day_ahead_eur_mwh, DATEADD(hour, -rn, ts_utc) AS grp_key FROM neg
+    SELECT region_key, ts_utc, datum_key, day_ahead_eur_mwh, DATEADD(hour, -rn, ts_utc) AS grp_key FROM neg
+), phase AS (
+    SELECT region_key, MIN(datum_key) AS start_datum_key, MIN(ts_utc) AS start_utc,
+           DATEADD(hour, 1, MAX(ts_utc)) AS ende_utc, COUNT(*) AS stunden,
+           MIN(day_ahead_eur_mwh) AS min_preis_eur_mwh, AVG(day_ahead_eur_mwh) AS avg_preis_eur_mwh
+    FROM grp
+    GROUP BY region_key, grp_key
 )
-SELECT region_key, MIN(ts_utc) AS start_utc, MAX(ts_utc) AS ende_utc, COUNT(*) AS stunden,
-       MIN(day_ahead_eur_mwh) AS min_preis_eur_mwh, AVG(day_ahead_eur_mwh) AS avg_preis_eur_mwh
-FROM grp
-GROUP BY region_key, grp_key;
+SELECT region_key, start_datum_key, start_utc, ende_utc,
+       CAST(start_utc AT TIME ZONE 'UTC' AT TIME ZONE 'W. Europe Standard Time' AS datetime2(0)) AS start_lokal,
+       CAST(ende_utc AT TIME ZONE 'UTC' AT TIME ZONE 'W. Europe Standard Time' AS datetime2(0)) AS ende_lokal,
+       stunden, min_preis_eur_mwh, avg_preis_eur_mwh
+FROM phase;
 GO
 CREATE OR ALTER VIEW rpt.v_dq_luecken AS
 WITH span AS (

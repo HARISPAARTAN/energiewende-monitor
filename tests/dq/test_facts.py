@@ -1,3 +1,4 @@
+from datetime import datetime, timedelta
 from decimal import Decimal
 
 import pytest
@@ -58,6 +59,22 @@ def test_dq_luecken_reports_no_gaps_for_the_fixture_week(con):
 def test_negative_price_phases_for_the_fixture_week(con):
     phases, hours = con.execute("SELECT COUNT(*), SUM(stunden) FROM rpt.v_negative_preisphasen").fetchone()
     assert (phases, hours) == (3, 11)
+    rows = con.execute(
+        "SELECT start_datum_key, start_utc, ende_utc, start_lokal, ende_lokal, stunden "
+        "FROM rpt.v_negative_preisphasen ORDER BY start_utc"
+    ).fetchall()
+    for _key, start_utc, ende_utc, _sl, _el, stunden in rows:
+        assert ende_utc == start_utc + timedelta(hours=stunden)  # exclusive end
+    # Friday 2025-10-24 in summer time (UTC+2), Sunday 2025-10-26 after the switch to winter time (UTC+1)
+    assert tuple(rows[0][:5]) == (20251024, datetime(2025, 10, 24, 11), datetime(2025, 10, 24, 13),
+                                  datetime(2025, 10, 24, 13), datetime(2025, 10, 24, 15))
+    assert tuple(rows[2][:5]) == (20251026, datetime(2025, 10, 26, 7), datetime(2025, 10, 26, 15),
+                                  datetime(2025, 10, 26, 8), datetime(2025, 10, 26, 16))
+
+
+def test_bundesland_kuerzel_is_not_padded(con):
+    row = con.execute("SELECT kuerzel, DATALENGTH(kuerzel) FROM rpt.v_dim_bundesland WHERE kuerzel = 'BW'").fetchone()
+    assert tuple(row) == ("BW", 2)
 
 
 def test_reload_is_idempotent(con, settings):

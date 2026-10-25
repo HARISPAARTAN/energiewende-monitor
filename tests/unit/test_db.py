@@ -4,7 +4,9 @@ from datetime import datetime
 import pandas as pd
 import pytest
 
-from ewmonitor.db import bulk_insert, df_rows, run_sql_file, split_batches
+from ewmonitor import db
+from ewmonitor.config import DbConfig
+from ewmonitor.db import bulk_insert, df_rows, ensure_database, quote_name, run_sql_file, split_batches
 from ewmonitor.load import write_stg
 
 
@@ -175,3 +177,56 @@ def test_write_stg_failed_insert_rolls_back_deletes_without_committing():
     assert "DELETE FROM stg.smard_series" in con.calls[kinds.index("execute")][1]
     assert kinds[-1] == "close" and "rollback" in kinds
     assert "commit" not in kinds
+
+
+def test_quote_name_brackets_valid_names_and_rejects_others():
+    assert quote_name("energiewende_dq") == "[energiewende_dq]"
+    for bad in ["", "energie wende", "x]; DROP DATABASE y; --", "dq-test", "ä"]:
+        with pytest.raises(ValueError, match="ungültig"):
+            quote_name(bad)
+
+
+class _MasterConnection:
+    def __init__(self, db_id):
+        self.db_id = db_id
+        self.sql: list[str] = []
+        self.closed = False
+
+    def execute(self, sql, *params):
+        self.sql.append(sql)
+        return self
+
+    def fetchval(self):
+        return self.db_id
+
+    def close(self):
+        self.closed = True
+
+
+def _cfg(name="energiewende_dq"):
+    return DbConfig(server="s", database=name, user="u", password="p", driver="d")
+
+
+def test_ensure_database_creates_in_simple_recovery_and_closes(monkeypatch):
+    master = _MasterConnection(db_id=None)
+    monkeypatch.setattr(db, "connect", lambda cfg, database=None, autocommit=False: master)
+    ensure_database(_cfg())
+    assert master.sql[1:] == ["CREATE DATABASE [energiewende_dq];",
+                              "ALTER DATABASE [energiewende_dq] SET RECOVERY SIMPLE;"]
+    assert master.closed
+
+
+def test_ensure_database_leaves_an_existing_database_alone(monkeypatch):
+    master = _MasterConnection(db_id=7)
+    monkeypatch.setattr(db, "connect", lambda cfg, database=None, autocommit=False: master)
+    ensure_database(_cfg())
+    assert len(master.sql) == 1 and master.closed
+
+
+def test_ensure_database_rejects_an_unsafe_name_before_connecting(monkeypatch):
+    def fail(*_args, **_kwargs):
+        raise AssertionError("connected")
+
+    monkeypatch.setattr(db, "connect", fail)
+    with pytest.raises(ValueError):
+        ensure_database(_cfg("x]; DROP DATABASE energiewende; --"))
