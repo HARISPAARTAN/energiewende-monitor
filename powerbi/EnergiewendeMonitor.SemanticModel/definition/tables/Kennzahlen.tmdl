@@ -9,7 +9,7 @@ table Kennzahlen
 		lineageTag: f6e20a74-cb1a-5217-95bc-f3b2d8cd78ec
 
 	/// Generation of renewable carriers only; respects an outer Kategorie filter (KEEPFILTERS), so it is blank when only conventional carriers are selected.
-	measure 'Erzeugung Erneuerbar (MWh)' = CALCULATE([Erzeugung (MWh)], KEEPFILTERS(Energieträger[Kategorie] = "Erneuerbar"))
+	measure 'Erzeugung Erneuerbar (MWh)' = CALCULATE([Erzeugung (MWh)], KEEPFILTERS('Energieträger'[Kategorie] = "Erneuerbar"))
 		formatString: #,0
 		displayFolder: Erzeugung
 		lineageTag: e511cc3e-f86b-5985-8079-72218f4b122a
@@ -111,7 +111,7 @@ table Kennzahlen
 		lineageTag: 17cf731b-a29d-5075-a995-06a42f28813b
 
 	/// Capacity commissioned in the period, MW (Marktstammdatenregister).
-	measure 'Zubau (MW)' = SUM(Kapazität[Zubau MW])
+	measure 'Zubau (MW)' = SUM('Kapazität'[Zubau MW])
 		formatString: #,0
 		displayFolder: Ausbau
 		lineageTag: f7f4171d-eafe-5ff2-94e2-3c744b170c45
@@ -126,8 +126,8 @@ table Kennzahlen
 	/// (month-end stock = Anfangsbestand + Zubau - Abgang).
 	measure 'Installierte Leistung (MW)' =
 			VAR EndeDatum = MAX(Datum[Datum])
-			VAR LetzterMonat = CALCULATE(MAX(Kapazität[Datum Key]), REMOVEFILTERS(Datum), Datum[Datum] <= EndeDatum)
-			RETURN CALCULATE(SUM(Kapazität[Bestand MW]), REMOVEFILTERS(Datum), Kapazität[Datum Key] = LetzterMonat)
+			VAR LetzterMonat = CALCULATE(MAX('Kapazität'[Datum Key]), REMOVEFILTERS(Datum), Datum[Datum] <= EndeDatum)
+			RETURN CALCULATE(SUM('Kapazität'[Bestand MW]), REMOVEFILTERS(Datum), 'Kapazität'[Datum Key] = LetzterMonat)
 		formatString: #,0
 		displayFolder: Ausbau
 		lineageTag: aa3cf45d-df42-50c3-93e3-81a3cb981224
@@ -141,8 +141,8 @@ table Kennzahlen
 				VAR ErzStart = CALCULATE(MIN(Erzeugung[Datum Key]))
 				VAR ErzEnde = CALCULATE(MAX(Erzeugung[Datum Key]))
 				VAR MonatStart = INT(ErzStart / 100) * 100 + 1
-				VAR MonateMitBestand = CALCULATETABLE(VALUES(Kapazität[Datum Key]), REMOVEFILTERS(Datum), Kapazität[Datum Key] >= MonatStart && Kapazität[Datum Key] <= ErzEnde)
-				VAR MittlererBestand = CALCULATE(AVERAGEX(MonateMitBestand, CALCULATE(SUM(Kapazität[Bestand MW]))), REMOVEFILTERS(Datum))
+				VAR MonateMitBestand = CALCULATETABLE(VALUES('Kapazität'[Datum Key]), REMOVEFILTERS(Datum), 'Kapazität'[Datum Key] >= MonatStart && 'Kapazität'[Datum Key] <= ErzEnde)
+				VAR MittlererBestand = CALCULATE(AVERAGEX(MonateMitBestand, CALCULATE(SUM('Kapazität'[Bestand MW]))), REMOVEFILTERS(Datum))
 				RETURN DIVIDE([Erzeugung (MWh)], MittlererBestand)
 			)
 		formatString: #,0
@@ -150,7 +150,7 @@ table Kennzahlen
 		lineageTag: 9c724651-2c63-5792-b093-bec58146ee8c
 
 	/// Number of units commissioned in the period.
-	measure 'Anzahl Einheiten Zubau' = SUM(Kapazität[Anzahl Zubau])
+	measure 'Anzahl Einheiten Zubau' = SUM('Kapazität'[Anzahl Zubau])
 		formatString: #,0
 		displayFolder: Ausbau
 		lineageTag: caed6983-4964-52e4-8216-267ad0fdce1e
@@ -161,13 +161,13 @@ table Kennzahlen
 		lineageTag: b8396b1f-0492-5f58-a243-40ddcc9adfbd
 
 	/// Row count of the four fact tables in context, for the data-quality page.
-	measure Zeilen = COUNTROWS(Erzeugung) + COUNTROWS(Last) + COUNTROWS(Preis) + COUNTROWS(Kapazität)
+	measure Zeilen = COUNTROWS(Erzeugung) + COUNTROWS(Last) + COUNTROWS(Preis) + COUNTROWS('Kapazität')
 		formatString: #,0
 		displayFolder: Qualität
 		lineageTag: 7ec0f21b-1a9e-5d9c-a3bf-802a95adf3ee
 
 	/// Newest capacity month loaded (yyyy-mm-01), from the Marktstammdatenregister export.
-	measure 'Datenstand MaStR' = FORMAT(CALCULATE(MAX(Kapazität[Datum Key]), REMOVEFILTERS()), "0000-00-00")
+	measure 'Datenstand MaStR' = FORMAT(CALCULATE(MAX('Kapazität'[Datum Key]), REMOVEFILTERS()), "0000-00-00")
 		displayFolder: Qualität
 		lineageTag: e294e8e1-0e53-502f-8789-e0d3b302aff0
 

@@ -410,3 +410,25 @@ def test_mutation_missing_sort_or_topn_is_caught(report, model):
     for sub in find_values(top_20.raw, "Query"):
         sub["Top"] = 20
     assert phases_problems(top_20, model)
+
+
+ORDERED_AXES = {("Datum", "Jahr-Monat"), ("Datum", "Datum"), ("Zeit", "Uhrzeit"), ("Preis", "Preis Klasse (10 €)")}
+
+
+def _column(field):
+    col = (field or {}).get("Column", {})
+    return col.get("Expression", {}).get("SourceRef", {}).get("Entity"), col.get("Property")
+
+
+def test_time_and_class_axes_sort_ascending(report):
+    # without a sortDefinition Desktop may sort a category axis by the first measure (seen on Überblick in the session)
+    problems = []
+    for page in report.pages:
+        for v in page.visuals:
+            query = v.raw.get("visual", {}).get("query", {})
+            projections = query.get("queryState", {}).get("Category", {}).get("projections", [])
+            sorts = query.get("sortDefinition", {}).get("sort", [])
+            for axis in {_column(p.get("field")) for p in projections} & ORDERED_AXES:
+                if not any(_column(s.get("field")) == axis and s.get("direction") == "Ascending" for s in sorts):
+                    problems.append(f"{page.display_name} / {v.title}: no ascending sort on {axis[0]}[{axis[1]}]")
+    assert not problems, problems

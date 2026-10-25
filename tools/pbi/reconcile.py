@@ -45,14 +45,14 @@ PAIRS: tuple[Pair, ...] = (
     Pair(
         "R7",
         "Zubau 2024 Photovoltaik (MW)",
-        'CALCULATE([Zubau (MW)], Datum[Jahr] = 2024, Energieträger[Energieträger] = "Photovoltaik")',
+        """CALCULATE([Zubau (MW)], Datum[Jahr] = 2024, 'Energieträger'[Energieträger] = "Photovoltaik")""",
         0.5,
         0,
     ),
     Pair(
         "R8",
         "Volllaststunden Wind Onshore 2025 (h)",
-        'CALCULATE([Volllaststunden (h)], Datum[Jahr] = 2025, Energieträger[Energieträger] = "Wind Onshore")',
+        """CALCULATE([Volllaststunden (h)], Datum[Jahr] = 2025, 'Energieträger'[Energieträger] = "Wind Onshore")""",
         0.5,
         0,
     ),
@@ -105,6 +105,13 @@ def _workspace_roots() -> list[Path]:
     return roots
 
 
+def _read_port(path: Path) -> int:
+    """msmdsrv.port.txt is UTF-16; the Store build writes it without a BOM, which the text reader rejects."""
+    raw = path.read_bytes()
+    text = raw.decode("utf-16") if raw[:2] in (bytes((0xFF, 0xFE)), bytes((0xFE, 0xFF))) else raw.decode("utf-16-le")
+    return int(text.strip().lstrip(chr(0xFEFF)))
+
+
 def desktop_port() -> int | None:
     """Port of the local Analysis Services instance of an open Desktop, or None.
 
@@ -118,7 +125,7 @@ def desktop_port() -> int | None:
         candidates += [Path(p) for p in glob.glob(str(root / "*" / "Data" / "msmdsrv.port.txt"))]
     for path in sorted(candidates, key=lambda p: p.stat().st_mtime, reverse=True):
         try:
-            port = int(path.read_text(encoding="utf-16").strip().lstrip("\ufeff"))
+            port = _read_port(path)
         except (OSError, ValueError):
             continue
         try:

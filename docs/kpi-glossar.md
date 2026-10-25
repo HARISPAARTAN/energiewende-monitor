@@ -11,13 +11,13 @@ Zeitstempel in SMARD-Daten sind UTC; Datum und Uhrzeit des Modells (`Datum`, `Ze
 
 Gilt für Zubau, Installierte Leistung und Volllaststunden.
 
-**Monatsendbestand.** `Kapazität[Bestand MW]` ist der Bestand am Monatsende (Anfangsbestand plus Zubau minus Abgang des Monats)
+**Monatsendbestand.** `'Kapazität'[Bestand MW]` ist der Bestand am Monatsende (Anfangsbestand plus Zubau minus Abgang des Monats)
 je Bundesland und Energieträger, mit lückenlosem Monatsraster ab Januar 1990. Summiert über Bundesländer ergibt das den
 bundesweiten Bestand eines Monats; Summen über mehrere Monate wären sinnlos und kommen nicht vor.
 
 **Letzter Monat mit Daten (LASTNONBLANK-Logik).** Installierte Leistung nimmt nicht den Bestand "des Zeitraums", sondern den des
 letzten Monats mit Kapazitätszeilen, der am oder vor dem Ende des gewählten Datums liegt. Das Ende ist `MAX(Datum[Datum])` im
-Kontext, die Auswahl `MAX(Kapazität[Datum Key])` über alle Datumszeilen bis dahin (`REMOVEFILTERS(Datum)` plus Datumsvergleich).
+Kontext, die Auswahl `MAX('Kapazität'[Datum Key])` über alle Datumszeilen bis dahin (`REMOVEFILTERS(Datum)` plus Datumsvergleich).
 Beispiele: Jahr 2024 ergibt den Bestand Dezember 2024; ein Jahr nach dem neuesten Monat oder ein Zeitraum ohne Filter ergibt den
 neuesten Monat. Das entspricht der Logik von LASTNONBLANK und liefert auch dann einen Wert, wenn der Zeitraum
 selbst keine Kapazitätszeile enthält (zum Beispiel ein einzelner Tag).
@@ -65,17 +65,17 @@ SUM(Erzeugung[Erzeugung MWh])
 
 - **Definition:** Erzeugung der Energieträger mit der Kategorie Erneuerbar (Photovoltaik, Wind Onshore, Wind Offshore, Biomasse, Wasserkraft, sonstige Erneuerbare).
 - **Einheit:** MWh
-- **Quelle:** SMARD (Bundesnetzagentur | SMARD.de, CC BY 4.0), Ansicht `rpt.v_erzeugung`, Dimension `Energieträger[Kategorie]`
+- **Quelle:** SMARD (Bundesnetzagentur | SMARD.de, CC BY 4.0), Ansicht `rpt.v_erzeugung`, Dimension `'Energieträger'[Kategorie]`
 - **Formatierung im Modell:** `#,0`
 - **Hinweise:**
   - Pumpspeicher gehört in der Dimension `Energieträger` zur Kategorie Konventionell.
-  - Ein äußerer Filter auf `Energieträger[Kategorie]` (Slicer Kategorie, Lesezeichen) bleibt wirksam (`KEEPFILTERS`): Bei Auswahl Konventionell ist die Kennzahl leer, der EE-Anteil 0 %.
+  - Ein äußerer Filter auf `'Energieträger'[Kategorie]` (Slicer Kategorie, Lesezeichen) bleibt wirksam (`KEEPFILTERS`): Bei Auswahl Konventionell ist die Kennzahl leer, der EE-Anteil 0 %.
 
 **Formel**
 
 ```dax
 Erzeugung Erneuerbar (MWh) =
-CALCULATE([Erzeugung (MWh)], KEEPFILTERS(Energieträger[Kategorie] = "Erneuerbar"))
+CALCULATE([Erzeugung (MWh)], KEEPFILTERS('Energieträger'[Kategorie] = "Erneuerbar"))
 ```
 
 ## EE-Anteil %
@@ -349,7 +349,7 @@ DIVIDE([Netzlast (MWh)] - [Netzlast Vormonat (MWh)], [Netzlast Vormonat (MWh)])
 
 ```dax
 Zubau (MW) =
-SUM(Kapazität[Zubau MW])
+SUM('Kapazität'[Zubau MW])
 ```
 
 ## Zubau YTD (MW)
@@ -382,8 +382,8 @@ TOTALYTD([Zubau (MW)], Datum[Datum])
 ```dax
 Installierte Leistung (MW) =
 VAR EndeDatum = MAX(Datum[Datum])
-VAR LetzterMonat = CALCULATE(MAX(Kapazität[Datum Key]), REMOVEFILTERS(Datum), Datum[Datum] <= EndeDatum)
-RETURN CALCULATE(SUM(Kapazität[Bestand MW]), REMOVEFILTERS(Datum), Kapazität[Datum Key] = LetzterMonat)
+VAR LetzterMonat = CALCULATE(MAX('Kapazität'[Datum Key]), REMOVEFILTERS(Datum), Datum[Datum] <= EndeDatum)
+RETURN CALCULATE(SUM('Kapazität'[Bestand MW]), REMOVEFILTERS(Datum), 'Kapazität'[Datum Key] = LetzterMonat)
 ```
 
 ## Volllaststunden (h)
@@ -408,8 +408,8 @@ BLANK(),
 VAR ErzStart = CALCULATE(MIN(Erzeugung[Datum Key]))
 VAR ErzEnde = CALCULATE(MAX(Erzeugung[Datum Key]))
 VAR MonatStart = INT(ErzStart / 100) * 100 + 1
-VAR MonateMitBestand = CALCULATETABLE(VALUES(Kapazität[Datum Key]), REMOVEFILTERS(Datum), Kapazität[Datum Key] >= MonatStart && Kapazität[Datum Key] <= ErzEnde)
-VAR MittlererBestand = CALCULATE(AVERAGEX(MonateMitBestand, CALCULATE(SUM(Kapazität[Bestand MW]))), REMOVEFILTERS(Datum))
+VAR MonateMitBestand = CALCULATETABLE(VALUES('Kapazität'[Datum Key]), REMOVEFILTERS(Datum), 'Kapazität'[Datum Key] >= MonatStart && 'Kapazität'[Datum Key] <= ErzEnde)
+VAR MittlererBestand = CALCULATE(AVERAGEX(MonateMitBestand, CALCULATE(SUM('Kapazität'[Bestand MW]))), REMOVEFILTERS(Datum))
 RETURN DIVIDE([Erzeugung (MWh)], MittlererBestand)
 )
 ```
@@ -427,7 +427,7 @@ RETURN DIVIDE([Erzeugung (MWh)], MittlererBestand)
 
 ```dax
 Anzahl Einheiten Zubau =
-SUM(Kapazität[Anzahl Zubau])
+SUM('Kapazität'[Anzahl Zubau])
 ```
 
 ## Datenstand
@@ -446,7 +446,7 @@ FORMAT(CALCULATE(MAX(Erzeugung[Zeitstempel UTC]), REMOVEFILTERS()), "dd.MM.yyyy 
 
 ## Zeilen
 
-- **Definition:** Summe der Zeilen der vier Faktentabellen (Erzeugung, Last, Preis, Kapazität) im Filterkontext.
+- **Definition:** Summe der Zeilen der vier Faktentabellen (Erzeugung, Last, Preis, 'Kapazität') im Filterkontext.
 - **Einheit:** Zeilen
 - **Quelle:** Alle vier Faktenansichten
 - **Formatierung im Modell:** `#,0`
@@ -457,7 +457,7 @@ FORMAT(CALCULATE(MAX(Erzeugung[Zeitstempel UTC]), REMOVEFILTERS()), "dd.MM.yyyy 
 
 ```dax
 Zeilen =
-COUNTROWS(Erzeugung) + COUNTROWS(Last) + COUNTROWS(Preis) + COUNTROWS(Kapazität)
+COUNTROWS(Erzeugung) + COUNTROWS(Last) + COUNTROWS(Preis) + COUNTROWS('Kapazität')
 ```
 
 ## Datenstand MaStR
@@ -473,7 +473,7 @@ COUNTROWS(Erzeugung) + COUNTROWS(Last) + COUNTROWS(Preis) + COUNTROWS(Kapazität
 
 ```dax
 Datenstand MaStR =
-FORMAT(CALCULATE(MAX(Kapazität[Datum Key]), REMOVEFILTERS()), "0000-00-00")
+FORMAT(CALCULATE(MAX('Kapazität'[Datum Key]), REMOVEFILTERS()), "0000-00-00")
 ```
 
 ## Abgleich mit dem Data Warehouse

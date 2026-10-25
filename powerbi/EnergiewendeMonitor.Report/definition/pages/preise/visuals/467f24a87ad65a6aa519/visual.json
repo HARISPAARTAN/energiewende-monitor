@@ -286,6 +286,23 @@
             }
           ]
         }
+      },
+      "sortDefinition": {
+        "sort": [
+          {
+            "direction": "Ascending",
+            "field": {
+              "Column": {
+                "Expression": {
+                  "SourceRef": {
+                    "Entity": "Preis"
+                  }
+                },
+                "Property": "Preis Klasse (10 €)"
+              }
+            }
+          }
+        ]
       }
     },
     "visualContainerObjects": {

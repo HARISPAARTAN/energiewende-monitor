@@ -50,7 +50,7 @@ def test_all_26_measures_exist_with_format_and_description(model):
 
 def test_dax_references_resolve(model):
     # a qualified reference is `Table[Column]` or `'Table name'[Column]`; the table must be a bare identifier or quoted
-    ref = re.compile(r"(?:'([^']+)'|(?<![\w\]'])([^\W\d][\w\-]*))\[([^\]]+)\]")
+    ref = re.compile(r"(?:'([^']+)'|(?<![\w\]'])([A-Za-z_][A-Za-z0-9_]*))\[([^\]]+)\]")
     cols = {(t, c) for t, tab in model.tables.items() for c in tab.columns}
     meas = {(t, m) for t, tab in model.tables.items() for m in tab.measures}
     for m in model.tables["Kennzahlen"].measures.values():
@@ -58,6 +58,17 @@ def test_dax_references_resolve(model):
             table = quoted or bare
             assert (table, item) in cols or (table, item) in meas or table in ("Kennzahlen",), (m.name, table, item)
 
+
+def test_dax_quotes_table_names_that_are_not_plain_ascii(model):
+    # DAX accepts a bare table name only for ASCII letters, digits and underscores; umlauts, spaces and hyphens
+    # need quotes (Desktop rejects 'Energieträger[...]' with "Invalid token"), and Python's \w would let them pass
+    special = [t for t in model.tables if not re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]*", t)]
+    bare = re.compile(r"(?<![\w'])(" + "|".join(map(re.escape, special)) + r")(?=\s*[\[),])")
+    expressions = [(m.name, m.expression) for tab in model.tables.values() for m in tab.measures.values()]
+    expressions += [(f"{r.name}/{t}", e) for r in model.roles for t, e in r.table_permissions.items()]
+    expressions += [(t.name, t.partition_source or "") for t in model.tables.values()]
+    offenders = [(name, hit) for name, expr in expressions for hit in bare.findall(expr)]
+    assert not offenders, offenders
 
 def test_unqualified_dax_references_are_measures(model):
     unqualified = re.compile(r"(?<![\w'\]])\[([^\]]+)\]")
@@ -175,4 +186,4 @@ def test_volllaststunden_are_blank_unless_all_bundeslaender_are_visible(model):
 
 def test_renewable_generation_respects_an_outer_kategorie_filter(model):
     m = model.tables["Kennzahlen"].measures["Erzeugung Erneuerbar (MWh)"]
-    assert 'KEEPFILTERS(Energieträger[Kategorie] = "Erneuerbar")' in m.expression
+    assert "KEEPFILTERS('Energieträger'[Kategorie] = \"Erneuerbar\")" in m.expression

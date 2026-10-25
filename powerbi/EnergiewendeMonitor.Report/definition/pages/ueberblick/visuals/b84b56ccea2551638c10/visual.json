@@ -88,6 +88,23 @@
             }
           ]
         }
+      },
+      "sortDefinition": {
+        "sort": [
+          {
+            "direction": "Ascending",
+            "field": {
+              "Column": {
+                "Expression": {
+                  "SourceRef": {
+                    "Entity": "Datum"
+                  }
+                },
+                "Property": "Jahr-Monat"
+              }
+            }
+          }
+        ]
       }
     },
     "visualContainerObjects": {
