@@ -17,6 +17,11 @@ def date_key(d: date) -> int:
     return d.year * 10000 + d.month * 100 + d.day
 
 
+def local_midnight_ms(d: date) -> int:
+    """Unix milliseconds of 00:00 Europe/Berlin wall-clock time on the local day `d`."""
+    return int(datetime(d.year, d.month, d.day, tzinfo=BERLIN).timestamp() * 1000)
+
+
 def local_keys(ts_utc: datetime) -> tuple[int, int]:
     """Return (datum_key yyyymmdd, zeit_key 0..95) of a UTC instant in Europe/Berlin wall-clock time.
 

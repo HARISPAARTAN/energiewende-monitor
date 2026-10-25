@@ -8,20 +8,26 @@ The week start is a Monday in Europe/Berlin local time. Series whose index has n
 from __future__ import annotations
 
 import argparse
-from datetime import date, datetime
+from datetime import date
 
 from ewmonitor.config import load_settings
 from ewmonitor.ingest import series_specs
 from ewmonitor.smard import SmardClient
-from ewmonitor.timekeys import BERLIN
+from ewmonitor.timekeys import local_midnight_ms
 
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--week-start", required=True, help="Monday, local date YYYY-MM-DD")
+    parser.add_argument(
+        "--week-start", required=True, type=date.fromisoformat, help="Monday, local date YYYY-MM-DD"
+    )
     args = parser.parse_args()
-    monday = date.fromisoformat(args.week_start)
-    ts_ms = int(datetime(monday.year, monday.month, monday.day, tzinfo=BERLIN).timestamp() * 1000)
+    monday: date = args.week_start
+    if monday.weekday() != 0:
+        parser.error(
+            f"--week-start must be a Monday, SMARD chunks start on Mondays; {monday} is a {monday:%A}"
+        )
+    ts_ms = local_midnight_ms(monday)
     settings = load_settings()
     out = settings.fixtures_dir / "smard"
     out.mkdir(parents=True, exist_ok=True)

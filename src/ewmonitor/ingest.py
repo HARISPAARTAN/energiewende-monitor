@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import logging
 from collections.abc import Sequence
-from datetime import date, datetime
+from datetime import date, timedelta
 from pathlib import Path
 from typing import NamedTuple
 
@@ -12,7 +12,7 @@ import pandas as pd
 
 from .config import Settings
 from .smard import STG_COLUMNS, latest_chunks, parse_chunk_file, select_chunks
-from .timekeys import BERLIN, date_key
+from .timekeys import date_key, local_midnight_ms
 
 log = logging.getLogger(__name__)
 
@@ -33,17 +33,13 @@ def series_specs(settings: Settings, regions: Sequence[str] | None = None) -> li
     return specs
 
 
-def _local_midnight_ms(d: date) -> int:
-    return int(datetime(d.year, d.month, d.day, tzinfo=BERLIN).timestamp() * 1000)
-
-
 def ingest_range(
     settings: Settings, client, start: date, end: date, regions: Sequence[str] | None = None
 ) -> pd.DataFrame:
     """Download (or reuse cached) chunks covering [start, end] local days and return staging rows
     for those days.
     """
-    start_ms, end_ms = _local_midnight_ms(start), _local_midnight_ms(end) + 24 * 3600 * 1000 - 1
+    start_ms, end_ms = local_midnight_ms(start), local_midnight_ms(end + timedelta(days=1)) - 1
     frames: list[pd.DataFrame] = []
     for spec in series_specs(settings, regions):
         index = client.fetch_index(spec.filter_id, spec.region, spec.resolution)
