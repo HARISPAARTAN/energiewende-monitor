@@ -21,6 +21,8 @@ from .load import key_range, load_facts, write_stg
 from .smard import SmardClient
 from .timekeys import BERLIN, date_key
 
+log = logging.getLogger(__name__)
+
 app = typer.Typer(help="Energiewende-Monitor Pipeline: SMARD -> SQL Server Star-Schema.", no_args_is_help=True)
 
 FromOpt = Annotated[datetime | None, typer.Option("--from", help="erster Tag (YYYY-MM-DD), Standard: config scope.start")]
@@ -175,7 +177,11 @@ def seed_mastr(
             mastr.download(settings.mastr_output_dir, settings.mastr_tables, date_)
         if source == "xml":
             quelle = mastr.find_zip(settings.mastr_output_dir)
-            export_date = export_date or mastr.zip_export_date(quelle)
+            zip_date = mastr.zip_export_date(quelle)
+            if export_date and zip_date and export_date != zip_date:
+                log.warning("--date %s weicht vom Exportstand im Dateinamen %s ab (%s); der Seed verwendet --date",
+                            export_date.isoformat(), zip_date.isoformat(), quelle.name)
+            export_date = export_date or zip_date
             chunks = mastr.iter_units_xml(quelle, mastr.UNIT_TABLES, mastr.load_katalog(quelle))
         else:
             quelle = mastr.find_sqlite(settings.mastr_output_dir)
@@ -191,7 +197,9 @@ def seed_mastr(
             label = quelle.relative_to(settings.root).as_posix()
         except ValueError:
             label = quelle.name
-        (settings.root / "docs" / "mastr-profil.md").write_text(prof.markdown(label), encoding="utf-8", newline="\n")
-        typer.echo("profil: docs/mastr-profil.md")
+        name = "mastr-profil-fixture.md" if fixtures else "mastr-profil.md"  # never overwrite the real profile
+        (settings.root / "docs").mkdir(parents=True, exist_ok=True)
+        (settings.root / "docs" / name).write_text(prof.markdown(label), encoding="utf-8", newline="\n")
+        typer.echo(f"profil: docs/{name}")
     mastr.write_seed(seed, target, stats, export_date or date.today())
     typer.echo(f"seed: {target} " + " ".join(f"{k}={v}" for k, v in sorted(stats.items())))

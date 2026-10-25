@@ -205,39 +205,67 @@ def check_freshness(con, now: datetime | None = None, to_key: int | None = None)
                        f"letzter Netzlast-Wert {latest:%Y-%m-%d %H:%M} UTC ({age.days} Tage alt)")
 
 
-PLAUSIBEL_GW = {  # national Bestand at the newest month, generous bounds (warn only)
+PLAUSIBEL_GW = {  # national Bestand at the newest month, generous bounds (warn only); a missing carrier counts as 0
     "Photovoltaik": (60.0, 200.0), "Wind Onshore": (40.0, 100.0), "Wind Offshore": (5.0, 25.0), "Biomasse": (5.0, 15.0),
-    "Braunkohle": (5.0, 25.0), "Steinkohle": (3.0, 25.0), "Erdgas": (20.0, 50.0), "Pumpspeicher": (4.0, 12.0),
+    "Wasserkraft": (3.0, 8.0), "Braunkohle": (5.0, 25.0), "Steinkohle": (3.0, 25.0), "Erdgas": (20.0, 50.0),
+    "Pumpspeicher": (4.0, 12.0), "Sonstige Konventionelle": (5.0, 25.0),
 }
 
 
 def check_capacity_non_negative(con, from_key: int, to_key: int) -> CheckResult:
-    n = _val(con, "SELECT COUNT(*) FROM dw.fact_kapazitaet WHERE bestand_mw < -0.0005 OR bestand_anzahl < 0")
+    """Tolerance of one rounding unit (0.001 MW): the running sum adds values rounded to three decimals."""
+    n = _val(con, "SELECT COUNT(*) FROM dw.fact_kapazitaet WHERE bestand_mw < -0.001 OR bestand_anzahl < 0")
     return CheckResult("kapazitaet_bestand_nicht_negativ", "ok" if n == 0 else "fail", f"{n} negative Bestandswerte")
 
 
+CAPACITY_PAIR_MISMATCH_SQL = """
+WITH s AS (
+    SELECT b.bundesland_key, e.energietraeger_key, SUM(s.anfangsbestand_mw + s.zubau_mw - s.abgang_mw) AS mw
+    FROM stg.mastr_kapazitaet s
+    JOIN dw.dim_bundesland b ON b.kuerzel = s.bundesland_kuerzel
+    JOIN dw.dim_energietraeger e ON e.name_de = s.energietraeger
+    GROUP BY b.bundesland_key, e.energietraeger_key),
+f AS (
+    SELECT bundesland_key, energietraeger_key, bestand_mw AS mw
+    FROM (SELECT bundesland_key, energietraeger_key, bestand_mw,
+                 ROW_NUMBER() OVER (PARTITION BY bundesland_key, energietraeger_key ORDER BY datum_key DESC) AS rn
+          FROM dw.fact_kapazitaet) x
+    WHERE rn = 1)
+SELECT COUNT(*) FROM s FULL JOIN f ON f.bundesland_key = s.bundesland_key AND f.energietraeger_key = s.energietraeger_key
+WHERE s.mw IS NULL OR f.mw IS NULL OR ABS(s.mw - f.mw) > 0.0005"""
+
+
 def check_capacity_vs_staging(con, from_key: int, to_key: int) -> CheckResult:
+    """Movement sums staging vs fact, and per Bundesland/Energietraeger pair the final Bestand of the fact against
+    the cumulative staging sum anfangsbestand + zubau - abgang."""
     sql = """
     SELECT ROUND(SUM(zubau_mw), 3), SUM(anzahl_zubau), ROUND(SUM(abgang_mw), 3), SUM(anzahl_abgang),
            ROUND(SUM(anfangsbestand_mw), 3), SUM(anfangsbestand_anzahl) FROM {t}"""
     stg = con.execute(sql.format(t="stg.mastr_kapazitaet")).fetchone()
     fact = con.execute(sql.format(t="dw.fact_kapazitaet")).fetchone()
-    same = all((a or 0) == (b or 0) for a, b in zip(stg, fact, strict=True))
+    pairs = _val(con, CAPACITY_PAIR_MISMATCH_SQL) or 0
+    same = all((a or 0) == (b or 0) for a, b in zip(stg, fact, strict=True)) and pairs == 0
     def fmt(row) -> str:  # plain numbers, not Decimal('...') reprs
         return "(" + ", ".join(str(v) for v in row) + ")"
-    return CheckResult("kapazitaet_vs_staging", "ok" if same else "fail", f"staging {fmt(stg)} vs fakten {fmt(fact)}")
+    return CheckResult("kapazitaet_vs_staging", "ok" if same else "fail",
+                       f"staging {fmt(stg)} vs fakten {fmt(fact)}; {pairs} Paare mit abweichendem Endbestand")
 
 
 def check_capacity_month_grid(con, from_key: int, to_key: int) -> CheckResult:
+    """Every pair has one row per month without gaps, and every pair runs to the newest month of the fact."""
     sql = """
     WITH p AS (SELECT bundesland_key, energietraeger_key, MIN(datum_key) AS von, MAX(datum_key) AS bis, COUNT(*) AS n
                FROM dw.fact_kapazitaet GROUP BY bundesland_key, energietraeger_key),
-    soll AS (SELECT p.bundesland_key, p.energietraeger_key, p.n, COUNT(d.datum_key) AS m
+    soll AS (SELECT p.bundesland_key, p.energietraeger_key, p.n, p.bis, COUNT(d.datum_key) AS m
              FROM p JOIN dw.dim_datum d ON d.tag = 1 AND d.datum_key BETWEEN p.von AND p.bis
-             GROUP BY p.bundesland_key, p.energietraeger_key, p.n)
-    SELECT COUNT(*) FROM soll WHERE n <> m"""
-    n = _val(con, sql)
-    return CheckResult("kapazitaet_monatsraster", "ok" if n == 0 else "fail", f"{n} Paare mit Luecken im Monatsraster")
+             GROUP BY p.bundesland_key, p.energietraeger_key, p.n, p.bis),
+    letzter AS (SELECT MAX(datum_key) AS datum_key FROM dw.fact_kapazitaet)
+    SELECT SUM(CASE WHEN soll.n <> soll.m THEN 1 ELSE 0 END),
+           SUM(CASE WHEN soll.bis < letzter.datum_key THEN 1 ELSE 0 END)
+    FROM soll CROSS JOIN letzter"""
+    gaps, short = (v or 0 for v in con.execute(sql).fetchone())
+    return CheckResult("kapazitaet_monatsraster", "ok" if gaps == 0 and short == 0 else "fail",
+                       f"{gaps} Paare mit Luecken im Monatsraster, {short} Paare enden vor dem letzten Monat")
 
 
 def check_capacity_plausible(con, from_key: int, to_key: int) -> CheckResult:
@@ -250,8 +278,8 @@ def check_capacity_plausible(con, from_key: int, to_key: int) -> CheckResult:
     if not rows:
         return CheckResult("kapazitaet_plausibel", "warn", "keine Kapazitaetsdaten")
     gw = {name: float(v) for name, v in rows}
-    off = [f"{name} {gw[name]:.1f} GW (erwartet {lo}-{hi})" for name, (lo, hi) in PLAUSIBEL_GW.items()
-           if name in gw and not lo <= gw[name] <= hi]
+    off = [f"{name} {gw.get(name, 0.0):.1f} GW (erwartet {lo}-{hi})" for name, (lo, hi) in PLAUSIBEL_GW.items()
+           if not lo <= gw.get(name, 0.0) <= hi]  # an absent carrier (a table not read) warns instead of passing
     return CheckResult("kapazitaet_plausibel", "ok" if not off else "warn", "; ".join(off) or "Bestand im erwarteten Bereich")
 
 

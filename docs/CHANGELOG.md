@@ -21,6 +21,14 @@
   Konventionelle; Klärgas, Deponiegas, Grubengas, Solarthermie, Druck aus Wasserleitungen als sonstige Erneuerbare.
 - Echter Seed, Exportstand 2026-10-25: 9.663.557 Einheiten, 25.323 Zeilen, keine nicht zugeordneten Werte;
   Wertelisten in `docs/mastr-profil.md`, Entscheidungen in ADR-004.
+- Nach dem Review: `kapazitaet_plausibel` warnt auch bei fehlendem Energieträger und begrenzt zusätzlich
+  Wasserkraft und sonstige Konventionelle; `kapazitaet_monatsraster` scheitert, wenn ein Paar vor dem letzten
+  Monat endet; `kapazitaet_vs_staging` vergleicht zusätzlich den Endbestand je Bundesland und Energieträger;
+  Toleranz für negativen Bestand eine Rundungseinheit. `seed-mastr --fixtures --profile` schreibt
+  `docs/mastr-profil-fixture.md`; ein `--date`, das vom Zip-Namen abweicht, wird gemeldet.
+  `ewmonitor.__version__` = 0.2.0.
+- Bekannte Grenze: Die Kapazitätshistorie vor etwa 2019 ist unvollständig (nur heute registrierte Einheiten),
+  siehe README und ADR-004.
 
 ## v0.1.1 (2026-10-25) Korrekturen nach Review
 

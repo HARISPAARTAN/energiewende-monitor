@@ -16,8 +16,9 @@ Marktstammdatenregister export of 2026-10-25.
 - Generation by source, grid load, residual load and pumped-storage consumption for bidding zone DE-LU,
   quarter-hourly from 1 January 2023.
 - Day-ahead price DE-LU, hourly.
-- Installed capacity per month, federal state and energy source from 1990, from the Marktstammdatenregister
-  (additions, retirements, stock), see [Capacity (MaStR)](#capacity-mastr).
+- Installed capacity per month, federal state and energy source from the Marktstammdatenregister (additions,
+  retirements, stock). The month grid starts in 1990; the stock is reliable only from about 2019, see
+  [Capacity (MaStR)](#capacity-mastr).
 
 ## Architecture
 
@@ -54,6 +55,8 @@ are downloaded again, because SMARD republishes past weeks). `ewmonitor all --fi
 - `uv run --env-file .env pytest tests/dq -m db`: rows per day, pivot, hourly aggregate, idempotent loads, errors
   in the fact loads. The suite works in its own database (`EWM_DQ_DB_NAME`, default `energiewende_dq`), empties
   staging and facts there and loads the test week; the database from `EWM_DB_NAME` is left untouched.
+  For capacity: running stock after additions and retirements, a gap-free month grid up to the last month,
+  AWZ and UNB rows, the four capacity checks on the fixture seed and idempotent `dw.fact_kapazitaet` loads.
 - GitHub Actions runs both against a SQL Server container (`.github/workflows/ci.yml`).
 
 ## Error handling
@@ -87,7 +90,9 @@ from eight unit tables into additions, retirements and opening stock per month, 
 `ewmonitor load` and `ewmonitor all` stage it in `stg.mastr_kapazitaet` and build `dw.fact_kapazitaet` with running
 stock totals. The view `rpt.v_kapazitaet` has the columns `datum_key`, `jahr_monat`, `bundesland_key`,
 `energietraeger_key`, `zubau_mw`, `anzahl_zubau`, `abgang_mw`, `anzahl_abgang`, `anfangsbestand_mw`,
-`anfangsbestand_anzahl`, `bestand_mw`, `bestand_anzahl`.
+`anfangsbestand_anzahl`, `bestand_mw`, `bestand_anzahl`. `bestand_mw` is the end-of-month value after the month's
+additions and retirements. The newest month is partial, and because units are often registered weeks after
+commissioning, additions in the last two to three months are too low.
 
 Stock in October 2026 (net rated power): solar PV 116.6 GW, wind onshore 71.5 GW, wind offshore 11.6 GW, natural gas
 35.8 GW, hard coal 15.1 GW, lignite 14.8 GW, pumped storage 9.9 GW, biomass 8.8 GW, hydro 5.3 GW, nuclear 0
@@ -109,7 +114,14 @@ Rules (reasoning in `docs/decisions/ADR-004-mastr-seed.md`):
   the export in `docs/mastr-profil.md`. No value of the 2026-10-25 export is left unmapped.
 - Solar PV: net rated power (inverter) is about 11 % below the gross module power that the Bundesnetzagentur
   reports in its expansion figures (October 2026: 116.6 instead of 131.7 GW).
-- Units deleted from the register are missing from the past as well, so early years are a lower bound.
+- **History before 2019 is incomplete.** The register holds only units registered since it started in 2019,
+  plus the units in operation at that time; plants decommissioned or deleted earlier are missing. Stock and
+  additions before about 2019 therefore show today's registered fleet by commissioning date, not the stock of
+  the time. Examples: nuclear stays flat at 8.1 GW from 1990 to the end of 2021 (about 20.5 GW were online in
+  2010); wind onshore shows 24.0 GW at the end of 2010 instead of about 27 GW.
+- Emergency generators and grid-reserve plants stay in the stock in milestone 2: 3.0 GW of petroleum products
+  and 0.6 GW of natural gas carry `Notstromaggregat = 1`, 7.45 GW of hard coal `NetzreserveZugeordnet = 1`.
+  Whether to exclude them is decided in milestone 3.
 
 Regenerating the seed (developer machine only, not in CI):
 
@@ -122,10 +134,15 @@ uv run ewmonitor seed-mastr --skip-download --profile   # reuse the existing zip
 `--source xml` (default) reads the Gesamtdatenexport zip directly: lxml streams the UTF-16 XML files with flat
 memory and resolves the catalog values itself. open-mastr 1.0 serves as the downloader only, because its SQLite
 import fails on all 66 solar files of the 2026-10-25 export (multi-values such as `710 3183` in an integer column).
-`--source sqlite` reads the open-mastr database as a fallback. The export date in the seed comes from the zip's
-file name or from `--date YYYYMMDD`. Disk: zip 2.4 GB, open-mastr SQLite database 3.7 GB (built during the
+`--source sqlite` reads the open-mastr database; for the 2026-10-25 export it lacks `EinheitenSolar` and
+`EinheitenVerbrennung` entirely, so the SQLite reader serves tests and comparisons, not as a fallback for the real
+seed. The export date in the seed comes from the zip's file name; a differing `--date YYYYMMDD` wins with a
+warning. `seed-mastr --fixtures --profile` writes `docs/mastr-profil-fixture.md` and leaves the real profile alone. Disk: zip 2.4 GB, open-mastr SQLite database 3.7 GB (built during the
 download); budget 15 GB. Runtime on 2026-10-25: download 12 minutes, open-mastr import 16 minutes, XML reader
 5 minutes.
+
+Note: `ewmonitor all --fixtures` replaces the capacity data of the developer database (`EWM_DB_NAME`) with the
+fixture seed. Run `ewmonitor load` again before a Power BI refresh.
 
 ## Data sources and licences
 

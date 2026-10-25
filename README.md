@@ -16,8 +16,9 @@ Marktstammdatenregister Exportstand 2026-10-25.
 - Stromerzeugung nach Energieträger, Netzlast, Residuallast und Pumpspeicher-Verbrauch im Marktgebiet DE-LU,
   viertelstündlich ab dem 1. Januar 2023.
 - Day-Ahead-Preis DE-LU, stündlich.
-- Installierte Leistung je Monat, Bundesland und Energieträger ab 1990 aus dem Marktstammdatenregister
-  (Zubau, Abgang, Bestand), siehe [Kapazitäten (MaStR)](#kapazitäten-mastr).
+- Installierte Leistung je Monat, Bundesland und Energieträger aus dem Marktstammdatenregister (Zubau, Abgang,
+  Bestand). Das Monatsraster beginnt 1990, belastbar ist der Bestand erst etwa ab 2019, siehe
+  [Kapazitäten (MaStR)](#kapazitäten-mastr).
 
 ## Architektur
 
@@ -56,6 +57,9 @@ ohne Netzwerk.
 - `uv run --env-file .env pytest tests/dq -m db`: Zeilen je Tag, Pivot, Stundenaggregat, Idempotenz der Ladeläufe,
   Fehler im Faktenladen. Die Suite arbeitet in einer eigenen Datenbank (`EWM_DQ_DB_NAME`, Standard `energiewende_dq`),
   leert dort Staging und Fakten und lädt die Testwoche; die Datenbank aus `EWM_DB_NAME` bleibt unberührt.
+  Für die Kapazitäten: laufender Bestand nach Zubau und Abgang, lückenloses Monatsraster bis zum letzten Monat,
+  AWZ- und UNB-Zeilen, die vier Kapazitätsprüfungen auf dem Fixture-Seed und die Idempotenz von
+  `dw.fact_kapazitaet`.
 - GitHub Actions führt beides gegen einen SQL-Server-Container aus (`.github/workflows/ci.yml`).
 
 ## Fehlerbehandlung
@@ -91,7 +95,9 @@ Einheiten aus acht Einheitentabellen zu Zubau, Abgang und Anfangsbestand je Mona
 `ewmonitor load` und `ewmonitor all` laden ihn nach `stg.mastr_kapazitaet` und bauen daraus `dw.fact_kapazitaet`
 mit laufendem Bestand. Die View `rpt.v_kapazitaet` hat die Spalten `datum_key`, `jahr_monat`, `bundesland_key`,
 `energietraeger_key`, `zubau_mw`, `anzahl_zubau`, `abgang_mw`, `anzahl_abgang`, `anfangsbestand_mw`,
-`anfangsbestand_anzahl`, `bestand_mw`, `bestand_anzahl`.
+`anfangsbestand_anzahl`, `bestand_mw`, `bestand_anzahl`. `bestand_mw` ist der Wert am Monatsende, nach Zubau und
+Abgang des Monats. Der neueste Monat ist angebrochen, und weil Anlagen oft erst Wochen nach der Inbetriebnahme
+registriert werden, fällt der Zubau der letzten zwei bis drei Monate zu niedrig aus.
 
 Bestand im Oktober 2026 (Nettonennleistung): Photovoltaik 116,6 GW, Wind an Land 71,5 GW, Wind auf See 11,6 GW,
 Erdgas 35,8 GW, Steinkohle 15,1 GW, Braunkohle 14,8 GW, Pumpspeicher 9,9 GW, Biomasse 8,8 GW, Wasserkraft 5,3 GW,
@@ -113,7 +119,14 @@ Regeln (Begründung in `docs/decisions/ADR-004-mastr-seed.md`):
   des Exports in `docs/mastr-profil.md`. Im Export 2026-10-25 bleibt kein Wert ohne Zuordnung.
 - Photovoltaik: Die Nettonennleistung (Wechselrichter) liegt rund 11 % unter der Bruttoleistung der Module, die
   die Bundesnetzagentur in ihren Zubauzahlen meldet (Oktober 2026: 116,6 statt 131,7 GW).
-- Aus dem Register gelöschte Einheiten fehlen auch in der Vergangenheit; frühe Jahre sind deshalb eine Untergrenze.
+- **Historie vor 2019 ist unvollständig.** Das Register enthält nur Einheiten, die seit seinem Start 2019
+  registriert wurden, und die damals noch in Betrieb waren; früher stillgelegte oder gelöschte Anlagen fehlen.
+  Bestand und Zubau vor etwa 2019 zeigen daher den heute registrierten Anlagenpark nach Inbetriebnahmedatum,
+  nicht den damaligen Bestand. Beispiele: Kernenergie steht von 1990 bis Ende 2021 konstant bei 8,1 GW
+  (2010 waren rund 20,5 GW am Netz); Wind an Land hat Ende 2010 24,0 GW statt rund 27 GW.
+- Notstromaggregate und Netzreserve bleiben in Meilenstein 2 im Bestand: 3,0 GW Mineralölprodukte und 0,6 GW
+  Erdgas tragen `Notstromaggregat = 1`, 7,45 GW Steinkohle `NetzreserveZugeordnet = 1`. Ob sie herausgerechnet
+  werden, entscheidet Meilenstein 3.
 
 Seed neu erzeugen (nur auf dem Entwicklerrechner, nicht in CI):
 
@@ -126,10 +139,16 @@ uv run ewmonitor seed-mastr --skip-download --profile   # vorhandenen Zip verwen
 `--source xml` (Standard) liest den Gesamtdatenexport-Zip direkt: lxml streamt die UTF-16-XML-Dateien bei
 konstantem Speicher und löst die Katalogwerte selbst auf. open-mastr 1.0 dient nur als Downloader, weil sein
 SQLite-Import an allen 66 Solar-Dateien des Exports 2026-10-25 scheitert (Mehrfachwerte wie `710 3183` in einer
-Ganzzahlspalte). `--source sqlite` liest die open-mastr-Datenbank als Rückfallebene. Der Exportstand im Seed kommt
-aus dem Dateinamen des Zips oder aus `--date YYYYMMDD`. Platz: Zip 2,4 GB, SQLite-Datenbank von open-mastr 3,7 GB
+Ganzzahlspalte). `--source sqlite` liest die open-mastr-Datenbank; für den Export 2026-10-25 fehlen dort
+`EinheitenSolar` und `EinheitenVerbrennung` ganz, der SQLite-Leser dient also Tests und Vergleichen, nicht als
+Ersatz für den echten Seed. Der Exportstand im Seed kommt aus dem Dateinamen des Zips; ein abweichendes
+`--date YYYYMMDD` gewinnt mit einer Warnung. `seed-mastr --fixtures --profile` schreibt
+`docs/mastr-profil-fixture.md` und lässt das echte Profil unberührt. Platz: Zip 2,4 GB, SQLite-Datenbank von open-mastr 3,7 GB
 (entsteht beim Download mit); Budget 15 GB. Laufzeit am 2026-10-25: Download 12 Minuten, open-mastr-Import
 16 Minuten, XML-Leser 5 Minuten.
+
+Hinweis: `ewmonitor all --fixtures` ersetzt die Kapazitätsdaten der Entwicklerdatenbank (`EWM_DB_NAME`) durch den
+Fixture-Seed. Vor einer Power-BI-Aktualisierung deshalb `ewmonitor load` erneut ausführen.
 
 ## Datenquellen und Lizenzen
 

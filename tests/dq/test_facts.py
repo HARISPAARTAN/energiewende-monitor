@@ -77,7 +77,15 @@ def test_bundesland_kuerzel_is_not_padded(con):
     assert tuple(row) == ("BW", 2)
 
 
+CAPACITY_FINGERPRINT = """
+SELECT COUNT(*), SUM(zubau_mw), SUM(anzahl_zubau), SUM(abgang_mw), SUM(anzahl_abgang), SUM(anfangsbestand_mw),
+       SUM(anfangsbestand_anzahl), SUM(bestand_mw), SUM(bestand_anzahl) FROM dw.fact_kapazitaet"""
+
+
 def test_reload_is_idempotent(con, settings):
     before = con.execute("SELECT COUNT(*) FROM dw.fact_erzeugung").fetchval()
+    kapazitaet_before = tuple(con.execute(CAPACITY_FINGERPRINT).fetchone())
+    assert kapazitaet_before[0] > 0
     load_facts(con, settings.root / "sql", 20251020, 20251026)
     assert con.execute("SELECT COUNT(*) FROM dw.fact_erzeugung").fetchval() == before
+    assert tuple(con.execute(CAPACITY_FINGERPRINT).fetchone()) == kapazitaet_before

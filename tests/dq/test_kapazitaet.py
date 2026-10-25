@@ -39,6 +39,7 @@ def test_awz_and_unbekannt_rows_exist(con):
 
 def test_capacity_checks_on_the_fixture(con):
     from ewmonitor.checks import run_checks
+    assert con.execute("SELECT COUNT(*) FROM dw.fact_kapazitaet").fetchval() > 0  # checks on an empty fact prove nothing
     by = {r.name: r for r in run_checks(con, 20251020, 20251026)}
     assert by["kapazitaet_bestand_nicht_negativ"].status == "ok"
     assert by["kapazitaet_vs_staging"].status == "ok"

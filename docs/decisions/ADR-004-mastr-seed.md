@@ -21,7 +21,10 @@ Repository; CI und `ewmonitor load` laden ihn, ohne Download und ohne die Einzel
   Felder und löst die Katalog-IDs über `Katalogwerte.xml` auf (die IDs sind global eindeutig; ein Wert, der keine
   ID ist, bleibt unverändert). Der ganze Export läuft so in rund fünf Minuten bei konstantem Speicher, ohne
   etwas auf die Platte zu entpacken (9.663.557 Einheiten, davon 6.598.819 Solar).
-- Der SQLite-Leser (`--source sqlite`) bleibt als Rückfallebene und für die Fixture. Beide Leser liefern
+- Der SQLite-Leser (`--source sqlite`) bleibt für Tests und Vergleiche, ist aber keine Rückfallebene für den
+  echten Seed: Für den Export 2026-10-25 fehlen in der open-mastr-Datenbank `EinheitenSolar` und
+  `EinheitenVerbrennung` ganz (der Import scheitert an allen Solar-Dateien und an der einen
+  Verbrennungs-Datei). Beide Leser liefern
   denselben normalisierten Rahmen; ein Unit-Test prüft das auf der synthetischen Fixture (61 Einheiten, als
   SQLite-Tabellen und als Export-Zip).
 - `seed-mastr` ohne `--skip-download` ruft weiter open-mastr auf und baut damit auch die SQLite-Datenbank
@@ -50,8 +53,17 @@ Repository; CI und `ewmonitor load` laden ihn, ohne Download und ohne die Einzel
   Schweizer Grenze. Sie bleiben als `UNB` im Bestand.
 - **Speicher.** Pumpspeicher zählen als `Pumpspeicher`. Batterien, Wasserstoffspeicher, Druckluft- und
   Schwungradspeicher sowie Speicher ohne Technologie werden verworfen: SMARD weist für sie keine Erzeugung aus.
-- **Gelöschte Einheiten** sind im Export nicht enthalten; ihre Historie lässt sich nicht rekonstruieren. Der
-  Bestand früherer Jahre ist deshalb eine Untergrenze, vor allem vor 2019 (Start des Registers in heutiger Form).
+- **Historie vor 2019.** Das Register enthält nur Einheiten, die seit seinem Start 2019 registriert wurden, und
+  die damals in Betrieb waren; vorher stillgelegte und gelöschte Einheiten fehlen, ihre Historie lässt sich nicht
+  rekonstruieren. Bestand und Zubau vor etwa 2019 zeigen deshalb den heute registrierten Anlagenpark nach
+  Inbetriebnahmedatum und sind deutlich unvollständig: Kernenergie steht von 1990 bis Ende 2021 konstant bei
+  8,1 GW (2010 rund 20,5 GW am Netz), Wind an Land hat Ende 2010 24,0 GW statt rund 27 GW. Das Monatsraster
+  beginnt trotzdem 1990, damit die laufenden Summen den Anfangsbestand enthalten.
+- **Bestand** (`bestand_mw`) ist der Wert am Monatsende nach Zubau und Abgang des Monats. Der neueste Monat ist
+  angebrochen; wegen des Registrierungsverzugs fällt der Zubau der letzten zwei bis drei Monate zu niedrig aus.
+- **Notstrom und Netzreserve** bleiben in Meilenstein 2 im Bestand: 3,0 GW Mineralölprodukte und 0,6 GW Erdgas
+  tragen `Notstromaggregat = 1`. Ebenso 7,45 GW Steinkohle mit `NetzreserveZugeordnet = 1`, die nicht am Markt
+  erzeugen. Beides entscheidet Meilenstein 3.
 
 ## Zuordnung zu den SMARD-Energieträgern
 
