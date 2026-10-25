@@ -4,8 +4,13 @@ from __future__ import annotations
 
 import os
 import tomllib
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
+
+
+def _odbc_quote(value: str) -> str:
+    """Brace-quote an ODBC connection-string value so ';', '=' and braces in it are taken literally."""
+    return "{" + value.replace("}", "}}") + "}"
 
 
 @dataclass(frozen=True)
@@ -26,13 +31,16 @@ class DbConfig:
     server: str
     database: str
     user: str
-    password: str
+    password: str = field(repr=False)
     driver: str
 
     def connection_string(self, database: str | None = None) -> str:
+        if not self.password:
+            raise ValueError("MSSQL_SA_PASSWORD fehlt")
         return (
             f"DRIVER={{{self.driver}}};SERVER={self.server};DATABASE={database or self.database};"
-            f"UID={self.user};PWD={self.password};Encrypt=yes;TrustServerCertificate=yes"
+            f"UID={_odbc_quote(self.user)};PWD={_odbc_quote(self.password)};"
+            "Encrypt=yes;TrustServerCertificate=yes"
         )
 
 
@@ -48,8 +56,19 @@ class Settings:
     fixtures_dir: Path
 
 
+def _toml_list(data: dict, section: str, key: str) -> list:
+    """A list value from config.toml; a bare string would otherwise become a tuple of its characters."""
+    value = data[section][key]
+    if not isinstance(value, list):
+        raise ValueError(f"config.toml: [{section}] {key} muss eine Liste sein, nicht {type(value).__name__}")
+    return value
+
+
 def load_settings(root: Path | None = None) -> Settings:
-    """Read config.toml under `root` (default: the repository root) and the EWM_*/MSSQL_* variables."""
+    """Read config.toml under `root` (default: the repository root) and the EWM_*/MSSQL_* variables.
+
+    A missing MSSQL_SA_PASSWORD is not an error here; DbConfig.connection_string raises when it is needed.
+    """
     root = (root or Path(__file__).resolve().parents[2]).resolve()
     data = tomllib.loads((root / "config.toml").read_text(encoding="utf-8"))
     scope, smard, paths = data["scope"], data["smard"], data["paths"]
@@ -63,13 +82,13 @@ def load_settings(root: Path | None = None) -> Settings:
     return Settings(
         root=root,
         start=str(scope["start"]),
-        regions=tuple(scope["regions"]),
+        regions=tuple(_toml_list(data, "scope", "regions")),
         smard=SmardConfig(
             base_url=smard["base_url"],
-            generation=tuple(int(x) for x in smard["generation"]),
-            consumption=tuple(int(x) for x in smard["consumption"]),
+            generation=tuple(int(x) for x in _toml_list(data, "smard", "generation")),
+            consumption=tuple(int(x) for x in _toml_list(data, "smard", "consumption")),
             price=int(smard["price"]),
-            price_regions=tuple(smard["price_regions"]),
+            price_regions=tuple(_toml_list(data, "smard", "price_regions")),
         ),
         db=db,
         raw_dir=root / paths["raw"],
