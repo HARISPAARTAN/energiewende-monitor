@@ -1,0 +1,54 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/page/2.1.0/schema.json",
+  "annotations": [
+    {
+      "name": "ewm:generated",
+      "value": "tools/pbi/pages.json"
+    }
+  ],
+  "displayName": "Erzeugung & Last",
+  "displayOption": "FitToPage",
+  "filterConfig": {
+    "filters": [
+      {
+        "field": {
+          "Column": {
+            "Expression": {
+              "SourceRef": {
+                "Entity": "Datum"
+              }
+            },
+            "Property": "Jahr-Monat"
+          }
+        },
+        "howCreated": "Drillthrough",
+        "name": "0fcc042b12665b09a2eb",
+        "type": "Categorical"
+      }
+    ]
+  },
+  "height": 720,
+  "name": "erzeugung-last",
+  "pageBinding": {
+    "name": "07a7c9a783a3592592f1",
+    "parameters": [
+      {
+        "boundFilter": "0fcc042b12665b09a2eb",
+        "fieldExpr": {
+          "Column": {
+            "Expression": {
+              "SourceRef": {
+                "Entity": "Datum"
+              }
+            },
+            "Property": "Jahr-Monat"
+          }
+        },
+        "name": "79ea4709763b5af3b090"
+      }
+    ],
+    "type": "Drillthrough"
+  },
+  "type": "Drillthrough",
+  "width": 1280
+}

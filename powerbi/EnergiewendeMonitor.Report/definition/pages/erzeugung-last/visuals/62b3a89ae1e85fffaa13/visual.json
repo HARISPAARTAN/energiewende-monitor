@@ -1,0 +1,99 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.13.0/schema.json",
+  "name": "62b3a89ae1e85fffaa13",
+  "position": {
+    "height": 280,
+    "tabOrder": 2,
+    "width": 600,
+    "x": 24,
+    "y": 416,
+    "z": 2
+  },
+  "visual": {
+    "drillFilterOtherVisuals": true,
+    "objects": {},
+    "query": {
+      "queryState": {
+        "Columns": {
+          "projections": [
+            {
+              "active": true,
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "Datum"
+                    }
+                  },
+                  "Property": "Wochentag"
+                }
+              },
+              "nativeQueryRef": "Wochentag",
+              "queryRef": "Datum.Wochentag"
+            }
+          ]
+        },
+        "Rows": {
+          "projections": [
+            {
+              "active": true,
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "Zeit"
+                    }
+                  },
+                  "Property": "Tageszeit"
+                }
+              },
+              "nativeQueryRef": "Tageszeit",
+              "queryRef": "Zeit.Tageszeit"
+            }
+          ]
+        },
+        "Values": {
+          "projections": [
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "Kennzahlen"
+                    }
+                  },
+                  "Property": "Residuallast Ø (MWh/15 min)"
+                }
+              },
+              "nativeQueryRef": "Residuallast Ø (MWh/15 min)",
+              "queryRef": "Kennzahlen.Residuallast Ø (MWh/15 min)"
+            }
+          ]
+        }
+      }
+    },
+    "visualContainerObjects": {
+      "title": [
+        {
+          "properties": {
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
+            "text": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Residuallast Ø nach Tageszeit und Wochentag'"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "visualType": "pivotTable"
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "name": "Energiewende",
+  "background": "#F7F7F4",
+  "foreground": "#14181D",
+  "tableAccent": "#B45309",
+  "dataColors": ["#F2A93B", "#3D8BDB", "#1F5FA8", "#5FA85A", "#2BB5C9", "#8B5E3C", "#5C5C66", "#C9553E", "#9B59B6", "#2E7D32", "#7F7F88", "#B45309"],
+  "textClasses": {"title": {"fontSize": 14, "fontFace": "Segoe UI Semibold", "color": "#14181D"}, "label": {"fontSize": 10, "fontFace": "Segoe UI", "color": "#5B6472"}, "callout": {"fontSize": 28, "fontFace": "Segoe UI Semibold", "color": "#14181D"}},
+  "visualStyles": {"*": {"*": {"background": [{"show": true, "color": {"solid": {"color": "#FFFFFF"}}, "transparency": 0}], "border": [{"show": true, "color": {"solid": {"color": "#E6E1DA"}}, "radius": 6}], "title": [{"fontColor": {"solid": {"color": "#14181D"}}, "fontSize": 12}]}},
+                   "page": {"*": {"background": [{"color": {"solid": {"color": "#F7F7F4"}}, "transparency": 0}]}}}
+}

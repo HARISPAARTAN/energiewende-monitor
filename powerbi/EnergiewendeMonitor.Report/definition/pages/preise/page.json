@@ -1,0 +1,14 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/page/2.1.0/schema.json",
+  "annotations": [
+    {
+      "name": "ewm:generated",
+      "value": "tools/pbi/pages.json"
+    }
+  ],
+  "displayName": "Preise",
+  "displayOption": "FitToPage",
+  "height": 720,
+  "name": "preise",
+  "width": 1280
+}

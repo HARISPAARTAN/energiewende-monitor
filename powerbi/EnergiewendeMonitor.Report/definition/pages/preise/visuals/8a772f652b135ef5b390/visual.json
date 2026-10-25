@@ -1,0 +1,207 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.13.0/schema.json",
+  "name": "8a772f652b135ef5b390",
+  "position": {
+    "height": 290,
+    "tabOrder": 4,
+    "width": 608,
+    "x": 648,
+    "y": 406,
+    "z": 4
+  },
+  "visual": {
+    "drillFilterOtherVisuals": true,
+    "objects": {
+      "columnHeaders": [
+        {
+          "properties": {}
+        }
+      ]
+    },
+    "query": {
+      "queryState": {
+        "Values": {
+          "projections": [
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "Preisphasen"
+                    }
+                  },
+                  "Property": "Start (lokal)"
+                }
+              },
+              "nativeQueryRef": "Start (lokal)",
+              "queryRef": "Preisphasen.Start (lokal)"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "Preisphasen"
+                    }
+                  },
+                  "Property": "Ende (lokal)"
+                }
+              },
+              "nativeQueryRef": "Ende (lokal)",
+              "queryRef": "Preisphasen.Ende (lokal)"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "Preisphasen"
+                    }
+                  },
+                  "Property": "Stunden"
+                }
+              },
+              "nativeQueryRef": "Stunden",
+              "queryRef": "Preisphasen.Stunden"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "Preisphasen"
+                    }
+                  },
+                  "Property": "Min Preis €/MWh"
+                }
+              },
+              "nativeQueryRef": "Min Preis €/MWh",
+              "queryRef": "Preisphasen.Min Preis €/MWh"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "Preisphasen"
+                    }
+                  },
+                  "Property": "Ø Preis €/MWh"
+                }
+              },
+              "nativeQueryRef": "Ø Preis €/MWh",
+              "queryRef": "Preisphasen.Ø Preis €/MWh"
+            }
+          ]
+        }
+      }
+    },
+    "visualContainerObjects": {
+      "background": [
+        {
+          "properties": {
+            "color": {
+              "solid": {
+                "color": {
+                  "expr": {
+                    "ThemeDataColor": {
+                      "ColorId": 0,
+                      "Percent": -0.1
+                    }
+                  }
+                }
+              }
+            },
+            "transparency": {
+              "expr": {
+                "Literal": {
+                  "Value": "60D"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "border": [
+        {
+          "properties": {
+            "radius": {
+              "expr": {
+                "Literal": {
+                  "Value": "10D"
+                }
+              }
+            },
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "lockAspect": [
+        {
+          "properties": {
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "stylePreset": [
+        {
+          "properties": {
+            "name": {
+              "expr": {
+                "Literal": {
+                  "Value": "'None'"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "title": [
+        {
+          "properties": {
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
+            "text": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Längste negative Preisphasen'"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "visualHeader": [
+        {
+          "properties": {
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "false"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "visualType": "tableEx"
+  }
+}

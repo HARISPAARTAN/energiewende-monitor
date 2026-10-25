@@ -1,0 +1,66 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.13.0/schema.json",
+  "name": "a3d10dccfa4f56e6a2ba",
+  "position": {
+    "height": 330,
+    "tabOrder": 4,
+    "width": 456,
+    "x": 800,
+    "y": 130,
+    "z": 4
+  },
+  "visual": {
+    "drillFilterOtherVisuals": true,
+    "objects": {
+      "general": [
+        {
+          "properties": {
+            "paragraphs": [
+              {
+                "textRuns": [
+                  {
+                    "textStyle": {
+                      "fontSize": "12pt"
+                    },
+                    "value": "Quellen und Lizenzen"
+                  }
+                ]
+              },
+              {
+                "textRuns": [
+                  {
+                    "textStyle": {
+                      "fontSize": "12pt"
+                    },
+                    "value": "Strommarktdaten: Bundesnetzagentur | SMARD.de, Lizenz CC BY 4.0."
+                  }
+                ]
+              },
+              {
+                "textRuns": [
+                  {
+                    "textStyle": {
+                      "fontSize": "12pt"
+                    },
+                    "value": "Kapazitäten: Datenquelle: Marktstammdatenregister der Bundesnetzagentur, Datenlizenz Deutschland – Namensnennung – Version 2.0 (https://www.govdata.de/dl-de/by-2-0), Daten aggregiert."
+                  }
+                ]
+              },
+              {
+                "textRuns": [
+                  {
+                    "textStyle": {
+                      "fontSize": "12pt"
+                    },
+                    "value": "Hinweis: Das Register enthält Einheiten, die seit 2019 registriert wurden, sowie die damals schon in Betrieb waren; Bestand und Zubau vor etwa 2019 sind unvollständig. Der jüngste Monat ist unvollständig."
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "visualType": "textbox"
+  }
+}

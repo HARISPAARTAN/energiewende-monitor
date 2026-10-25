@@ -1,0 +1,66 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.13.0/schema.json",
+  "name": "3c99b9e3724c55cc8210",
+  "position": {
+    "height": 220,
+    "tabOrder": 5,
+    "width": 1232,
+    "x": 24,
+    "y": 476,
+    "z": 5
+  },
+  "visual": {
+    "drillFilterOtherVisuals": true,
+    "objects": {
+      "general": [
+        {
+          "properties": {
+            "paragraphs": [
+              {
+                "textRuns": [
+                  {
+                    "textStyle": {
+                      "fontSize": "12pt"
+                    },
+                    "value": "Projekt"
+                  }
+                ]
+              },
+              {
+                "textRuns": [
+                  {
+                    "textStyle": {
+                      "fontSize": "12pt"
+                    },
+                    "value": "Code, Pipeline und Modell: https://github.com/HARISPAARTAN/energiewende-monitor"
+                  }
+                ]
+              },
+              {
+                "textRuns": [
+                  {
+                    "textStyle": {
+                      "fontSize": "12pt"
+                    },
+                    "value": "Portfolio: https://harispaartan.github.io/projects/energiewende-monitor/"
+                  }
+                ]
+              },
+              {
+                "textRuns": [
+                  {
+                    "textStyle": {
+                      "fontSize": "12pt"
+                    },
+                    "value": "Kennzahlen-Glossar: docs/kpi-glossar.md im Repository. Keine Gewähr; kein Ersatz für die amtlichen Veröffentlichungen."
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "visualType": "textbox"
+  }
+}
