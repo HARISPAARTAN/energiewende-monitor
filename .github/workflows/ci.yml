@@ -1,0 +1,58 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  lint-and-unit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          python-version: "3.13"
+      - run: uv sync --dev
+      - run: uv run ruff check .
+      - run: uv run pytest tests/unit -q
+        env:
+          TZ: Europe/Berlin
+
+  dq:
+    runs-on: ubuntu-latest
+    needs: lint-and-unit
+    services:
+      mssql:
+        image: mcr.microsoft.com/mssql/server:2022-latest
+        env:
+          ACCEPT_EULA: "Y"
+          MSSQL_SA_PASSWORD: "Ci_Passw0rd_2026!"
+          MSSQL_PID: Developer
+        ports:
+          - 1433:1433
+        options: >-
+          --health-cmd "/opt/mssql-tools18/bin/sqlcmd -C -S localhost -U sa -P 'Ci_Passw0rd_2026!' -Q 'SELECT 1' || exit 1"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 15
+    env:
+      MSSQL_SA_PASSWORD: "Ci_Passw0rd_2026!"
+      EWM_DB_SERVER: "127.0.0.1,1433"
+      EWM_DB_NAME: energiewende
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          python-version: "3.13"
+      - name: Install Microsoft ODBC Driver 18
+        run: |
+          curl -sSL -O "https://packages.microsoft.com/config/ubuntu/$(lsb_release -rs)/packages-microsoft-prod.deb"
+          sudo dpkg -i packages-microsoft-prod.deb
+          sudo apt-get update
+          sudo ACCEPT_EULA=Y apt-get install -y msodbcsql18 unixodbc-dev
+      - run: uv sync --dev
+      - run: uv run ewmonitor all --fixtures
+      - run: uv run pytest tests/dq -m db -q
+        env:
+          TZ: Europe/Berlin

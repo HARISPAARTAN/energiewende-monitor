@@ -82,6 +82,8 @@ def check_hourly_aggregate(con, from_key: int, to_key: int) -> CheckResult:
         """, from_key, to_key).fetchone()
     if row is None:
         return CheckResult("stunden_aggregat", "warn", "keine Lastdaten im Zeitraum")
+    if row[1] is None or row[2] is None:
+        return CheckResult("stunden_aggregat", "warn", "Stunde ohne Werte")
     diff = abs(float(row[1]) - float(row[2]))
     return CheckResult("stunden_aggregat", "ok" if diff < 0.001 else "fail",
                        f"Stunde {row[0]}: Differenz {diff:.3f} MWh")
