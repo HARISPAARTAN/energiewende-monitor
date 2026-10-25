@@ -6,11 +6,12 @@ import logging
 import sys
 from contextlib import closing
 from datetime import date, datetime, timedelta
+from pathlib import Path
 from typing import Annotated
 
 import typer
 
-from . import db
+from . import db, mastr
 from .checks import format_results, has_failures, run_checks
 from .config import Settings, load_settings
 from .dims import load_dims
@@ -125,3 +126,31 @@ def run_all(from_: FromOpt = None, to: ToOpt = None, fixtures: FixturesOpt = Fal
     typer.echo(format_results(results))
     if has_failures(results):
         raise typer.Exit(code=1)
+
+
+@app.command(name="seed-mastr")
+def seed_mastr(
+    date_: Annotated[str | None, typer.Option("--date", help="MaStR-Exportstand YYYYMMDD, Standard: aktuell")] = None,
+    skip_download: Annotated[bool, typer.Option("--skip-download", help="vorhandene SQLite-Datei verwenden")] = False,
+    fixtures: FixturesOpt = False,
+    profile: Annotated[bool, typer.Option("--profile", help="docs/mastr-profil.md mit den Wertelisten schreiben")] = False,
+    out: Annotated[Path | None, typer.Option("--out", help="Zielpfad der Seed-CSV (Standard: data/seed bzw. data/fixtures)")] = None,
+) -> None:
+    """MaStR-Gesamtdatenexport lesen und data/seed/kapazitaet_monat.csv neu erzeugen (Stunden; nur auf dem Entwicklerrechner)."""
+    settings = load_settings()
+    if fixtures:
+        sqlite_path = mastr.sqlite_from_csv_dir(settings.fixtures_dir / "mastr" / "tables",
+                                                settings.root / "data" / "raw" / "mastr_fixture" / "open-mastr.db")
+        target = out or settings.fixtures_dir / "mastr" / "kapazitaet_monat.csv"
+    else:
+        sqlite_path = mastr.find_sqlite(settings.mastr_output_dir) if skip_download else mastr.download(
+            settings.mastr_output_dir, settings.mastr_tables, date_)
+        target = out or settings.seed_dir / "kapazitaet_monat.csv"
+    if profile:
+        (settings.root / "docs" / "mastr-profil.md").write_text(mastr.profile(sqlite_path), encoding="utf-8")
+        typer.echo("profil: docs/mastr-profil.md")
+    mapping = mastr.load_mapping(settings.seed_dir / "mastr_energietraeger_mapping.csv")
+    seed, stats = mastr.aggregate(mastr.iter_units(sqlite_path), settings.calendar_start, settings.calendar_end, mapping)
+    export_date = date.fromisoformat(f"{date_[:4]}-{date_[4:6]}-{date_[6:]}") if date_ else date.today()
+    mastr.write_seed(seed, target, stats, export_date)
+    typer.echo(f"seed: {target} " + " ".join(f"{k}={v}" for k, v in sorted(stats.items())))

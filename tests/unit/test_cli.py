@@ -55,3 +55,12 @@ def test_range_rejects_before_scope_start_even_though_calendar_is_older():
     settings = load_settings()
     with pytest.raises(typer.BadParameter, match="2023-01-01"):
         _range(settings, datetime(1995, 1, 1), None)
+
+
+def test_seed_mastr_command_is_registered_and_fixtures_mode_writes_the_fixture_seed(tmp_path, monkeypatch):
+    names = {c.name or c.callback.__name__.replace("_", "-") for c in app.registered_commands}
+    assert "seed-mastr" in names
+    result = CliRunner().invoke(app, ["seed-mastr", "--fixtures", "--out", str(tmp_path / "seed.csv")])
+    assert result.exit_code == 0, result.output
+    assert (tmp_path / "seed.csv").exists()
+    assert "zeilen=" in result.output

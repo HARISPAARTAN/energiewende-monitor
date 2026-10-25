@@ -1,0 +1,73 @@
+# PLATZHALTER aus data/fixtures/mastr; der echte MaStR-Stand folgt in Task 5
+# Exportstand: 2026-10-25
+# Regeln: Zubau im Monat der Inbetriebnahme; Abgang im Monat der endgueltigen Stilllegung; Anfangsbestand im ersten Kalendermonat fuer aeltere Inbetriebnahmen und fehlende Daten; In Planung ausgeschlossen; endgueltig stillgelegt ohne Stilllegungsdatum bleibt im Bestand (stilllegung_ohne_datum)
+# Statistik: bundesland_unbekannt=1, datum_unplausibel=0, einheiten=61, in_planung=3, inbetriebnahme_fehlt=2, nach_kalender=0, netto_fehlt=0, netto_unplausibel=0, status_unbekannt=0, stilllegung_ohne_datum=0, unmapped=1, verworfen=2, vor_kalender_abgang=1, vor_kalender_zubau=11, zeilen=68
+jahr_monat,bundesland_kuerzel,energietraeger,zubau_mw,anzahl_zubau,abgang_mw,anzahl_abgang,anfangsbestand_mw,anfangsbestand_anzahl
+1990-01,BW,Kernenergie,0.0,0,0.0,0,1310.0,1
+1990-01,BW,Pumpspeicher,0.0,0,0.0,0,160.0,1
+1990-01,BW,Wasserkraft,0.0,0,0.0,0,1.2,1
+1990-01,BY,Kernenergie,0.0,0,0.0,0,1400.0,1
+1990-01,BY,Wasserkraft,0.0,0,0.0,0,25.0,1
+1990-01,HE,Kernenergie,0.0,0,0.0,0,1167.0,1
+1990-01,NI,Kernenergie,0.0,0,0.0,0,1360.0,1
+1990-01,NW,Braunkohle,0.0,0,0.0,0,300.0,1
+1990-01,NW,Pumpspeicher,0.0,0,0.0,0,140.0,1
+1990-01,SH,Kernenergie,0.0,0,0.0,0,1400.0,1
+1990-01,SL,Steinkohle,0.0,0,0.0,0,180.0,1
+1990-01,SN,Photovoltaik,0.0,0,0.0,0,0.005,1
+1990-01,TH,Wasserkraft,0.0,0,0.0,0,0.08,1
+1990-03,SN,Pumpspeicher,80.0,1,0.0,0,0.0,0
+1992-07,RP,Wasserkraft,0.045,1,0.0,0,0.0,0
+1995-01,BY,Biomasse,1.0,1,0.0,0,0.0,0
+1997-06,NW,Sonstige Erneuerbare,2.0,1,0.0,0,0.0,0
+1998-05,NI,Wind Onshore,0.6,1,0.0,0,0.0,0
+1999-11,HB,Sonstige Konventionelle,25.0,1,0.0,0,0.0,0
+2001-01,ST,Sonstige Konventionelle,30.0,1,0.0,0,0.0,0
+2002-02,SL,Sonstige Erneuerbare,1.35,1,0.0,0,0.0,0
+2003-01,TH,Pumpspeicher,1060.0,1,0.0,0,0.0,0
+2003-04,TH,Biomasse,20.0,1,0.0,0,0.0,0
+2004-10,HE,Photovoltaik,0.004,1,0.0,0,0.0,0
+2004-12,NW,Sonstige Erneuerbare,1.5,1,0.0,0,0.0,0
+2005-03,ST,Wind Onshore,1.5,1,0.0,0,0.0,0
+2005-05,HE,Erdgas,400.0,1,0.0,0,0.0,0
+2007-09,NI,Biomasse,0.75,1,0.0,0,0.0,0
+2008-01,BY,Sonstige Erneuerbare,3.0,1,0.0,0,0.0,0
+2009-04,SN,Wasserkraft,0.15,1,0.0,0,0.0,0
+2009-06,BW,Photovoltaik,0.007,1,0.0,0,0.0,0
+2010-01,HH,Sonstige Konventionelle,1.0,1,0.0,0,0.0,0
+2010-11,BW,Sonstige Erneuerbare,4.3,1,0.0,0,0.0,0
+2011-08,HE,Kernenergie,0.0,0,1167.0,1,0.0,0
+2011-12,BY,Photovoltaik,0.75,1,0.0,0,0.0,0
+2012-03,SH,Biomasse,0.25,1,0.0,0,0.0,0
+2012-08,SN,Braunkohle,900.0,1,0.0,0,0.0,0
+2012-11,NI,Wind Onshore,3.0,1,0.0,0,0.0,0
+2013-09,BY,Sonstige Erneuerbare,5.5,1,0.0,0,0.0,0
+2014-05,BY,Wasserkraft,0.3,1,0.0,0,0.0,0
+2015-06,BY,Biomasse,0.5,1,0.0,0,0.0,0
+2016-02,RP,Biomasse,0.075,1,0.0,0,0.0,0
+2016-03,HE,Sonstige Konventionelle,0.6,1,0.0,0,0.0,0
+2016-08,SH,Wind Onshore,2.3,1,0.0,0,0.0,0
+2017-05,HE,Wind Onshore,3.3,1,0.0,0,0.0,0
+2018-06,MV,Biomasse,0.55,1,0.0,0,0.0,0
+2018-12,RP,Wasserkraft,0.0,0,0.045,1,0.0,0
+2019-03,BY,Photovoltaik,0.01,1,0.0,0,0.0,0
+2019-12,NI,Wind Onshore,0.0,0,0.6,1,0.0,0
+2020-04,AWZ,Wind Offshore,8.0,1,0.0,0,0.0,0
+2020-10,HE,Wasserkraft,0.9,1,0.0,0,0.0,0
+2020-12,BY,Biomasse,0.0,0,1.0,1,0.0,0
+2021-06,NW,Sonstige Erneuerbare,0.0,0,2.0,1,0.0,0
+2021-09,UNB,Photovoltaik,0.03,1,0.0,0,0.0,0
+2021-12,SH,Kernenergie,0.0,0,1400.0,1,0.0,0
+2022-04,NW,Photovoltaik,0.01,1,0.0,0,0.0,0
+2022-10,SL,Steinkohle,0.0,0,180.0,1,0.0,0
+2023-04,BW,Kernenergie,0.0,0,1310.0,1,0.0,0
+2023-04,BY,Kernenergie,0.0,0,1400.0,1,0.0,0
+2023-04,NI,Kernenergie,0.0,0,1360.0,1,0.0,0
+2023-08,BB,Photovoltaik,20.0,1,0.0,0,0.0,0
+2023-11,MV,Wind Offshore,6.0,1,0.0,0,0.0,0
+2024-02,AWZ,Wind Offshore,9.5,1,0.0,0,0.0,0
+2024-03,NW,Braunkohle,0.0,0,300.0,1,0.0,0
+2024-07,HH,Sonstige Konventionelle,1.0,1,0.0,0,0.0,0
+2024-10,HE,Photovoltaik,0.0,0,0.004,1,0.0,0
+2025-01,NW,Pumpspeicher,0.0,0,140.0,1,0.0,0
+2025-07,BB,Wind Onshore,4.2,1,0.0,0,0.0,0

@@ -38,7 +38,7 @@ SOURCE_COLUMNS = {  # normalised name -> MaStR column; missing optional columns 
     "lage": "Lage",
 }
 UNIT_COLUMNS = ("einheit", "tabelle", "bundesland", "status", "inbetriebnahme", "stilllegung", "netto_kw",
-                "energietraeger_mastr", "technologie", "hauptbrennstoff", "lage")
+                "energietraeger_mastr", "technologie", "hauptbrennstoff", "lage", "datum_unplausibel")
 SEED_COLUMNS = ("jahr_monat", "bundesland_kuerzel", "energietraeger", "zubau_mw", "anzahl_zubau", "abgang_mw",
                 "anzahl_abgang", "anfangsbestand_mw", "anfangsbestand_anzahl")
 STATUS_IN_PLANUNG = "In Planung"
@@ -89,7 +89,7 @@ def iter_units(sqlite_path: Path, chunksize: int = 500_000) -> Iterator[pd.DataF
 def _normalise(df: pd.DataFrame) -> pd.DataFrame:
     """Normalise one raw chunk. A non-empty date that does not parse or lies outside MIN_YEAR..MAX_YEAR counts as
     missing (this also keeps dates beyond the datetime64[ns] limit of 2262-04-11 from raising); the number of units
-    with such a date is stored in `attrs["datum_unplausibel"]` of the returned frame, which `aggregate` sums."""
+    with such a date is flagged in the boolean column `datum_unplausibel`, which `aggregate` sums."""
     out = df.copy()
     unplausibel = pd.Series(False, index=out.index)
     for col in ("inbetriebnahme", "stilllegung"):
@@ -101,9 +101,8 @@ def _normalise(df: pd.DataFrame) -> pd.DataFrame:
     out["netto_kw"] = pd.to_numeric(out["netto_kw"], errors="coerce").astype("float64")
     for col in ("bundesland", "status", "energietraeger_mastr", "technologie", "hauptbrennstoff", "lage"):
         out[col] = out[col].astype("string").str.strip().replace({"": pd.NA})
-    result = out[list(UNIT_COLUMNS)]
-    result.attrs["datum_unplausibel"] = int(unplausibel.sum())
-    return result
+    out["datum_unplausibel"] = unplausibel.astype(bool)
+    return out[list(UNIT_COLUMNS)]
 
 
 def load_mapping(path: Path) -> pd.DataFrame:
@@ -157,7 +156,7 @@ def aggregate(chunks: Iterable[pd.DataFrame], calendar_start: date, calendar_end
     parts: list[pd.DataFrame] = []
     for chunk in chunks:
         stats["einheiten"] += len(chunk)
-        stats["datum_unplausibel"] += int(chunk.attrs.get("datum_unplausibel", 0))
+        stats["datum_unplausibel"] += int(chunk["datum_unplausibel"].sum())
         m = map_energietraeger(chunk, mapping)
         stats["verworfen"] += int(m["verworfen"].sum())
         m = m[~m["verworfen"]]
