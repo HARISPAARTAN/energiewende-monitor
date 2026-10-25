@@ -42,7 +42,7 @@ def test_iter_units_reads_every_table_with_normalised_columns(units):
     assert len(units) == 61
     assert units["inbetriebnahme"].dtype == "datetime64[ns]"
     assert units["netto_kw"].dtype == "float64"
-    assert units.loc[units["einheit"] == "SEE900000000001", "lage"].item() == "Windkraft auf See"
+    assert units.loc[units["einheit"] == "SEE900000000001", "lage"].item() == "Windenergie auf See"
 
 
 def test_mapping_values_exist_in_dim_energietraeger(mapping):
@@ -58,8 +58,11 @@ def test_map_energietraeger(units, mapping):
     assert by.loc["SEE900000000011", "energietraeger"] == "Photovoltaik"
     assert by.loc["SEE900000000031", "energietraeger"] == "Braunkohle"
     assert by.loc["SEE900000000036", "energietraeger"] == "Sonstige Konventionelle"  # Mineralölprodukte
-    assert by.loc["SEE900000000037", "energietraeger"] == "Sonstige Konventionelle"  # unmapped fuel "Wasserstoff"
-    assert bool(by.loc["SEE900000000037", "unmapped"]) is True
+    assert by.loc["SEE900000000007", "energietraeger"] == "Wind Offshore"  # Bundesland Ausschließliche Wirtschaftszone
+    assert by.loc["SEE900000000037", "energietraeger"] == "Sonstige Konventionelle"  # Wasserstoff, mapped
+    assert bool(by.loc["SEE900000000037", "unmapped"]) is False
+    assert by.loc["SEE900000000077", "energietraeger"] == "Sonstige Konventionelle"  # "Druckentspannung", not in the mapping
+    assert bool(by.loc["SEE900000000077", "unmapped"]) is True
     assert bool(by.loc["SEE900000000052", "verworfen"]) is True  # Batterie
     assert by.loc["SEE900000000051", "energietraeger"] == "Pumpspeicher"
 
@@ -72,6 +75,64 @@ def test_mapping_fallback_rows_catch_null_lage_and_technologie(mapping):
     assert bool(by.loc["W", "unmapped"]) is False
     assert bool(by.loc["S", "verworfen"]) is True
     assert bool(by.loc["S", "unmapped"]) is False
+
+
+def test_awz_bundesland_maps_to_awz_and_wind_offshore(mapping):
+    units = _raw({"einheit": "A", "tabelle": "EinheitenWind", "bundesland": "Ausschließliche Wirtschaftszone",
+                  "lage": "Windenergie auf See", "netto_kw": "8000"},
+                 {"einheit": "K", "tabelle": "EinheitenWind", "bundesland": "Niedersachsen",
+                  "lage": "Windenergie auf See", "netto_kw": "5000"},  # offshore in the 12-mile zone keeps its Land
+                 {"einheit": "L", "tabelle": "EinheitenWind", "bundesland": "Niedersachsen",
+                  "lage": "Windenergie an Land", "netto_kw": "3000"})
+    by = mastr.map_energietraeger(units, mapping).set_index("einheit")
+    assert by["energietraeger"].to_dict() == {"A": "Wind Offshore", "K": "Wind Offshore", "L": "Wind Onshore"}
+    assert not by["unmapped"].any()
+    assert mastr._bundesland_kuerzel(units).tolist() == ["AWZ", "NI", "NI"]
+    seed, stats = mastr.aggregate([units], CAL_START, CAL_END, mapping)
+    assert stats["bundesland_unbekannt"] == 0
+    cells = seed.set_index(["bundesland_kuerzel", "energietraeger"])["zubau_mw"].to_dict()
+    assert cells == {("AWZ", "Wind Offshore"): 8.0, ("NI", "Wind Offshore"): 5.0, ("NI", "Wind Onshore"): 3.0}
+
+
+def test_offshore_rule_still_fills_a_null_bundesland():
+    units = _raw({"tabelle": "EinheitenWind", "bundesland": None, "lage": "Windenergie auf See"},
+                 {"tabelle": "EinheitenWind", "bundesland": None, "lage": "Windenergie an Land"})
+    assert mastr._bundesland_kuerzel(units).tolist() == ["AWZ", "UNB"]
+
+
+@pytest.mark.parametrize("tabelle, feld, wert, expected", [
+    ("EinheitenVerbrennung", "energietraeger_mastr", "Wasserstoff", "Sonstige Konventionelle"),
+    ("EinheitenVerbrennung", "energietraeger_mastr", "Erdgas", "Erdgas"),
+    ("EinheitenVerbrennung", "energietraeger_mastr", "Steinkohle", "Steinkohle"),
+    ("EinheitenVerbrennung", "energietraeger_mastr", "Braunkohle", "Braunkohle"),
+    ("EinheitenVerbrennung", "energietraeger_mastr", "Mineralölprodukte", "Sonstige Konventionelle"),
+    ("EinheitenVerbrennung", "energietraeger_mastr", "andere Gase", "Sonstige Konventionelle"),
+    ("EinheitenVerbrennung", "energietraeger_mastr", "nicht biogener Abfall", "Sonstige Konventionelle"),
+    ("EinheitenVerbrennung", "energietraeger_mastr", "Wärme", "Sonstige Konventionelle"),
+    ("EinheitenVerbrennung", "energietraeger_mastr", "Speicher", "Sonstige Konventionelle"),
+    ("EinheitenVerbrennung", "hauptbrennstoff", "Grubengas", "Sonstige Erneuerbare"),
+    ("EinheitenGeothermieGrubengasDruckentspannung", "energietraeger_mastr", "Grubengas", "Sonstige Erneuerbare"),
+    ("EinheitenGeothermieGrubengasDruckentspannung", "energietraeger_mastr", "Geothermie", "Sonstige Erneuerbare"),
+    ("EinheitenGeothermieGrubengasDruckentspannung", "energietraeger_mastr", "Solarthermie", "Sonstige Erneuerbare"),
+    ("EinheitenGeothermieGrubengasDruckentspannung", "energietraeger_mastr", "Druck aus Wasserleitungen", "Sonstige Erneuerbare"),
+    ("EinheitenGeothermieGrubengasDruckentspannung", "energietraeger_mastr", "Druck aus Gasleitungen", "Sonstige Konventionelle"),
+    ("EinheitenGeothermieGrubengasDruckentspannung", "energietraeger_mastr", "Klärschlamm", "Sonstige Konventionelle"),
+    ("EinheitenBiomasse", "hauptbrennstoff", "Klärgas", "Sonstige Erneuerbare"),
+    ("EinheitenBiomasse", "hauptbrennstoff", "Deponiegas", "Sonstige Erneuerbare"),
+    ("EinheitenBiomasse", "hauptbrennstoff", "Biogas", "Biomasse"),
+    ("EinheitenStromSpeicher", "technologie", "Pumpspeicher", "Pumpspeicher"),
+    ("EinheitenStromSpeicher", "technologie", "Wasserstoffspeicher", "VERWERFEN"),
+    ("EinheitenStromSpeicher", "technologie", "Druckluft", "VERWERFEN"),
+    ("EinheitenStromSpeicher", "technologie", "Schwungrad", "VERWERFEN"),
+])
+def test_every_value_of_the_real_profile_is_mapped(mapping, tabelle, feld, wert, expected):
+    """The values docs/mastr-profil.md lists for the 2026-10-25 export; none may end up unmapped."""
+    unit = {"tabelle": tabelle, feld: wert}
+    if feld == "hauptbrennstoff" and tabelle == "EinheitenVerbrennung":
+        unit["energietraeger_mastr"] = "andere Gase"
+    by = mastr.map_energietraeger(_raw(unit), mapping)
+    assert by.loc[0, "energietraeger"] == expected
+    assert bool(by.loc[0, "unmapped"]) is False
 
 
 @pytest.mark.parametrize("line, message", [
@@ -219,7 +280,8 @@ def test_committed_fixture_seed_is_current(sqlite_path, mapping):
 
 def test_profile_lists_distinct_values(sqlite_path):
     text = mastr.profile(mastr.iter_units(sqlite_path), source="fixture")
-    assert "EinheitenWind" in text and "Windkraft auf See" in text and "Bundesland NULL" in text
+    assert "EinheitenWind" in text and "Windenergie auf See" in text and "Bundesland NULL" in text
+    assert "### WindAnLandOderAufSee" in text
     assert "Einheiten: 10" in text  # EinheitenWind
     assert "| In Betrieb |" in text
     solar = text.split("## EinheitenSolar")[1].split("## ")[0]

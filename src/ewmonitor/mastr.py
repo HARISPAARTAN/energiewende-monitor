@@ -41,7 +41,7 @@ SOURCE_COLUMNS = {  # normalised name -> MaStR column; missing optional columns 
     "energietraeger_mastr": "Energietraeger",
     "technologie": "Technologie",
     "hauptbrennstoff": "Hauptbrennstoff",
-    "lage": "Lage",
+    "lage": "WindAnLandOderAufSee",  # the export's name; open-mastr keeps it, there is no column "Lage"
 }
 UNIT_COLUMNS = ("einheit", "tabelle", "bundesland", "status", "inbetriebnahme", "stilllegung", "netto_kw",
                 "energietraeger_mastr", "technologie", "hauptbrennstoff", "lage", "datum_unplausibel")
@@ -50,7 +50,7 @@ SEED_COLUMNS = ("jahr_monat", "bundesland_kuerzel", "energietraeger", "zubau_mw"
 STATUS_IN_PLANUNG = "In Planung"
 STATUS_ENDGUELTIG = "Endgültig stillgelegt"
 COUNTED_STATUS = ("In Betrieb", "Vorübergehend stillgelegt", STATUS_ENDGUELTIG)
-OFFSHORE_LAGE = "Windkraft auf See"
+OFFSHORE_LAGE = "Windenergie auf See"
 AWZ, UNBEKANNT = "AWZ", "UNB"
 FALLBACK = "Sonstige Konventionelle"
 VERWERFEN = "VERWERFEN"
@@ -63,6 +63,7 @@ BUNDESLAND_KUERZEL = {
     "Hessen": "HE", "Mecklenburg-Vorpommern": "MV", "Niedersachsen": "NI", "Nordrhein-Westfalen": "NW",
     "Rheinland-Pfalz": "RP", "Saarland": "SL", "Sachsen": "SN", "Sachsen-Anhalt": "ST", "Schleswig-Holstein": "SH",
     "Thüringen": "TH",
+    "Ausschließliche Wirtschaftszone": "AWZ",  # offshore turbines beyond the 12-mile zone carry this Bundesland
 }
 
 ATTRIBUTION = ("Datenquelle: Marktstammdatenregister der Bundesnetzagentur, Datenlizenz Deutschland – Namensnennung – "

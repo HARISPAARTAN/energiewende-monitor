@@ -11,7 +11,8 @@ are the whole fixture. tests/unit/test_mastr.py depends on them; the statistics 
 - vor_kalender_abgang = 1   SEE900000000032 (NW Steinkohle, stillgelegt 1988-12-31; no row at all)
 - inbetriebnahme_fehlt = 2  SEE900000000013 (SN Solar, 5 kW), SEE900000000067 (Wasser); both In Betrieb, no date
 - verworfen = 2             SEE900000000052, SEE900000000053 (Batterie; 053 also has no date)
-- unmapped = 1              SEE900000000037 (Energietraeger "Wasserstoff")
+- unmapped = 1              SEE900000000077 (Energietraeger "Druckentspannung": the real export says "Druck aus
+                            Gasleitungen" or "Druck aus Wasserleitungen"; it stands for a value MaStR adds later)
 - datum_unplausibel = 0, netto_unplausibel = 0, nach_kalender = 0, stilllegung_ohne_datum = 0
 
 Rule units the tests check by cell:
@@ -19,8 +20,12 @@ Rule units the tests check by cell:
 - SEE900000000010 (HE Wind, Vorübergehend stillgelegt with a DatumEndgueltigeStilllegung 2024-06-30):
   Zubau 2017-05, no Abgang, because only Endgültig stillgelegt units leave the stock
 
-Every other unit maps cleanly: all Wind units have a Lage, all Verbrennung and GSGK fuels are in the
-mapping, all other storage units are Pumpspeicher, no other unit has an empty Inbetriebnahmedatum, and
+Offshore wind: SEE900000000001 has no Bundesland (AWZ by the Lage rule), SEE900000000007 carries the real
+export value "Ausschließliche Wirtschaftszone" (AWZ by the Bundesland), SEE900000000006 lies in the 12-mile
+zone of Mecklenburg-Vorpommern (MV, Wind Offshore).
+
+Every other unit maps cleanly: all Wind units have a Lage, all other Verbrennung and GSGK fuels are in the
+mapping (SEE900000000037 "Wasserstoff" maps to Sonstige Konventionelle), all other storage units are Pumpspeicher, no other unit has an empty Inbetriebnahmedatum, and
 every other endgueltig stillgelegte unit has a Stilllegung on or after 1990-01-01.
 """
 
@@ -37,7 +42,7 @@ ZIP_PATH = OUT_DIR.parent / "xml" / "Gesamtdatenexport_fixture.zip"
 BASE_COLUMNS = ["EinheitMastrNummer", "Bundesland", "Nettonennleistung", "Bruttoleistung", "Inbetriebnahmedatum",
                 "EinheitBetriebsstatus", "DatumEndgueltigeStilllegung", "Energietraeger"]
 TABLE_EXTRA_COLUMNS = {  # open-mastr 1.0: Technologie is absent from Solar and Wasser
-    "EinheitenWind": ["Technologie", "Lage"],
+    "EinheitenWind": ["Technologie", "WindAnLandOderAufSee"],
     "EinheitenSolar": [],
     "EinheitenBiomasse": ["Technologie", "Hauptbrennstoff"],
     "EinheitenWasser": [],
@@ -54,20 +59,21 @@ P = "In Planung"
 
 # Columns of every row:
 #   EinheitMastrNummer, Bundesland, Netto kW, Brutto kW, Inbetriebnahme, Status, Stilllegung, Energietraeger,
-#   Technologie, Hauptbrennstoff, Lage
-# "" is an empty (NULL) value; Technologie, Hauptbrennstoff and Lage are written only where the table has them.
+#   Technologie, Hauptbrennstoff, WindAnLandOderAufSee (the Lage of a wind unit)
+# "" is an empty (NULL) value; Technologie, Hauptbrennstoff and WindAnLandOderAufSee are written only where the
+# table has them.
 UNITS = {
     "EinheitenWind": [
-        ("SEE900000000001", "", "8000", "8000", "2020-04-15", B, "", "Wind", "Horizontalläufer", "", "Windkraft auf See"),
-        ("SEE900000000002", "Niedersachsen", "3000", "3050", "2012-11-02", B, "", "Wind", "Horizontalläufer", "", "Windkraft an Land"),
-        ("SEE900000000003", "Brandenburg", "2000", "2000", "", P, "", "Wind", "Horizontalläufer", "", "Windkraft an Land"),
-        ("SEE900000000004", "Schleswig-Holstein", "2300", "2350", "2016-08-10", B, "", "Wind", "Horizontalläufer", "", "Windkraft an Land"),
-        ("SEE900000000005", "Niedersachsen", "600", "600", "1998-05-20", E, "2019-12-31", "Wind", "Horizontalläufer", "", "Windkraft an Land"),
-        ("SEE900000000006", "Mecklenburg-Vorpommern", "6000", "6150", "2023-11-30", B, "", "Wind", "Horizontalläufer", "", "Windkraft auf See"),
-        ("SEE900000000007", "", "9500", "9500", "2024-02-01", B, "", "Wind", "Horizontalläufer", "", "Windkraft auf See"),
-        ("SEE900000000008", "Sachsen-Anhalt", "1500", "1500", "2005-03-15", V, "", "Wind", "Horizontalläufer", "", "Windkraft an Land"),
-        ("SEE900000000009", "Brandenburg", "4200", "4200", "2025-07-01", B, "", "Wind", "Horizontalläufer", "", "Windkraft an Land"),
-        ("SEE900000000010", "Hessen", "3300", "3400", "2017-05-12", V, "2024-06-30", "Wind", "Horizontalläufer", "", "Windkraft an Land"),
+        ("SEE900000000001", "", "8000", "8000", "2020-04-15", B, "", "Wind", "Horizontalläufer", "", "Windenergie auf See"),
+        ("SEE900000000002", "Niedersachsen", "3000", "3050", "2012-11-02", B, "", "Wind", "Horizontalläufer", "", "Windenergie an Land"),
+        ("SEE900000000003", "Brandenburg", "2000", "2000", "", P, "", "Wind", "Horizontalläufer", "", "Windenergie an Land"),
+        ("SEE900000000004", "Schleswig-Holstein", "2300", "2350", "2016-08-10", B, "", "Wind", "Horizontalläufer", "", "Windenergie an Land"),
+        ("SEE900000000005", "Niedersachsen", "600", "600", "1998-05-20", E, "2019-12-31", "Wind", "Horizontalläufer", "", "Windenergie an Land"),
+        ("SEE900000000006", "Mecklenburg-Vorpommern", "6000", "6150", "2023-11-30", B, "", "Wind", "Horizontalläufer", "", "Windenergie auf See"),
+        ("SEE900000000007", "Ausschließliche Wirtschaftszone", "9500", "9500", "2024-02-01", B, "", "Wind", "Horizontalläufer", "", "Windenergie auf See"),
+        ("SEE900000000008", "Sachsen-Anhalt", "1500", "1500", "2005-03-15", V, "", "Wind", "Horizontalläufer", "", "Windenergie an Land"),
+        ("SEE900000000009", "Brandenburg", "4200", "4200", "2025-07-01", B, "", "Wind", "Horizontalläufer", "", "Windenergie an Land"),
+        ("SEE900000000010", "Hessen", "3300", "3400", "2017-05-12", V, "2024-06-30", "Wind", "Horizontalläufer", "", "Windenergie an Land"),
     ],
     "EinheitenSolar": [
         ("SEE900000000011", "Bayern", "9.9", "10.5", "2019-03-01", B, "", "Solare Strahlungsenergie", "", "", ""),
@@ -136,7 +142,7 @@ UNITS = {
     ],
 }
 
-ROW_FIELDS = BASE_COLUMNS + ["Technologie", "Hauptbrennstoff", "Lage"]
+ROW_FIELDS = BASE_COLUMNS + ["Technologie", "Hauptbrennstoff", "WindAnLandOderAufSee"]
 
 
 def main() -> None:
