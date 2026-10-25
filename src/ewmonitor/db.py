@@ -32,10 +32,16 @@ def ensure_database(cfg: DbConfig) -> None:
 
 
 def run_sql_file(con: pyodbc.Connection, path: Path, *params) -> None:
-    """Execute every GO batch of a script; params apply to each batch (use them only in single-batch scripts)."""
-    for batch in split_batches(Path(path).read_text(encoding="utf-8")):
-        con.execute(batch, *params)
-    con.commit()
+    """Execute every GO batch of a script in one transaction; params apply to each batch (use them only in
+    single-batch scripts). On any failure the transaction is rolled back and the error re-raised."""
+    batches = split_batches(Path(path).read_text(encoding="utf-8"))
+    try:
+        for batch in batches:
+            con.execute(batch, *params)
+        con.commit()
+    except Exception:
+        con.rollback()
+        raise
     log.info("ran %s", Path(path).name)
 
 
@@ -68,9 +74,15 @@ def bulk_insert(
     placeholders = ", ".join("?" for _ in columns)
     sql = f"INSERT INTO {table} ({', '.join(columns)}) VALUES ({placeholders})"
     cur = con.cursor()
-    cur.fast_executemany = True
-    for i in range(0, len(rows), chunk):
-        cur.executemany(sql, rows[i : i + chunk])
-    con.commit()
+    try:
+        cur.fast_executemany = True
+        for i in range(0, len(rows), chunk):
+            cur.executemany(sql, rows[i : i + chunk])
+        con.commit()
+    except Exception:
+        con.rollback()
+        raise
+    finally:
+        cur.close()
     log.info("inserted %d rows into %s", len(rows), table)
     return len(rows)
