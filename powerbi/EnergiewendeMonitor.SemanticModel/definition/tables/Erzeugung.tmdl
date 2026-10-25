@@ -1,69 +1,77 @@
-table v_erzeugung
+/// Net electricity generation per region, carrier and quarter-hour (SMARD).
+table Erzeugung
 	lineageTag: fc9be076-cd10-5792-af10-12a6ad9428ad
 
-	column region_key
+	column 'Region Key'
 		dataType: int64
 		formatString: 0
+		isHidden
 		lineageTag: d4565dab-7483-588d-bbda-05c2d2faecdd
-		summarizeBy: sum
+		summarizeBy: none
 		sourceColumn: region_key
 
 		annotation SummarizationSetBy = Automatic
 
-	column energietraeger_key
+	column 'Energieträger Key'
 		dataType: int64
 		formatString: 0
+		isHidden
 		lineageTag: 9a022826-2ad4-560d-ad6a-7832b5edba05
-		summarizeBy: sum
+		summarizeBy: none
 		sourceColumn: energietraeger_key
 
 		annotation SummarizationSetBy = Automatic
 
-	column ts_utc
+	column 'Zeitstempel UTC'
 		dataType: dateTime
 		formatString: General Date
+		isHidden
 		lineageTag: 28c3effe-9654-53fa-883e-93c958e1ba79
 		summarizeBy: none
 		sourceColumn: ts_utc
 
 		annotation SummarizationSetBy = Automatic
 
-	column datum_key
+	column 'Datum Key'
 		dataType: int64
 		formatString: 0
+		isHidden
 		lineageTag: 5bdf3423-1949-529d-ac84-824853e94b02
-		summarizeBy: sum
+		summarizeBy: none
 		sourceColumn: datum_key
 
 		annotation SummarizationSetBy = Automatic
 
-	column zeit_key
+	column 'Zeit Key'
 		dataType: int64
 		formatString: 0
+		isHidden
 		lineageTag: 698bbd83-f502-5c2e-ac3f-2946b98b9661
-		summarizeBy: sum
+		summarizeBy: none
 		sourceColumn: zeit_key
 
 		annotation SummarizationSetBy = Automatic
 
-	column aufloesung_min
+	column 'Auflösung (min)'
 		dataType: int64
 		formatString: 0
+		isHidden
 		lineageTag: 879eb7cd-edb0-5cf8-9c4d-9b13db851b21
-		summarizeBy: sum
+		summarizeBy: none
 		sourceColumn: aufloesung_min
 
 		annotation SummarizationSetBy = Automatic
 
-	column erzeugung_mwh
+	column 'Erzeugung MWh'
 		dataType: decimal
+		isHidden
 		lineageTag: 03d1eadc-44c7-52d6-ab63-25fe578b6c1b
 		summarizeBy: sum
 		sourceColumn: erzeugung_mwh
 
 		annotation SummarizationSetBy = Automatic
 
-	partition v_erzeugung = m
+	partition Erzeugung = m
 		mode: import
 		source =
 				let

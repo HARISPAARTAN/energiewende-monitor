@@ -1,16 +1,18 @@
-table v_dim_region
+/// SMARD regions (Germany, control areas, bidding zones).
+table Region
 	lineageTag: f3c8687b-2dee-5ee2-862d-fd944dda6d59
 
-	column region_key
+	column 'Region Key'
 		dataType: int64
 		formatString: 0
+		isHidden
 		lineageTag: 838caf57-8192-570a-a527-0b0c46ac4c15
-		summarizeBy: sum
+		summarizeBy: none
 		sourceColumn: region_key
 
 		annotation SummarizationSetBy = Automatic
 
-	column smard_code
+	column 'SMARD-Code'
 		dataType: string
 		lineageTag: d57fe488-9ccd-5f83-a3c9-c6f23e18806f
 		summarizeBy: none
@@ -18,7 +20,7 @@ table v_dim_region
 
 		annotation SummarizationSetBy = Automatic
 
-	column name_de
+	column Region
 		dataType: string
 		lineageTag: 62fe5b0c-49d2-5909-8d7b-252622270f74
 		summarizeBy: none
@@ -26,7 +28,7 @@ table v_dim_region
 
 		annotation SummarizationSetBy = Automatic
 
-	column name_en
+	column 'Region (EN)'
 		dataType: string
 		lineageTag: fb17d697-d5ed-5ea9-af21-f887dbd97550
 		summarizeBy: none
@@ -34,7 +36,7 @@ table v_dim_region
 
 		annotation SummarizationSetBy = Automatic
 
-	column typ_de
+	column Typ
 		dataType: string
 		lineageTag: 6d59fa67-15f6-55ea-ba6d-aa0f3839fd0d
 		summarizeBy: none
@@ -42,7 +44,7 @@ table v_dim_region
 
 		annotation SummarizationSetBy = Automatic
 
-	column typ_en
+	column 'Typ (EN)'
 		dataType: string
 		lineageTag: e4de7b07-8849-5ee1-a73e-608cdc0cb5c1
 		summarizeBy: none
@@ -50,7 +52,7 @@ table v_dim_region
 
 		annotation SummarizationSetBy = Automatic
 
-	partition v_dim_region = m
+	partition Region = m
 		mode: import
 		source =
 				let

@@ -1,0 +1,174 @@
+/// Measure table: all report measures live here; the single hidden column only anchors the table.
+table Kennzahlen
+	lineageTag: 92f95086-b97b-5b46-8af4-9650a8e05c7a
+
+	/// Net electricity generation in the filter context, MWh (SMARD quarter-hours summed).
+	measure 'Erzeugung (MWh)' = SUM(Erzeugung[Erzeugung MWh])
+		formatString: #,0
+		displayFolder: Erzeugung
+		lineageTag: f6e20a74-cb1a-5217-95bc-f3b2d8cd78ec
+
+	/// Generation of renewable carriers only.
+	measure 'Erzeugung Erneuerbar (MWh)' = CALCULATE([Erzeugung (MWh)], Energieträger[Kategorie] = "Erneuerbar")
+		formatString: #,0
+		displayFolder: Erzeugung
+		lineageTag: e511cc3e-f86b-5985-8079-72218f4b122a
+
+	/// Share of renewables in net generation.
+	measure 'EE-Anteil %' = DIVIDE([Erzeugung Erneuerbar (MWh)], [Erzeugung (MWh)])
+		formatString: 0.0 %
+		displayFolder: Erzeugung
+		lineageTag: 9a51ed0e-9772-549e-a265-221d42b44eb8
+
+	/// Grid load, MWh.
+	measure 'Netzlast (MWh)' = SUM(Last[Netzlast MWh])
+		formatString: #,0
+		displayFolder: Last
+		lineageTag: a166ace2-612c-5acf-bbb6-c2ff5940472f
+
+	/// Residual load (grid load minus wind and solar), MWh.
+	measure 'Residuallast (MWh)' = SUM(Last[Residuallast MWh])
+		formatString: #,0
+		displayFolder: Last
+		lineageTag: b96a93ad-8720-59fb-870a-1b6b8685c64a
+
+	/// Lowest quarter-hour residual load in context.
+	measure 'Residuallast Minimum (MWh/15 min)' = MIN(Last[Residuallast MWh])
+		formatString: #,0.0
+		displayFolder: Last
+		lineageTag: 60fee845-237d-511d-9f7f-630d7466939b
+
+	/// Average quarter-hour residual load in context.
+	measure 'Residuallast Ø (MWh/15 min)' = AVERAGE(Last[Residuallast MWh])
+		formatString: #,0.0
+		displayFolder: Last
+		lineageTag: ffad6c2a-f0ac-554c-9541-14d870015dff
+
+	/// Average hourly day-ahead price, EUR/MWh.
+	measure 'Day-Ahead Ø (€/MWh)' = AVERAGE(Preis[Day-Ahead €/MWh])
+		formatString: #,0.00 "€"
+		displayFolder: Preise
+		lineageTag: eea3b989-6fb2-5a5d-b163-08cd7138773f
+
+	/// Highest hourly day-ahead price in context.
+	measure 'Day-Ahead Max (€/MWh)' = MAX(Preis[Day-Ahead €/MWh])
+		formatString: #,0.00 "€"
+		displayFolder: Preise
+		lineageTag: 4f4fb8f8-1934-50ff-b0e1-63c71dddf167
+
+	/// Lowest hourly day-ahead price in context.
+	measure 'Day-Ahead Min (€/MWh)' = MIN(Preis[Day-Ahead €/MWh])
+		formatString: #,0.00 "€"
+		displayFolder: Preise
+		lineageTag: fc0e0283-5b73-503c-a756-d1efba5c63a2
+
+	/// Number of hours with a negative day-ahead price.
+	measure 'Negative Preisstunden' = CALCULATE(COUNTROWS(Preis), Preis[Day-Ahead €/MWh] < 0)
+		formatString: #,0
+		displayFolder: Preise
+		lineageTag: 396f620a-7719-5869-9352-1aadfd55933b
+
+	/// Generation in the same period one year earlier.
+	measure 'Erzeugung Vorjahr (MWh)' = CALCULATE([Erzeugung (MWh)], SAMEPERIODLASTYEAR(Datum[Datum]))
+		formatString: #,0
+		displayFolder: Erzeugung
+		lineageTag: 4f9750fa-b82f-53c8-8c12-a20652c68ed7
+
+	/// Year-over-year change of generation.
+	measure 'Erzeugung Δ Vorjahr %' = DIVIDE([Erzeugung (MWh)] - [Erzeugung Vorjahr (MWh)], [Erzeugung Vorjahr (MWh)])
+		formatString: +0.0 %;-0.0 %;0.0 %
+		displayFolder: Erzeugung
+		lineageTag: 0dcb8120-e983-5cda-b48b-b9b84067fa5e
+
+	/// Renewables share in the same period one year earlier.
+	measure 'EE-Anteil Vorjahr %' = CALCULATE([EE-Anteil %], SAMEPERIODLASTYEAR(Datum[Datum]))
+		formatString: 0.0 %
+		displayFolder: Erzeugung
+		lineageTag: 6c4e0c8a-3f7c-552b-a49e-81b33dddb8f0
+
+	/// Change of the renewables share in percentage points.
+	measure 'EE-Anteil Δ Vorjahr (pp)' = ([EE-Anteil %] - [EE-Anteil Vorjahr %]) * 100
+		formatString: +0.0 "pp";-0.0 "pp";0.0 "pp"
+		displayFolder: Erzeugung
+		lineageTag: de1f303b-ad4f-52bd-9d72-59193c7ca06f
+
+	/// Grid load one month earlier.
+	measure 'Netzlast Vormonat (MWh)' = CALCULATE([Netzlast (MWh)], DATEADD(Datum[Datum], -1, MONTH))
+		formatString: #,0
+		displayFolder: Last
+		lineageTag: 692fa303-db7e-5a67-a39e-abba9cfbfe0c
+
+	/// Month-over-month change of grid load.
+	measure 'Netzlast Δ Vormonat %' = DIVIDE([Netzlast (MWh)] - [Netzlast Vormonat (MWh)], [Netzlast Vormonat (MWh)])
+		formatString: +0.0 %;-0.0 %;0.0 %
+		displayFolder: Last
+		lineageTag: 17cf731b-a29d-5075-a995-06a42f28813b
+
+	/// Capacity commissioned in the period, MW (Marktstammdatenregister).
+	measure 'Zubau (MW)' = SUM(Kapazität[Zubau MW])
+		formatString: #,0
+		displayFolder: Ausbau
+		lineageTag: f7f4171d-eafe-5ff2-94e2-3c744b170c45
+
+	/// Capacity commissioned year to date, MW.
+	measure 'Zubau YTD (MW)' = TOTALYTD([Zubau (MW)], Datum[Datum])
+		formatString: #,0
+		displayFolder: Ausbau
+		lineageTag: 27ceabb2-29a4-52c8-aea0-f0c95a0efc67
+
+	/// Installed capacity at the last month with capacity data on or before the end of the selected period
+	/// (month-end stock = Anfangsbestand + Zubau - Abgang).
+	measure 'Installierte Leistung (MW)' =
+			VAR LetzterMonat = CALCULATE(MAX(Kapazität[Datum Key]), REMOVEFILTERS(Datum), KEEPFILTERS(Datum[Datum] <= MAX(Datum[Datum])))
+			RETURN CALCULATE(SUM(Kapazität[Bestand MW]), REMOVEFILTERS(Datum), Kapazität[Datum Key] = LetzterMonat)
+		formatString: #,0
+		displayFolder: Ausbau
+		lineageTag: aa3cf45d-df42-50c3-93e3-81a3cb981224
+
+	/// Full-load hours: generation in the period divided by the average month-end installed capacity of the period.
+	/// Grid-reserve and emergency units are included (see KPI glossary).
+	measure 'Volllaststunden (h)' =
+			VAR Monate = CALCULATETABLE(VALUES(Kapazität[Datum Key]), REMOVEFILTERS(Datum), KEEPFILTERS(Datum[Datum] >= MIN(Datum[Datum]) && Datum[Datum] <= MAX(Datum[Datum])))
+			VAR Mittel = CALCULATE(AVERAGEX(Monate, CALCULATE(SUM(Kapazität[Bestand MW]))), REMOVEFILTERS(Datum))
+			RETURN DIVIDE([Erzeugung (MWh)], Mittel)
+		formatString: #,0
+		displayFolder: Ausbau
+		lineageTag: 9c724651-2c63-5792-b093-bec58146ee8c
+
+	/// Number of units commissioned in the period.
+	measure 'Anzahl Einheiten Zubau' = SUM(Kapazität[Anzahl Zubau])
+		formatString: #,0
+		displayFolder: Ausbau
+		lineageTag: caed6983-4964-52e4-8216-267ad0fdce1e
+
+	/// Newest SMARD timestamp loaded, UTC.
+	measure Datenstand = FORMAT(CALCULATE(MAX(Erzeugung[Zeitstempel UTC]), REMOVEFILTERS()), "dd.MM.yyyy HH:mm") & " UTC"
+		displayFolder: Qualität
+		lineageTag: b8396b1f-0492-5f58-a243-40ddcc9adfbd
+
+	/// Row count of the four fact tables in context, for the data-quality page.
+	measure Zeilen = COUNTROWS(Erzeugung) + COUNTROWS(Last) + COUNTROWS(Preis) + COUNTROWS(Kapazität)
+		formatString: #,0
+		displayFolder: Qualität
+		lineageTag: 7ec0f21b-1a9e-5d9c-a3bf-802a95adf3ee
+
+	/// Newest capacity month loaded (yyyy-mm-01), from the Marktstammdatenregister export.
+	measure 'Datenstand MaStR' = FORMAT(CALCULATE(MAX(Kapazität[Datum Key]), REMOVEFILTERS()), "0000-00-00")
+		displayFolder: Qualität
+		lineageTag: e294e8e1-0e53-502f-8789-e0d3b302aff0
+
+	column Spalte
+		dataType: int64
+		isHidden
+		summarizeBy: none
+		isNameInferred
+		sourceColumn: [Spalte]
+		lineageTag: 45ea69c2-ce1d-52f6-a72b-c61dc485f0c3
+
+		annotation SummarizationSetBy = Automatic
+
+	partition Kennzahlen = calculated
+		mode: import
+		source = {BLANK()}
+
+	annotation PBI_Id = efd41d5a22ac59059544104cd743aefb

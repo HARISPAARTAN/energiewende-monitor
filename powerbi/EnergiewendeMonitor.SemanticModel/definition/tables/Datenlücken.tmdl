@@ -1,7 +1,8 @@
-table v_dq_luecken
+/// Expected versus loaded quarter-hours per region, carrier and month (data quality).
+table Datenlücken
 	lineageTag: 1d6223fc-56d8-5be0-b6d6-2d133c246bf3
 
-	column region
+	column Region
 		dataType: string
 		lineageTag: d887bcd3-f566-54d0-ac47-bf6c90ef9f05
 		summarizeBy: none
@@ -9,7 +10,7 @@ table v_dq_luecken
 
 		annotation SummarizationSetBy = Automatic
 
-	column energietraeger
+	column Energieträger
 		dataType: string
 		lineageTag: 904e2425-f7d3-5c78-8e4c-47d05a8f7e35
 		summarizeBy: none
@@ -17,7 +18,7 @@ table v_dq_luecken
 
 		annotation SummarizationSetBy = Automatic
 
-	column jahr_monat
+	column 'Jahr-Monat'
 		dataType: string
 		lineageTag: 2dba1fa4-343e-53de-9a5f-fb1c52253745
 		summarizeBy: none
@@ -25,7 +26,7 @@ table v_dq_luecken
 
 		annotation SummarizationSetBy = Automatic
 
-	column erwartet
+	column Erwartet
 		dataType: int64
 		formatString: 0
 		lineageTag: f4a824b2-8e4b-5097-aa66-25d17d7c986e
@@ -34,7 +35,7 @@ table v_dq_luecken
 
 		annotation SummarizationSetBy = Automatic
 
-	column vorhanden
+	column Vorhanden
 		dataType: int64
 		formatString: 0
 		lineageTag: 2327c268-8d9b-5128-9ef7-57aaa0c2f872
@@ -43,7 +44,7 @@ table v_dq_luecken
 
 		annotation SummarizationSetBy = Automatic
 
-	column fehlend
+	column Fehlend
 		dataType: int64
 		formatString: 0
 		lineageTag: bee51f60-4794-5490-a439-650efb5b24b3
@@ -52,7 +53,7 @@ table v_dq_luecken
 
 		annotation SummarizationSetBy = Automatic
 
-	partition v_dq_luecken = m
+	partition Datenlücken = m
 		mode: import
 		source =
 				let

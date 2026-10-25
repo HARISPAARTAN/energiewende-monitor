@@ -9,21 +9,24 @@ model Model
 
 annotation __PBI_TimeIntelligenceEnabled = 0
 
-annotation PBI_QueryOrder = ["v_dim_datum","v_dim_zeit","v_dim_energietraeger","v_dim_region","v_dim_bundesland","v_erzeugung","v_last","v_preis","v_preis_last_stunde","v_negative_preisphasen","v_dq_luecken","v_kapazitaet"]
+annotation PBI_QueryOrder = ["Datum","Zeit","Energieträger","Region","Bundesland","Erzeugung","Last","Preis","Last Stunde","Preisphasen","Datenlücken","Kapazität"]
 
 annotation PBI_ProTooling = ["DevMode"]
 
-ref table v_dim_datum
-ref table v_dim_zeit
-ref table v_dim_energietraeger
-ref table v_dim_region
-ref table v_dim_bundesland
-ref table v_erzeugung
-ref table v_last
-ref table v_preis
-ref table v_preis_last_stunde
-ref table v_negative_preisphasen
-ref table v_dq_luecken
-ref table v_kapazitaet
+ref table Datum
+ref table Zeit
+ref table Energieträger
+ref table Region
+ref table Bundesland
+ref table Erzeugung
+ref table Last
+ref table Preis
+ref table 'Last Stunde'
+ref table Preisphasen
+ref table Datenlücken
+ref table Kapazität
+ref table Kennzahlen
+ref table 'Kennzahl-Auswahl'
+ref role 'Landesbehörde BW'
 
 ref cultureInfo de-DE

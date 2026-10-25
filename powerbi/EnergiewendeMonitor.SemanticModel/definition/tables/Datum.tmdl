@@ -1,68 +1,74 @@
-table v_dim_datum
+/// Calendar dimension (one row per day) and the model's date table.
+table Datum
 	lineageTag: 9842f9df-71a4-5f4a-9978-f2ef8db1fa48
+	dataCategory: Time
 
-	column datum_key
+	column 'Datum Key'
 		dataType: int64
 		formatString: 0
+		isHidden
 		lineageTag: 7c4fe36f-9a23-5f99-9d1e-2d2d466a0d64
-		summarizeBy: sum
+		summarizeBy: none
 		sourceColumn: datum_key
 
 		annotation SummarizationSetBy = Automatic
 
-	column datum
+	column Datum
 		dataType: dateTime
-		formatString: General Date
+		formatString: dd.MM.yyyy
+		isKey
 		lineageTag: 362ad0d2-8e7a-5ba7-94ec-dff23ca03b59
 		summarizeBy: none
 		sourceColumn: datum
 
 		annotation SummarizationSetBy = Automatic
 
-	column jahr
+	column Jahr
 		dataType: int64
 		formatString: 0
 		lineageTag: 84a47610-a90b-550a-b852-7874f4a713cc
-		summarizeBy: sum
+		summarizeBy: none
 		sourceColumn: jahr
 
 		annotation SummarizationSetBy = Automatic
 
-	column quartal
+	column Quartal
 		dataType: int64
 		formatString: 0
 		lineageTag: 8bdaa7fe-5626-5555-a1ba-f802be7f8d13
-		summarizeBy: sum
+		summarizeBy: none
 		sourceColumn: quartal
 
 		annotation SummarizationSetBy = Automatic
 
-	column monat
+	column Monat
 		dataType: int64
 		formatString: 0
 		lineageTag: fc11a36c-bb74-5af7-ae4c-8b987d91f3de
-		summarizeBy: sum
+		summarizeBy: none
 		sourceColumn: monat
 
 		annotation SummarizationSetBy = Automatic
 
-	column monat_name_de
+	column 'Monat Name'
 		dataType: string
 		lineageTag: 1b2add8a-ab72-5d86-bd48-8e6f927cfbc9
 		summarizeBy: none
 		sourceColumn: monat_name_de
+		sortByColumn: Monat
 
 		annotation SummarizationSetBy = Automatic
 
-	column monat_name_en
+	column 'Monat Name (EN)'
 		dataType: string
 		lineageTag: 80c83ad0-aca1-5c9e-9c67-0f4ea9dfd8a3
 		summarizeBy: none
 		sourceColumn: monat_name_en
+		sortByColumn: Monat
 
 		annotation SummarizationSetBy = Automatic
 
-	column jahr_monat
+	column 'Jahr-Monat'
 		dataType: string
 		lineageTag: cfa9e426-2bfe-5692-b058-1ec59c385257
 		summarizeBy: none
@@ -70,59 +76,61 @@ table v_dim_datum
 
 		annotation SummarizationSetBy = Automatic
 
-	column iso_jahr
+	column 'ISO-Jahr'
 		dataType: int64
 		formatString: 0
 		lineageTag: 3b40d90f-23dd-5146-8ff0-2e37d91b1206
-		summarizeBy: sum
+		summarizeBy: none
 		sourceColumn: iso_jahr
 
 		annotation SummarizationSetBy = Automatic
 
-	column iso_woche
+	column 'ISO-Woche'
 		dataType: int64
 		formatString: 0
 		lineageTag: 2de7215e-fa7f-59fa-a535-abb3c292dc05
-		summarizeBy: sum
+		summarizeBy: none
 		sourceColumn: iso_woche
 
 		annotation SummarizationSetBy = Automatic
 
-	column tag
+	column Tag
 		dataType: int64
 		formatString: 0
 		lineageTag: f1186965-ed74-5532-a888-7d9447551266
-		summarizeBy: sum
+		summarizeBy: none
 		sourceColumn: tag
 
 		annotation SummarizationSetBy = Automatic
 
-	column wochentag_nr
+	column 'Wochentag Nr'
 		dataType: int64
 		formatString: 0
 		lineageTag: 9aa376d3-0822-5fc9-b790-a4d4557e19bd
-		summarizeBy: sum
+		summarizeBy: none
 		sourceColumn: wochentag_nr
 
 		annotation SummarizationSetBy = Automatic
 
-	column wochentag_de
+	column Wochentag
 		dataType: string
 		lineageTag: 2a847b16-597e-5cf7-94af-e8a8c652af4e
 		summarizeBy: none
 		sourceColumn: wochentag_de
+		sortByColumn: 'Wochentag Nr'
 
 		annotation SummarizationSetBy = Automatic
 
-	column wochentag_en
+	column 'Wochentag (EN)'
 		dataType: string
 		lineageTag: 3be9c931-5d87-5729-94fe-349a95adbccd
 		summarizeBy: none
 		sourceColumn: wochentag_en
+		sortByColumn: 'Wochentag Nr'
 
 		annotation SummarizationSetBy = Automatic
 
-	column ist_wochenende
+	column Wochenende
 		dataType: boolean
 		lineageTag: c72c8946-ea33-5044-afd2-592463a2d15f
 		summarizeBy: none
@@ -130,7 +138,7 @@ table v_dim_datum
 
 		annotation SummarizationSetBy = Automatic
 
-	column saison_de
+	column Saison
 		dataType: string
 		lineageTag: f00a3e02-fcea-598a-8c31-6aebad5d10db
 		summarizeBy: none
@@ -138,16 +146,36 @@ table v_dim_datum
 
 		annotation SummarizationSetBy = Automatic
 
-	column viertelstunden
+	column Viertelstunden
 		dataType: int64
 		formatString: 0
+		isHidden
 		lineageTag: d293a5c1-6e07-588c-96c7-1986085f1dcd
-		summarizeBy: sum
+		summarizeBy: none
 		sourceColumn: viertelstunden
 
 		annotation SummarizationSetBy = Automatic
 
-	partition v_dim_datum = m
+	hierarchy Kalender
+		lineageTag: 702fc796-e642-52cf-b20d-28ee55c063f7
+
+		level Jahr
+			lineageTag: a98f63bd-fde3-5354-aec3-6598c478a3bf
+			column: Jahr
+
+		level Quartal
+			lineageTag: f231a54a-3464-5045-a052-138d5d5adc9b
+			column: Quartal
+
+		level 'Monat Name'
+			lineageTag: 6052e373-c1e1-5fec-8e2b-400afb78436c
+			column: 'Monat Name'
+
+		level Datum
+			lineageTag: f1465200-303d-5b5b-85e7-2c9ec409a987
+			column: Datum
+
+	partition Datum = m
 		mode: import
 		source =
 				let

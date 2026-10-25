@@ -1,41 +1,46 @@
-table v_dim_energietraeger
+/// Generation carriers with category and report colour.
+table Energieträger
 	lineageTag: 5b9b7790-699d-5c1d-a780-d515f049566d
 
-	column energietraeger_key
+	column 'Energieträger Key'
 		dataType: int64
 		formatString: 0
+		isHidden
 		lineageTag: 92d12890-e70e-599f-b127-27516aba09e2
-		summarizeBy: sum
+		summarizeBy: none
 		sourceColumn: energietraeger_key
 
 		annotation SummarizationSetBy = Automatic
 
-	column smard_filter_id
+	column 'SMARD-Filter'
 		dataType: int64
 		formatString: 0
+		isHidden
 		lineageTag: 9442bff3-bc1d-5f38-b681-7dfa38aaeab1
-		summarizeBy: sum
+		summarizeBy: none
 		sourceColumn: smard_filter_id
 
 		annotation SummarizationSetBy = Automatic
 
-	column name_de
+	column Energieträger
 		dataType: string
 		lineageTag: 5719b9b1-9f2d-5189-bdcb-5681a4011f29
 		summarizeBy: none
 		sourceColumn: name_de
+		sortByColumn: Sortierung
 
 		annotation SummarizationSetBy = Automatic
 
-	column name_en
+	column 'Energieträger (EN)'
 		dataType: string
 		lineageTag: c4f1a997-54c4-5724-b304-deae6f7a2dd7
 		summarizeBy: none
 		sourceColumn: name_en
+		sortByColumn: Sortierung
 
 		annotation SummarizationSetBy = Automatic
 
-	column kategorie_de
+	column Kategorie
 		dataType: string
 		lineageTag: 70cd89fa-28b1-51b2-a6bc-bd8a2ad7feea
 		summarizeBy: none
@@ -43,7 +48,7 @@ table v_dim_energietraeger
 
 		annotation SummarizationSetBy = Automatic
 
-	column kategorie_en
+	column 'Kategorie (EN)'
 		dataType: string
 		lineageTag: 66e9854e-2b02-5ef6-ad67-90efec144510
 		summarizeBy: none
@@ -51,16 +56,17 @@ table v_dim_energietraeger
 
 		annotation SummarizationSetBy = Automatic
 
-	column sortierung
+	column Sortierung
 		dataType: int64
 		formatString: 0
+		isHidden
 		lineageTag: 4f8d71a2-cf6b-5d2a-a6b3-8ade58e5a6a9
-		summarizeBy: sum
+		summarizeBy: none
 		sourceColumn: sortierung
 
 		annotation SummarizationSetBy = Automatic
 
-	column farbe_hex
+	column Farbe
 		dataType: string
 		lineageTag: 658e33de-0e39-561b-a7c2-e0a23e267d31
 		summarizeBy: none
@@ -68,7 +74,7 @@ table v_dim_energietraeger
 
 		annotation SummarizationSetBy = Automatic
 
-	partition v_dim_energietraeger = m
+	partition Energieträger = m
 		mode: import
 		source =
 				let

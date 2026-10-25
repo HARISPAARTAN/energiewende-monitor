@@ -1,16 +1,18 @@
-table v_preis_last_stunde
+/// Hourly rows joining price and load, for the price-versus-residual-load scatter.
+table 'Last Stunde'
 	lineageTag: cc504fef-e960-5cca-b623-f730b714a234
 
-	column region_key
+	column 'Region Key'
 		dataType: int64
 		formatString: 0
+		isHidden
 		lineageTag: eade01c1-640f-5f92-ac55-7409d83f0bcc
-		summarizeBy: sum
+		summarizeBy: none
 		sourceColumn: region_key
 
 		annotation SummarizationSetBy = Automatic
 
-	column stunde_utc
+	column 'Stunde UTC'
 		dataType: dateTime
 		formatString: General Date
 		lineageTag: 384a415e-03a5-5325-b6d4-b2d40267b3de
@@ -19,33 +21,35 @@ table v_preis_last_stunde
 
 		annotation SummarizationSetBy = Automatic
 
-	column datum_key
+	column 'Datum Key'
 		dataType: int64
 		formatString: 0
+		isHidden
 		lineageTag: 9cdba3ae-b48f-5d9a-9d67-dece811cffb1
-		summarizeBy: sum
+		summarizeBy: none
 		sourceColumn: datum_key
 
 		annotation SummarizationSetBy = Automatic
 
-	column zeit_key
+	column 'Zeit Key'
 		dataType: int64
 		formatString: 0
+		isHidden
 		lineageTag: 62b484df-67ae-5c8a-8a64-06f7ff3f2b00
-		summarizeBy: sum
+		summarizeBy: none
 		sourceColumn: zeit_key
 
 		annotation SummarizationSetBy = Automatic
 
-	column day_ahead_eur_mwh
+	column 'Day-Ahead €/MWh'
 		dataType: decimal
 		lineageTag: 54f7f43c-6081-5dbb-a517-3c935980923b
-		summarizeBy: sum
+		summarizeBy: none
 		sourceColumn: day_ahead_eur_mwh
 
 		annotation SummarizationSetBy = Automatic
 
-	column netzlast_mwh
+	column 'Netzlast MWh'
 		dataType: decimal
 		lineageTag: b99ed4c6-2dfd-51db-a6a1-0b8538547691
 		summarizeBy: sum
@@ -53,7 +57,7 @@ table v_preis_last_stunde
 
 		annotation SummarizationSetBy = Automatic
 
-	column residuallast_mwh
+	column 'Residuallast MWh'
 		dataType: decimal
 		lineageTag: a40a1219-0a07-51e7-a95a-f6328c651841
 		summarizeBy: sum
@@ -61,7 +65,7 @@ table v_preis_last_stunde
 
 		annotation SummarizationSetBy = Automatic
 
-	partition v_preis_last_stunde = m
+	partition 'Last Stunde' = m
 		mode: import
 		source =
 				let

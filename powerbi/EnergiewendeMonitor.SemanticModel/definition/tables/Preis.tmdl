@@ -1,51 +1,77 @@
-table v_preis
+/// Hourly day-ahead price per region (SMARD), keyed to the first quarter-hour of the hour.
+table Preis
 	lineageTag: c969355d-70d9-58b7-8a25-1c35decb63be
 
-	column region_key
+	column 'Region Key'
 		dataType: int64
 		formatString: 0
+		isHidden
 		lineageTag: d241c842-dfe9-57a6-a4b1-7a6838e67f94
-		summarizeBy: sum
+		summarizeBy: none
 		sourceColumn: region_key
 
 		annotation SummarizationSetBy = Automatic
 
-	column ts_utc
+	column 'Zeitstempel UTC'
 		dataType: dateTime
 		formatString: General Date
+		isHidden
 		lineageTag: 596fdc7d-6cc3-59d8-8d24-46efc66fe52e
 		summarizeBy: none
 		sourceColumn: ts_utc
 
 		annotation SummarizationSetBy = Automatic
 
-	column datum_key
+	column 'Datum Key'
 		dataType: int64
 		formatString: 0
+		isHidden
 		lineageTag: 5cdf92e8-690c-57d1-81b8-ba443072f596
-		summarizeBy: sum
+		summarizeBy: none
 		sourceColumn: datum_key
 
 		annotation SummarizationSetBy = Automatic
 
-	column zeit_key
+	column 'Zeit Key'
 		dataType: int64
 		formatString: 0
+		isHidden
 		lineageTag: 4a170890-bb87-5c63-bb54-b5e4b593932a
-		summarizeBy: sum
+		summarizeBy: none
 		sourceColumn: zeit_key
 
 		annotation SummarizationSetBy = Automatic
 
-	column day_ahead_eur_mwh
+	column 'Day-Ahead €/MWh'
 		dataType: decimal
+		isHidden
 		lineageTag: 198784df-0eff-5ca9-9e1a-ed2ab81e506f
-		summarizeBy: sum
+		summarizeBy: none
 		sourceColumn: day_ahead_eur_mwh
 
 		annotation SummarizationSetBy = Automatic
 
-	partition v_preis = m
+	/// Day-ahead price rounded down to a 10 EUR/MWh bin, for the price histogram.
+	column 'Preis Klasse (10 €)' = INT(FLOOR(Preis[Day-Ahead €/MWh], 10))
+		dataType: int64
+		formatString: #,0 "€"
+		lineageTag: 061bc869-f1bb-55a8-ba23-1d95ff345b5a
+		summarizeBy: none
+		sortByColumn: 'Preis Klasse Sortierung'
+
+		annotation SummarizationSetBy = Automatic
+
+	/// Numeric sort key of the price bin.
+	column 'Preis Klasse Sortierung' = INT(FLOOR(Preis[Day-Ahead €/MWh], 10))
+		dataType: int64
+		formatString: 0
+		isHidden
+		lineageTag: 56863319-d4f5-5aab-ac2d-05b8b9f940fa
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+
+	partition Preis = m
 		mode: import
 		source =
 				let

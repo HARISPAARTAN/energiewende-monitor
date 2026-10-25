@@ -1,59 +1,73 @@
-table v_dim_zeit
+/// Time-of-day dimension (one row per quarter-hour).
+table Zeit
 	lineageTag: 08ccdd44-bd3c-5bd4-9401-de3c534f2abd
 
-	column zeit_key
+	column 'Zeit Key'
 		dataType: int64
 		formatString: 0
+		isHidden
 		lineageTag: 37719ac3-0ca7-54ac-9f00-20a89ba2fc67
-		summarizeBy: sum
+		summarizeBy: none
 		sourceColumn: zeit_key
 
 		annotation SummarizationSetBy = Automatic
 
-	column uhrzeit
+	column Uhrzeit
 		dataType: dateTime
-		formatString: General Date
+		formatString: HH:mm
 		lineageTag: 313f983d-4388-51df-98a5-229b8d898994
 		summarizeBy: none
 		sourceColumn: uhrzeit
 
 		annotation SummarizationSetBy = Automatic
 
-	column stunde
+	column Stunde
 		dataType: int64
 		formatString: 0
 		lineageTag: 16d9f127-4271-579d-a424-2e5b50a166b5
-		summarizeBy: sum
+		summarizeBy: none
 		sourceColumn: stunde
 
 		annotation SummarizationSetBy = Automatic
 
-	column viertelstunde
+	column Viertelstunde
 		dataType: int64
 		formatString: 0
 		lineageTag: b596bfa3-50e9-5740-a919-7995e319b1cf
-		summarizeBy: sum
+		summarizeBy: none
 		sourceColumn: viertelstunde
 
 		annotation SummarizationSetBy = Automatic
 
-	column tageszeit_de
+	column Tageszeit
 		dataType: string
 		lineageTag: 512b0f5e-bf9d-5fcc-9057-3e1c12f481f7
 		summarizeBy: none
 		sourceColumn: tageszeit_de
+		sortByColumn: 'Tageszeit Nr'
 
 		annotation SummarizationSetBy = Automatic
 
-	column tageszeit_en
+	column 'Tageszeit (EN)'
 		dataType: string
 		lineageTag: a9b567ba-208e-59f6-957e-ccbcaff57a9e
 		summarizeBy: none
 		sourceColumn: tageszeit_en
+		sortByColumn: 'Tageszeit Nr'
 
 		annotation SummarizationSetBy = Automatic
 
-	partition v_dim_zeit = m
+	/// Sort order of the part of day: night, morning, afternoon, evening.
+	column 'Tageszeit Nr' = SWITCH(TRUE(), Zeit[Stunde] < 6, 1, Zeit[Stunde] < 12, 2, Zeit[Stunde] < 18, 3, 4)
+		dataType: int64
+		formatString: 0
+		isHidden
+		lineageTag: 15830505-abc9-5069-80ad-00e6cf90d588
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+
+	partition Zeit = m
 		mode: import
 		source =
 				let

@@ -1,0 +1,63 @@
+relationship datum-erzeugung
+	fromColumn: Erzeugung.'Datum Key'
+	toColumn: Datum.'Datum Key'
+
+relationship zeit-erzeugung
+	fromColumn: Erzeugung.'Zeit Key'
+	toColumn: Zeit.'Zeit Key'
+
+relationship region-erzeugung
+	fromColumn: Erzeugung.'Region Key'
+	toColumn: Region.'Region Key'
+
+relationship energietraeger-erzeugung
+	fromColumn: Erzeugung.'Energieträger Key'
+	toColumn: Energieträger.'Energieträger Key'
+
+relationship datum-last
+	fromColumn: Last.'Datum Key'
+	toColumn: Datum.'Datum Key'
+
+relationship zeit-last
+	fromColumn: Last.'Zeit Key'
+	toColumn: Zeit.'Zeit Key'
+
+relationship region-last
+	fromColumn: Last.'Region Key'
+	toColumn: Region.'Region Key'
+
+relationship datum-preis
+	fromColumn: Preis.'Datum Key'
+	toColumn: Datum.'Datum Key'
+
+relationship zeit-preis
+	fromColumn: Preis.'Zeit Key'
+	toColumn: Zeit.'Zeit Key'
+
+relationship region-preis
+	fromColumn: Preis.'Region Key'
+	toColumn: Region.'Region Key'
+
+relationship datum-laststunde
+	fromColumn: 'Last Stunde'.'Datum Key'
+	toColumn: Datum.'Datum Key'
+
+relationship region-laststunde
+	fromColumn: 'Last Stunde'.'Region Key'
+	toColumn: Region.'Region Key'
+
+relationship datum-kapazitaet
+	fromColumn: Kapazität.'Datum Key'
+	toColumn: Datum.'Datum Key'
+
+relationship bundesland-kapazitaet
+	fromColumn: Kapazität.'Bundesland Key'
+	toColumn: Bundesland.'Bundesland Key'
+
+relationship energietraeger-kapazitaet
+	fromColumn: Kapazität.'Energieträger Key'
+	toColumn: Energieträger.'Energieträger Key'
+
+relationship datum-preisphasen
+	fromColumn: Preisphasen.'Start Datum Key'
+	toColumn: Datum.'Datum Key'

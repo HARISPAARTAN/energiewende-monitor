@@ -1,0 +1,6 @@
+role 'Landesbehörde BW'
+	modelPermission: read
+
+	tablePermission Bundesland = Bundesland[Kürzel] = "BW"
+
+	annotation PBI_Id = cf24708c08015948b8f086127c1ad2a2
