@@ -1,0 +1,20 @@
+tabelle,feld,wert,energietraeger
+EinheitenWind,lage,Windkraft auf See,Wind Offshore
+EinheitenWind,lage,Windkraft an Land,Wind Onshore
+EinheitenWind,lage,*,Wind Onshore
+EinheitenSolar,*,*,Photovoltaik
+EinheitenBiomasse,*,*,Biomasse
+EinheitenWasser,*,*,Wasserkraft
+EinheitenKernkraft,*,*,Kernenergie
+EinheitenVerbrennung,energietraeger_mastr,Erdgas,Erdgas
+EinheitenVerbrennung,energietraeger_mastr,Steinkohle,Steinkohle
+EinheitenVerbrennung,energietraeger_mastr,Braunkohle,Braunkohle
+EinheitenVerbrennung,energietraeger_mastr,Mineralölprodukte,Sonstige Konventionelle
+EinheitenVerbrennung,energietraeger_mastr,andere Gase,Sonstige Konventionelle
+EinheitenVerbrennung,energietraeger_mastr,nicht biogener Abfall,Sonstige Konventionelle
+EinheitenVerbrennung,energietraeger_mastr,Wärme,Sonstige Konventionelle
+EinheitenGeothermieGrubengasDruckentspannung,energietraeger_mastr,Geothermie,Sonstige Erneuerbare
+EinheitenGeothermieGrubengasDruckentspannung,energietraeger_mastr,Grubengas,Sonstige Erneuerbare
+EinheitenGeothermieGrubengasDruckentspannung,energietraeger_mastr,Druckentspannung,Sonstige Konventionelle
+EinheitenStromSpeicher,technologie,Pumpspeicher,Pumpspeicher
+EinheitenStromSpeicher,technologie,*,VERWERFEN

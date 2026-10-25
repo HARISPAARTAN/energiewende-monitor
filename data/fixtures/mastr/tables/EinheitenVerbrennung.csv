@@ -1,0 +1,10 @@
+EinheitMastrNummer,Bundesland,Nettonennleistung,Bruttoleistung,Inbetriebnahmedatum,EinheitBetriebsstatus,DatumEndgueltigeStilllegung,Energietraeger,Technologie,Hauptbrennstoff
+SEE900000000031,Nordrhein-Westfalen,300000,320000,1985-01-01,Endgültig stillgelegt,2024-03-31,Braunkohle,Dampfturbine,Rohbraunkohle
+SEE900000000032,Nordrhein-Westfalen,50000,54000,1975-01-01,Endgültig stillgelegt,1988-12-31,Steinkohle,Dampfturbine,Steinkohle
+SEE900000000033,Hessen,400000,415000,2005-05-05,In Betrieb,,Erdgas,Gasturbine mit Abhitzekessel,Erdgas
+SEE900000000034,Sachsen,900000,950000,2012-08-01,In Betrieb,,Braunkohle,Dampfturbine,Rohbraunkohle
+SEE900000000035,Saarland,180000,190000,1989-06-01,Endgültig stillgelegt,2022-10-31,Steinkohle,Dampfturbine,Steinkohle
+SEE900000000036,Hamburg,1000,1050,2010-01-01,In Betrieb,,Mineralölprodukte,Verbrennungsmotor,Heizöl
+SEE900000000037,Hamburg,1000,1000,2024-07-01,In Betrieb,,Wasserstoff,Brennstoffzelle,Wasserstoff
+SEE900000000038,Bremen,25000,26000,1999-11-01,Vorübergehend stillgelegt,,andere Gase,Gasturbine ohne Abhitzekessel,Gichtgas
+SEE900000000039,Sachsen-Anhalt,30000,32000,2001-01-01,In Betrieb,,nicht biogener Abfall,Dampfturbine,Hausmüll

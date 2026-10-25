@@ -1,0 +1,8 @@
+EinheitMastrNummer,Bundesland,Nettonennleistung,Bruttoleistung,Inbetriebnahmedatum,EinheitBetriebsstatus,DatumEndgueltigeStilllegung,Energietraeger
+SEE900000000061,Baden-Württemberg,1200,1250,1950-01-01,In Betrieb,,Wasser
+SEE900000000062,Bayern,25000,26000,1955-01-01,In Betrieb,,Wasser
+SEE900000000063,Bayern,300,310,2014-05-01,In Betrieb,,Wasser
+SEE900000000064,Rheinland-Pfalz,45,45,1992-07-01,Endgültig stillgelegt,2018-12-31,Wasser
+SEE900000000065,Sachsen,150,155,2009-04-01,Vorübergehend stillgelegt,,Wasser
+SEE900000000066,Hessen,900,920,2020-10-01,In Betrieb,,Wasser
+SEE900000000067,Thüringen,80,80,,In Betrieb,,Wasser

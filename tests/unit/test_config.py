@@ -21,8 +21,16 @@ def _db(user: str = "sa", password: str = "pw") -> DbConfig:
     )
 
 
-def _write_config(root: Path, **lists: str) -> None:
-    """A minimal config.toml; keyword arguments replace the TOML value of a list key."""
+def _write_config(
+    root: Path,
+    *,
+    scope_start: str = "2023-01-01",
+    calendar_start: str = "1990-01-01",
+    calendar_end: str = "2030-12-31",
+    **lists: str,
+) -> None:
+    """A minimal config.toml; the date parameters set the scope and calendar bounds, further keyword
+    arguments replace the TOML value of a list key."""
     values = {
         "regions": '["DE-LU"]',
         "generation": "[1223]",
@@ -32,12 +40,12 @@ def _write_config(root: Path, **lists: str) -> None:
     values.update(lists)
     (root / "config.toml").write_text(
         f"""[scope]
-start = "2023-01-01"
+start = "{scope_start}"
 regions = {values["regions"]}
 
 [calendar]
-start = "1990-01-01"
-end = "2030-12-31"
+start = "{calendar_start}"
+end = "{calendar_end}"
 
 [mastr]
 output_dir = "data/raw/mastr"
@@ -136,3 +144,22 @@ def test_calendar_and_mastr_settings(tmp_path):
     assert settings.calendar_start < date.fromisoformat(settings.start)
     assert settings.mastr_output_dir == settings.root / "data" / "raw" / "mastr"
     assert settings.mastr_tables == ("wind", "solar", "biomass", "hydro", "gsgk", "combustion", "nuclear", "storage")
+
+
+@pytest.mark.parametrize(
+    ("dates", "message"),
+    [
+        ({"calendar_start": "2024-01-01"}, r"\[calendar\] start"),
+        ({"calendar_end": "1989-12-31"}, r"\[calendar\] end.*\[calendar\] start"),
+        ({"calendar_end": "2022-12-31"}, r"\[calendar\] end.*\[scope\] start"),
+    ],
+)
+def test_calendar_bounds_are_validated(tmp_path, dates, message):
+    _write_config(tmp_path, **dates)
+    with pytest.raises(ValueError, match=message):
+        load_settings(tmp_path)
+
+
+def test_calendar_end_may_equal_scope_start(tmp_path):
+    _write_config(tmp_path, calendar_end="2023-01-01")
+    assert load_settings(tmp_path).calendar_end == date(2023, 1, 1)

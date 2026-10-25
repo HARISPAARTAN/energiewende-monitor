@@ -1,0 +1,9 @@
+EinheitMastrNummer,Bundesland,Nettonennleistung,Bruttoleistung,Inbetriebnahmedatum,EinheitBetriebsstatus,DatumEndgueltigeStilllegung,Energietraeger,Technologie
+SEE900000000071,Bayern,3000,3400,2008-01-01,In Betrieb,,Geothermie,ORC-Anlage
+SEE900000000072,Bayern,5500,6000,2013-09-01,In Betrieb,,Geothermie,ORC-Anlage
+SEE900000000073,Baden-Württemberg,4300,4800,2010-11-01,In Betrieb,,Geothermie,Kalina-Anlage
+SEE900000000074,Saarland,1350,1400,2002-02-01,In Betrieb,,Grubengas,Verbrennungsmotor
+SEE900000000075,Nordrhein-Westfalen,2000,2050,1997-06-01,Endgültig stillgelegt,2021-06-30,Grubengas,Verbrennungsmotor
+SEE900000000076,Nordrhein-Westfalen,1500,1550,2004-12-01,Vorübergehend stillgelegt,,Grubengas,Verbrennungsmotor
+SEE900000000077,Hessen,600,620,2016-03-01,In Betrieb,,Druckentspannung,Druckentspannungsturbine
+SEE900000000079,Bayern,4000,4500,,In Planung,,Geothermie,ORC-Anlage

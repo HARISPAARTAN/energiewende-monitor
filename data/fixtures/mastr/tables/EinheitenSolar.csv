@@ -1,0 +1,10 @@
+EinheitMastrNummer,Bundesland,Nettonennleistung,Bruttoleistung,Inbetriebnahmedatum,EinheitBetriebsstatus,DatumEndgueltigeStilllegung,Energietraeger
+SEE900000000011,Bayern,9.9,10.5,2019-03-01,In Betrieb,,Solare Strahlungsenergie
+SEE900000000012,,30,32,2021-09-20,In Betrieb,,Solare Strahlungsenergie
+SEE900000000013,Sachsen,5,5,,In Betrieb,,Solare Strahlungsenergie
+SEE900000000014,Baden-Württemberg,7.2,7.8,2009-06-30,In Betrieb,,Solare Strahlungsenergie
+SEE900000000015,Bayern,750,800,2011-12-15,In Betrieb,,Solare Strahlungsenergie
+SEE900000000016,Nordrhein-Westfalen,10.5,11,2022-04-04,In Betrieb,,Solare Strahlungsenergie
+SEE900000000017,Brandenburg,20000,21500,2023-08-01,In Betrieb,,Solare Strahlungsenergie
+SEE900000000018,Hessen,4.5,4.5,2004-10-01,Endgültig stillgelegt,2024-10-01,Solare Strahlungsenergie
+SEE900000000019,Berlin,12,12,,In Planung,,Solare Strahlungsenergie

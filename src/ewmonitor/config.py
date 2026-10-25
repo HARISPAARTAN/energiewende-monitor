@@ -79,8 +79,13 @@ def load_settings(root: Path | None = None) -> Settings:
     scope, smard, paths = data["scope"], data["smard"], data["paths"]
     calendar, mastr = data["calendar"], data["mastr"]
     calendar_start, calendar_end = date.fromisoformat(str(calendar["start"])), date.fromisoformat(str(calendar["end"]))
-    if calendar_start > date.fromisoformat(str(scope["start"])):
+    scope_start = date.fromisoformat(str(scope["start"]))
+    if calendar_start > scope_start:
         raise ValueError("config.toml: [calendar] start muss vor oder auf [scope] start liegen")
+    if calendar_end < calendar_start:
+        raise ValueError("config.toml: [calendar] end muss nach oder auf [calendar] start liegen")
+    if calendar_end < scope_start:
+        raise ValueError("config.toml: [calendar] end muss nach oder auf [scope] start liegen")
     db = DbConfig(
         server=os.environ.get("EWM_DB_SERVER", "127.0.0.1,1433"),
         database=os.environ.get("EWM_DB_NAME", "energiewende"),

@@ -34,7 +34,7 @@ def test_all_help_shows_fixtures_option():
     assert "--fixtures" in text and "--regions" in text
 
 
-def test_range_rejects_from_before_the_calendar_start():
+def test_range_rejects_from_before_the_scope_start():
     settings = load_settings()
     with pytest.raises(typer.BadParameter, match=r"vor dem Datenbeginn 2023-01-01.*2023-01-01 bis 2030-12-31"):
         _range(settings, datetime(2022, 12, 1), datetime(2023, 1, 31))

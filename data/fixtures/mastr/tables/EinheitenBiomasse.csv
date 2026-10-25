@@ -1,0 +1,8 @@
+EinheitMastrNummer,Bundesland,Nettonennleistung,Bruttoleistung,Inbetriebnahmedatum,EinheitBetriebsstatus,DatumEndgueltigeStilllegung,Energietraeger,Technologie,Hauptbrennstoff
+SEE900000000021,Bayern,500,526,2015-06-17,In Betrieb,,Biomasse,Verbrennungsmotor,Biogas
+SEE900000000022,Niedersachsen,750,780,2007-09-01,In Betrieb,,Biomasse,Verbrennungsmotor,Biogas
+SEE900000000023,Schleswig-Holstein,250,265,2012-03-10,Vorübergehend stillgelegt,,Biomasse,Verbrennungsmotor,Biogas
+SEE900000000024,Bayern,1000,1050,1995-01-01,Endgültig stillgelegt,2020-12-31,Biomasse,Dampfturbine,Holz
+SEE900000000025,Thüringen,20000,21000,2003-04-01,In Betrieb,,Biomasse,Dampfturbine,Holz
+SEE900000000026,Mecklenburg-Vorpommern,550,570,2018-06-01,In Betrieb,,Biomasse,Verbrennungsmotor,Biomethan
+SEE900000000027,Rheinland-Pfalz,75,75,2016-02-01,In Betrieb,,Biomasse,Verbrennungsmotor,Biogas

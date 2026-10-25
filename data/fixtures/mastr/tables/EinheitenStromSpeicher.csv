@@ -1,0 +1,7 @@
+EinheitMastrNummer,Bundesland,Nettonennleistung,Bruttoleistung,Inbetriebnahmedatum,EinheitBetriebsstatus,DatumEndgueltigeStilllegung,Energietraeger,Technologie
+SEE900000000051,Thüringen,1060000,1060000,2003-01-01,In Betrieb,,Speicher,Pumpspeicher
+SEE900000000052,Berlin,100,100,2022-01-01,In Betrieb,,Speicher,Batterie
+SEE900000000053,Berlin,50,50,,In Betrieb,,Speicher,Batterie
+SEE900000000054,Baden-Württemberg,160000,165000,1975-01-01,In Betrieb,,Speicher,Pumpspeicher
+SEE900000000055,Sachsen,80000,80000,1990-03-01,Vorübergehend stillgelegt,,Speicher,Pumpspeicher
+SEE900000000056,Nordrhein-Westfalen,140000,145000,1969-01-01,Endgültig stillgelegt,2025-01-31,Speicher,Pumpspeicher

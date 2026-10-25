@@ -1,0 +1,6 @@
+EinheitMastrNummer,Bundesland,Nettonennleistung,Bruttoleistung,Inbetriebnahmedatum,EinheitBetriebsstatus,DatumEndgueltigeStilllegung,Energietraeger,Technologie
+SEE900000000041,Bayern,1400000,1485000,1988-01-01,Endgültig stillgelegt,2023-04-15,Kernenergie,Druckwasserreaktor
+SEE900000000042,Niedersachsen,1360000,1430000,1988-06-01,Endgültig stillgelegt,2023-04-15,Kernenergie,Druckwasserreaktor
+SEE900000000043,Baden-Württemberg,1310000,1400000,1989-04-01,Endgültig stillgelegt,2023-04-15,Kernenergie,Druckwasserreaktor
+SEE900000000044,Schleswig-Holstein,1400000,1480000,1986-09-01,Endgültig stillgelegt,2021-12-31,Kernenergie,Druckwasserreaktor
+SEE900000000045,Hessen,1167000,1225000,1974-08-25,Endgültig stillgelegt,2011-08-06,Kernenergie,Druckwasserreaktor

@@ -322,7 +322,7 @@ dev = [
 
 [package.metadata]
 requires-dist = [
-    { name = "open-mastr", marker = "extra == 'mastr'", specifier = ">=0.15" },
+    { name = "open-mastr", marker = "extra == 'mastr'", specifier = ">=1.0,<2" },
     { name = "pandas", specifier = ">=2.2" },
     { name = "pyodbc", specifier = ">=5.2" },
     { name = "requests", specifier = ">=2.32" },
