@@ -53,10 +53,14 @@ are downloaded again, because SMARD republishes past weeks). `ewmonitor all --fi
 
 ## Data quality
 
-`ewmonitor check` verifies quarter-hours per day and series (inside each series' loaded span), null values,
-no negative generation, prices between -500 and 4000 EUR/MWh, mapping of every staging row, the hourly aggregate
-against quarter-hours, and freshness (warning after 45 days). Missing quarter-hours per month come from the view
-`rpt.v_dq_luecken`.
+`ewmonitor check` verifies quarter-hours per day for generation and load (inside each series' loaded span), null
+values in generation and load, no negative generation, 23, 24 or 25 hourly prices per day, prices between -500 and
+4000 EUR/MWh, mapping of every staging row, staging reconciled with facts per fact table, incomplete load hours
+(warning only, the not yet published tail is normal) and freshness (warning after 45 days). Missing quarter-hours
+per month come from the view `rpt.v_dq_luecken`.
+
+The view `rpt.v_last_stunde` aggregates the load per UTC hour. A measure has a value there only when all four
+quarter-hours of the hour have one, otherwise NULL; the `viertelstunden_*` columns give the number of values present.
 
 ## Data sources and licences
 

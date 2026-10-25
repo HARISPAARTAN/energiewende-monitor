@@ -1,9 +1,7 @@
-from datetime import datetime
-
 from ewmonitor.checks import (
     CheckResult,
     check_facts_vs_staging,
-    check_hourly_aggregate,
+    check_incomplete_hours,
     format_results,
     has_failures,
 )
@@ -31,9 +29,16 @@ def test_format_results_is_a_table():
     assert "viertelstunden_pro_tag" in text and "ok" in text and "0 Abweichungen" in text
 
 
-def test_hourly_aggregate_warns_on_hour_without_values():
-    result = check_hourly_aggregate(_StubCon((datetime(2025, 10, 20), None, 12.5)), 20251020, 20251026)
-    assert (result.status, result.detail) == ("warn", "Stunde ohne Werte")
+def test_incomplete_hours_warns_when_the_range_has_no_load_data():
+    result = check_incomplete_hours(_StubCon((0, None)), 20251020, 20251026)
+    assert (result.status, result.detail) == ("warn", "keine Lastdaten im Zeitraum")
+
+
+def test_incomplete_hours_warns_never_fails():
+    result = check_incomplete_hours(_StubCon((168, 6)), 20261019, 20261024)
+    assert result.status == "warn"
+    assert result.detail.startswith("6 von 168 Stunden")
+    assert check_incomplete_hours(_StubCon((168, 0)), 20261019, 20261024).status == "ok"
 
 
 def test_facts_vs_staging_fails_and_names_both_counts_per_fact():

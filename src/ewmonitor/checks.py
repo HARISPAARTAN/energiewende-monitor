@@ -76,21 +76,77 @@ def check_unmapped_staging(con, from_key: int, to_key: int) -> CheckResult:
     return CheckResult("staging_zugeordnet", "ok" if n == 0 else "warn", f"{n} Staging-Zeilen ohne Dimension")
 
 
-def check_hourly_aggregate(con, from_key: int, to_key: int) -> CheckResult:
+def check_incomplete_hours(con, from_key: int, to_key: int) -> CheckResult:
+    """Hours of rpt.v_last_stunde in the range with fewer than four quarter-hour values for any fact_last
+    measure; the view returns NULL for such a measure. SMARD publishes the newest quarter-hours with a delay,
+    so a few incomplete hours at the end are normal: warn, never fail."""
     row = con.execute("""
-        SELECT TOP 1 l.stunde_utc, l.netzlast_mwh,
-               (SELECT SUM(f.netzlast_mwh) FROM dw.fact_last f
-                 WHERE f.region_key = l.region_key AND f.ts_utc >= l.stunde_utc
-                   AND f.ts_utc < DATEADD(hour, 1, l.stunde_utc)) AS viertel_summe
-        FROM rpt.v_last_stunde l WHERE l.datum_key BETWEEN ? AND ? ORDER BY l.stunde_utc
+        SELECT COUNT(*),
+               SUM(CASE WHEN viertelstunden_netzlast_mwh < 4 OR viertelstunden_residuallast_mwh < 4
+                          OR viertelstunden_pumpspeicher_verbrauch_mwh < 4 THEN 1 ELSE 0 END)
+        FROM rpt.v_last_stunde WHERE datum_key BETWEEN ? AND ?
         """, from_key, to_key).fetchone()
-    if row is None:
-        return CheckResult("stunden_aggregat", "warn", "keine Lastdaten im Zeitraum")
-    if row[1] is None or row[2] is None:
-        return CheckResult("stunden_aggregat", "warn", "Stunde ohne Werte")
-    diff = abs(float(row[1]) - float(row[2]))
-    return CheckResult("stunden_aggregat", "ok" if diff < 0.001 else "fail",
-                       f"Stunde {row[0]}: Differenz {diff:.3f} MWh")
+    if row is None or row[1] is None:
+        return CheckResult("unvollstaendige_stunden", "warn", "keine Lastdaten im Zeitraum")
+    hours, incomplete = row
+    return CheckResult("unvollstaendige_stunden", "ok" if incomplete == 0 else "warn",
+                       f"{incomplete} von {hours} Stunden mit weniger als 4 Viertelstundenwerten je Messgröße")
+
+
+def check_last_rows_per_day(con, from_key: int, to_key: int) -> CheckResult:
+    """fact_last counterpart of viertelstunden_pro_tag: inside each region's loaded span, every day has as many
+    quarter-hour rows as dim_datum.viertelstunden (92, 96 or 100)."""
+    sql = """
+    WITH span AS (
+        SELECT region_key, MIN(datum_key) AS von, MAX(datum_key) AS bis
+        FROM dw.fact_last WHERE aufloesung_min = 15 AND datum_key BETWEEN ? AND ?
+        GROUP BY region_key),
+    tage AS (
+        SELECT s.region_key, d.datum_key, d.viertelstunden
+        FROM span s JOIN dw.dim_datum d ON d.datum_key BETWEEN s.von AND s.bis),
+    ist AS (
+        SELECT region_key, datum_key, COUNT(*) AS n
+        FROM dw.fact_last WHERE aufloesung_min = 15 AND datum_key BETWEEN ? AND ?
+        GROUP BY region_key, datum_key)
+    SELECT COUNT(*) FROM tage t
+    LEFT JOIN ist i ON i.region_key = t.region_key AND i.datum_key = t.datum_key
+    WHERE ISNULL(i.n, 0) <> t.viertelstunden
+    """
+    bad = _val(con, sql, from_key, to_key, from_key, to_key)
+    return CheckResult("last_viertelstunden_pro_tag", "ok" if bad == 0 else "fail",
+                       f"{bad} Tag/Region-Kombinationen mit abweichender Zeilenzahl")
+
+
+def check_last_null_values(con, from_key: int, to_key: int) -> CheckResult:
+    row = con.execute("""
+        SELECT COUNT(*) - COUNT(netzlast_mwh), COUNT(*) - COUNT(residuallast_mwh),
+               COUNT(*) - COUNT(pumpspeicher_verbrauch_mwh)
+        FROM dw.fact_last WHERE datum_key BETWEEN ? AND ?
+        """, from_key, to_key).fetchone()
+    netz, rest, pump = (int(v or 0) for v in row)
+    return CheckResult("last_nullwerte", "ok" if netz + rest + pump == 0 else "warn",
+                       f"Viertelstunden ohne Wert (Quelle): Netzlast {netz}, Residuallast {rest}, Pumpspeicher {pump}")
+
+
+def check_price_hours_per_day(con, from_key: int, to_key: int) -> CheckResult:
+    """Every day inside each region's loaded price span has 23, 24 or 25 hourly prices."""
+    sql = """
+    WITH span AS (
+        SELECT region_key, MIN(datum_key) AS von, MAX(datum_key) AS bis
+        FROM dw.fact_preis WHERE datum_key BETWEEN ? AND ?
+        GROUP BY region_key),
+    ist AS (
+        SELECT region_key, datum_key, COUNT(*) AS n
+        FROM dw.fact_preis WHERE datum_key BETWEEN ? AND ?
+        GROUP BY region_key, datum_key)
+    SELECT COUNT(*) FROM span s
+    JOIN dw.dim_datum d ON d.datum_key BETWEEN s.von AND s.bis
+    LEFT JOIN ist i ON i.region_key = s.region_key AND i.datum_key = d.datum_key
+    WHERE ISNULL(i.n, 0) NOT IN (23, 24, 25)
+    """
+    bad = _val(con, sql, from_key, to_key, from_key, to_key)
+    return CheckResult("preis_stunden_pro_tag", "ok" if bad == 0 else "fail",
+                       f"{bad} Tag/Region-Kombinationen ohne 23, 24 oder 25 Stundenpreise")
 
 
 def check_facts_vs_staging(con, from_key: int, to_key: int) -> CheckResult:
@@ -142,10 +198,13 @@ def run_checks(con, from_key: int, to_key: int, now: datetime | None = None) -> 
         check_rows_per_day(con, from_key, to_key),
         check_null_values(con, from_key, to_key),
         check_non_negative(con, from_key, to_key),
+        check_last_rows_per_day(con, from_key, to_key),
+        check_last_null_values(con, from_key, to_key),
+        check_price_hours_per_day(con, from_key, to_key),
         check_price_range(con, from_key, to_key),
         check_unmapped_staging(con, from_key, to_key),
         check_facts_vs_staging(con, from_key, to_key),
-        check_hourly_aggregate(con, from_key, to_key),
+        check_incomplete_hours(con, from_key, to_key),
         check_freshness(con, now),
     ]
 

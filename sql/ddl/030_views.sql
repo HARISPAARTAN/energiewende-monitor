@@ -27,17 +27,21 @@ GO
 CREATE OR ALTER VIEW rpt.v_preis AS
 SELECT region_key, ts_utc, datum_key, zeit_key, day_ahead_eur_mwh FROM dw.fact_preis;
 GO
+-- One row per UTC hour; a measure is NULL unless all four of its quarter-hours have a value.
 CREATE OR ALTER VIEW rpt.v_last_stunde AS
 SELECT region_key,
-       DATEADD(hour, DATEDIFF(hour, 0, ts_utc), 0) AS stunde_utc,
+       CAST(DATETRUNC(hour, ts_utc) AS datetime2(0)) AS stunde_utc,
        MIN(datum_key) AS datum_key,
        MIN(zeit_key)  AS zeit_key,
-       SUM(netzlast_mwh)               AS netzlast_mwh,
-       SUM(residuallast_mwh)           AS residuallast_mwh,
-       SUM(pumpspeicher_verbrauch_mwh) AS pumpspeicher_verbrauch_mwh
+       COUNT(netzlast_mwh)               AS viertelstunden_netzlast_mwh,
+       COUNT(residuallast_mwh)           AS viertelstunden_residuallast_mwh,
+       COUNT(pumpspeicher_verbrauch_mwh) AS viertelstunden_pumpspeicher_verbrauch_mwh,
+       CASE WHEN COUNT(netzlast_mwh) = 4 THEN SUM(netzlast_mwh) END                             AS netzlast_mwh,
+       CASE WHEN COUNT(residuallast_mwh) = 4 THEN SUM(residuallast_mwh) END                     AS residuallast_mwh,
+       CASE WHEN COUNT(pumpspeicher_verbrauch_mwh) = 4 THEN SUM(pumpspeicher_verbrauch_mwh) END AS pumpspeicher_verbrauch_mwh
 FROM dw.fact_last
 WHERE aufloesung_min = 15
-GROUP BY region_key, DATEADD(hour, DATEDIFF(hour, 0, ts_utc), 0);
+GROUP BY region_key, DATETRUNC(hour, ts_utc);
 GO
 CREATE OR ALTER VIEW rpt.v_preis_last_stunde AS
 SELECT p.region_key, p.ts_utc AS stunde_utc, p.datum_key, p.zeit_key, p.day_ahead_eur_mwh,

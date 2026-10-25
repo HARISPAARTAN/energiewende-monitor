@@ -55,10 +55,15 @@ ohne Netzwerk.
 
 ## Datenqualität
 
-`ewmonitor check` prüft: Viertelstunden je Tag und Reihe (innerhalb der jeweils geladenen Spanne), Nullwerte,
-keine negative Erzeugung, Preise zwischen -500 und 4000 EUR/MWh, Zuordnung aller Staging-Zeilen,
-Stundenaggregat gegen Viertelstunden, Aktualität (Warnung ab 45 Tagen). Fehlende Viertelstunden je Monat liefert
-die View `rpt.v_dq_luecken`.
+`ewmonitor check` prüft: Viertelstunden je Tag für Erzeugung und Last (innerhalb der jeweils geladenen Spanne),
+Nullwerte in Erzeugung und Last, keine negative Erzeugung, 23, 24 oder 25 Stundenpreise je Tag, Preise zwischen
+-500 und 4000 EUR/MWh, Zuordnung aller Staging-Zeilen, Abgleich Staging gegen Fakten je Faktentabelle,
+unvollständige Stunden der Last (nur Warnung, das noch unveröffentlichte Ende ist normal) und Aktualität
+(Warnung ab 45 Tagen). Fehlende Viertelstunden je Monat liefert die View `rpt.v_dq_luecken`.
+
+Die View `rpt.v_last_stunde` fasst die Last je UTC-Stunde zusammen. Eine Messgröße hat dort nur dann einen Wert,
+wenn alle vier Viertelstunden der Stunde einen Wert haben, sonst NULL; die Spalten `viertelstunden_*` nennen die
+Anzahl der vorhandenen Werte.
 
 ## Datenquellen und Lizenzen
 
