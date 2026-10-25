@@ -4,7 +4,8 @@ from datetime import datetime
 import pandas as pd
 import pytest
 
-from ewmonitor.db import df_rows, run_sql_file, split_batches
+from ewmonitor.db import bulk_insert, df_rows, run_sql_file, split_batches
+from ewmonitor.load import write_stg
 
 
 def test_split_batches_on_go_lines():
@@ -63,3 +64,67 @@ def test_run_sql_file_rolls_back_and_reraises_when_a_later_batch_fails(tmp_path)
     assert [c[0] for c in con.calls] == ["execute", "execute", "rollback"]
     assert con.calls[0][1:] == ("DELETE FROM t;", (7,))
     assert ("commit",) not in con.calls
+
+
+class _FakeCursor:
+    """Cursor double: executemany raises on call number fail_executemany_on (1-based); records into the parent."""
+
+    def __init__(self, con):
+        self.con = con
+        self.fast_executemany = False
+
+    def execute(self, sql, *params):
+        self.con.calls.append(("execute", sql, params))
+
+    def executemany(self, sql, rows):
+        self.con.calls.append(("executemany", sql, len(rows)))
+        self.con.executemany_count += 1
+        if self.con.executemany_count == self.con.fail_executemany_on:
+            raise RuntimeError("insert failed")
+
+    def close(self):
+        self.con.calls.append(("close",))
+
+
+class _FakeCursorConnection:
+    def __init__(self, fail_executemany_on: int):
+        self.fail_executemany_on = fail_executemany_on
+        self.executemany_count = 0
+        self.calls: list[tuple] = []
+
+    def cursor(self):
+        return _FakeCursor(self)
+
+    def commit(self):
+        self.calls.append(("commit",))
+
+    def rollback(self):
+        self.calls.append(("rollback",))
+
+
+def test_bulk_insert_rolls_back_and_closes_cursor_when_second_chunk_fails():
+    con = _FakeCursorConnection(fail_executemany_on=2)
+
+    with pytest.raises(RuntimeError, match="insert failed"):
+        bulk_insert(con, "t", ["a"], [(1,), (2,), (3,)], chunk=2)
+
+    assert [c[0] for c in con.calls] == ["executemany", "executemany", "rollback", "close"]
+    assert ("commit",) not in con.calls
+
+
+def test_write_stg_failed_insert_rolls_back_deletes_without_committing():
+    ts = pd.to_datetime(["2025-10-19 22:00:00", "2025-10-19 22:15:00"])
+    df = pd.DataFrame({
+        "filter_id": [1, 1], "region": ["DE", "DE"], "resolution": ["quarterhour", "quarterhour"],
+        "ts_utc": ts, "datum_key": [20251020, 20251020], "zeit_key": [0, 15], "value": [1.0, 2.0],
+    })
+    con = _FakeCursorConnection(fail_executemany_on=1)
+
+    with pytest.raises(RuntimeError, match="insert failed"):
+        write_stg(con, df)
+
+    kinds = [c[0] for c in con.calls]
+    assert kinds.index("execute") < kinds.index("executemany")
+    assert "DELETE FROM stg.smard_series" in con.calls[kinds.index("execute")][1]
+    assert kinds[-1] == "close" and "rollback" in kinds
+    assert "commit" not in kinds

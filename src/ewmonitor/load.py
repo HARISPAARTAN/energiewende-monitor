@@ -21,14 +21,20 @@ def write_stg(con, df: pd.DataFrame) -> int:
     """Delete the covered timestamp range of every (filter, region, resolution) in df, then insert df."""
     if df.empty:
         return 0
-    cur = con.cursor()
-    for (filter_id, region, resolution), group in df.groupby(["filter_id", "region", "resolution"]):
-        cur.execute(
-            "DELETE FROM stg.smard_series WHERE filter_id = ? AND region = ? AND resolution = ? AND ts_utc BETWEEN ? AND ?",
-            int(filter_id), str(region), str(resolution),
-            group["ts_utc"].min().to_pydatetime(), group["ts_utc"].max().to_pydatetime(),
-        )
-    con.commit()
+    cur = con.cursor()  # not "with": pyodbc's Cursor.__exit__ commits, which would split the unit of work
+    try:
+        for (filter_id, region, resolution), group in df.groupby(["filter_id", "region", "resolution"]):
+            cur.execute(
+                "DELETE FROM stg.smard_series WHERE filter_id = ? AND region = ? AND resolution = ? AND ts_utc BETWEEN ? AND ?",
+                int(filter_id), str(region), str(resolution),
+                group["ts_utc"].min().to_pydatetime(), group["ts_utc"].max().to_pydatetime(),
+            )
+    except Exception:
+        con.rollback()
+        raise
+    finally:
+        cur.close()
+    # bulk_insert commits the DELETEs and the INSERT together, or rolls both back
     return bulk_insert(con, "stg.smard_series", STG_COLUMNS, df_rows(df, STG_COLUMNS))
 
 

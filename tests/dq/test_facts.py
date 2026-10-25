@@ -47,7 +47,15 @@ def test_views_exist_and_run(con):
 
 
 def test_dq_luecken_reports_no_gaps_for_the_fixture_week(con):
+    assert con.execute("SELECT COUNT(*) FROM rpt.v_dq_luecken").fetchval() == 11
     assert con.execute("SELECT ISNULL(SUM(fehlend), 0) FROM rpt.v_dq_luecken").fetchval() == 0
+    assert con.execute("SELECT MAX(fehlend) FROM rpt.v_dq_luecken").fetchval() == 0
+    assert con.execute("SELECT MIN(fehlend) FROM rpt.v_dq_luecken").fetchval() == 0
+
+
+def test_negative_price_phases_for_the_fixture_week(con):
+    phases, hours = con.execute("SELECT COUNT(*), SUM(stunden) FROM rpt.v_negative_preisphasen").fetchone()
+    assert (phases, hours) == (3, 11)
 
 
 def test_reload_is_idempotent(con):
