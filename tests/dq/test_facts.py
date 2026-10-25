@@ -2,6 +2,8 @@ from decimal import Decimal
 
 import pytest
 
+from ewmonitor.load import load_facts
+
 pytestmark = pytest.mark.db
 
 
@@ -58,10 +60,7 @@ def test_negative_price_phases_for_the_fixture_week(con):
     assert (phases, hours) == (3, 11)
 
 
-def test_reload_is_idempotent(con):
+def test_reload_is_idempotent(con, settings):
     before = con.execute("SELECT COUNT(*) FROM dw.fact_erzeugung").fetchval()
-    from ewmonitor.config import load_settings
-    from ewmonitor.load import load_facts
-
-    load_facts(con, load_settings().root / "sql", 20251020, 20251026)
+    load_facts(con, settings.root / "sql", 20251020, 20251026)
     assert con.execute("SELECT COUNT(*) FROM dw.fact_erzeugung").fetchval() == before

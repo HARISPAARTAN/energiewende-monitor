@@ -46,7 +46,9 @@ are downloaded again, because SMARD republishes past weeks). `ewmonitor all --fi
 ## Tests
 
 - `uv run pytest tests/unit` (no database): parser, time zones, dimensions, client with mocked HTTP.
-- `uv run --env-file .env pytest tests/dq -m db`: rows per day, pivot, hourly aggregate, idempotent loads.
+- `uv run --env-file .env pytest tests/dq -m db`: rows per day, pivot, hourly aggregate, idempotent loads, errors
+  in the fact loads. The suite works in its own database (`EWM_DQ_DB_NAME`, default `energiewende_dq`), empties
+  staging and facts there and loads the test week; the database from `EWM_DB_NAME` is left untouched.
 - GitHub Actions runs both against a SQL Server container (`.github/workflows/ci.yml`).
 
 ## Data quality

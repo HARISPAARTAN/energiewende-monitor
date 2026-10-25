@@ -40,6 +40,7 @@ jobs:
       MSSQL_SA_PASSWORD: "Ci_Passw0rd_2026!"
       EWM_DB_SERVER: "127.0.0.1,1433"
       EWM_DB_NAME: energiewende
+      EWM_DQ_DB_NAME: energiewende_dq
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v6

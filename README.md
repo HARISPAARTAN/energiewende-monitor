@@ -48,7 +48,9 @@ ohne Netzwerk.
 ## Tests
 
 - `uv run pytest tests/unit` (ohne Datenbank): Parser, Zeitzonen, Dimensionen, Client mit gemocktem HTTP.
-- `uv run --env-file .env pytest tests/dq -m db`: Zeilen je Tag, Pivot, Stundenaggregat, Idempotenz der Ladeläufe.
+- `uv run --env-file .env pytest tests/dq -m db`: Zeilen je Tag, Pivot, Stundenaggregat, Idempotenz der Ladeläufe,
+  Fehler im Faktenladen. Die Suite arbeitet in einer eigenen Datenbank (`EWM_DQ_DB_NAME`, Standard `energiewende_dq`),
+  leert dort Staging und Fakten und lädt die Testwoche; die Datenbank aus `EWM_DB_NAME` bleibt unberührt.
 - GitHub Actions führt beides gegen einen SQL-Server-Container aus (`.github/workflows/ci.yml`).
 
 ## Datenqualität
