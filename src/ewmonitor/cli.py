@@ -152,26 +152,46 @@ def run_all(from_: FromOpt = None, to: ToOpt = None, fixtures: FixturesOpt = Fal
 @app.command(name="seed-mastr")
 def seed_mastr(
     date_: Annotated[str | None, typer.Option("--date", help="MaStR-Exportstand YYYYMMDD, Standard: aktuell")] = None,
-    skip_download: Annotated[bool, typer.Option("--skip-download", help="vorhandene SQLite-Datei verwenden")] = False,
+    skip_download: Annotated[bool, typer.Option("--skip-download", help="vorhandenen Export (Zip bzw. SQLite) verwenden")] = False,
     fixtures: FixturesOpt = False,
     profile: Annotated[bool, typer.Option("--profile", help="docs/mastr-profil.md mit den Wertelisten schreiben")] = False,
     out: Annotated[Path | None, typer.Option("--out", help="Zielpfad der Seed-CSV (Standard: data/seed bzw. data/fixtures)")] = None,
+    source: Annotated[str, typer.Option(
+        "--source", help="Leser: xml (Standard, liest den Gesamtdatenexport-Zip direkt) oder sqlite (open-mastr-Datenbank); "
+                         "--fixtures liest immer die SQLite-Fixture")] = "xml",
 ) -> None:
-    """MaStR-Gesamtdatenexport lesen und data/seed/kapazitaet_monat.csv neu erzeugen (Stunden; nur auf dem Entwicklerrechner)."""
-    export_date = _export_date(date_) or date.today()
+    """MaStR-Gesamtdatenexport lesen und data/seed/kapazitaet_monat.csv neu erzeugen (nur auf dem Entwicklerrechner)."""
+    if source not in ("xml", "sqlite"):
+        raise typer.BadParameter(f"{source!r}: erlaubt sind xml und sqlite", param_hint="--source")
+    export_date = _export_date(date_)
     settings = load_settings()
     if fixtures:
-        sqlite_path = mastr.sqlite_from_csv_dir(settings.fixtures_dir / "mastr" / "tables",
-                                                settings.root / "data" / "raw" / "mastr_fixture" / "open-mastr.db")
+        quelle = mastr.sqlite_from_csv_dir(settings.fixtures_dir / "mastr" / "tables",
+                                           settings.root / "data" / "raw" / "mastr_fixture" / "open-mastr.db")
+        chunks = mastr.iter_units(quelle)
         target = out or settings.fixtures_dir / "mastr" / "kapazitaet_monat.csv"
     else:
-        sqlite_path = mastr.find_sqlite(settings.mastr_output_dir) if skip_download else mastr.download(
-            settings.mastr_output_dir, settings.mastr_tables, date_)
+        if not skip_download:
+            mastr.download(settings.mastr_output_dir, settings.mastr_tables, date_)
+        if source == "xml":
+            quelle = mastr.find_zip(settings.mastr_output_dir)
+            export_date = export_date or mastr.zip_export_date(quelle)
+            chunks = mastr.iter_units_xml(quelle, mastr.UNIT_TABLES, mastr.load_katalog(quelle))
+        else:
+            quelle = mastr.find_sqlite(settings.mastr_output_dir)
+            chunks = mastr.iter_units(quelle)
         target = out or settings.seed_dir / "kapazitaet_monat.csv"
-    if profile:
-        (settings.root / "docs" / "mastr-profil.md").write_text(mastr.profile(sqlite_path), encoding="utf-8")
-        typer.echo("profil: docs/mastr-profil.md")
+    typer.echo(f"quelle: {quelle}")
+    prof = mastr.Profile()
     mapping = mastr.load_mapping(settings.seed_dir / "mastr_energietraeger_mapping.csv")
-    seed, stats = mastr.aggregate(mastr.iter_units(sqlite_path), settings.calendar_start, settings.calendar_end, mapping)
-    mastr.write_seed(seed, target, stats, export_date)
+    seed, stats = mastr.aggregate(prof.wrap(chunks), settings.calendar_start, settings.calendar_end, mapping)
+    typer.echo("einheiten je tabelle: " + " ".join(f"{t}={prof.einheiten[t]}" for t in mastr.UNIT_TABLES))
+    if profile:
+        try:
+            label = quelle.relative_to(settings.root).as_posix()
+        except ValueError:
+            label = quelle.name
+        (settings.root / "docs" / "mastr-profil.md").write_text(prof.markdown(label), encoding="utf-8", newline="\n")
+        typer.echo("profil: docs/mastr-profil.md")
+    mastr.write_seed(seed, target, stats, export_date or date.today())
     typer.echo(f"seed: {target} " + " ".join(f"{k}={v}" for k, v in sorted(stats.items())))

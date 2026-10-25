@@ -1,8 +1,10 @@
 """Write the synthetic MaStR fixture: eight CSV tables with open-mastr 1.0 table and column names, 61 units.
 
 Usage: uv run python tools/make_mastr_fixture.py
-Writes data/fixtures/mastr/tables/<Tabelle>.csv. Deterministic, no randomness: the units below are the
-whole fixture. tests/unit/test_mastr.py depends on them; the statistics the tests assert come from
+Writes data/fixtures/mastr/tables/<Tabelle>.csv and, from those CSVs, the export-shaped zip
+data/fixtures/mastr/xml/Gesamtdatenexport_fixture.zip (Katalogwerte.xml plus UTF-16 XML members with catalog
+ids in place of the texts, see mastr.xml_export_from_csv_dir). Deterministic, no randomness: the units below
+are the whole fixture. tests/unit/test_mastr.py depends on them; the statistics the tests assert come from
 (aggregated with calendar 1990-01-01 .. 2030-12-31):
 
 - in_planung = 3            SEE900000000003 (Wind), SEE900000000019 (Solar), SEE900000000079 (Geothermie)
@@ -27,7 +29,10 @@ from __future__ import annotations
 import csv
 from pathlib import Path
 
+from ewmonitor.mastr import xml_export_from_csv_dir
+
 OUT_DIR = Path(__file__).resolve().parents[1] / "data" / "fixtures" / "mastr" / "tables"
+ZIP_PATH = OUT_DIR.parent / "xml" / "Gesamtdatenexport_fixture.zip"
 
 BASE_COLUMNS = ["EinheitMastrNummer", "Bundesland", "Nettonennleistung", "Bruttoleistung", "Inbetriebnahmedatum",
                 "EinheitBetriebsstatus", "DatumEndgueltigeStilllegung", "Energietraeger"]
@@ -149,6 +154,8 @@ def main() -> None:
         total += len(rows)
         print(f"{path.relative_to(OUT_DIR.parents[3])}: {len(rows)} Einheiten")
     print(f"insgesamt {total} Einheiten")
+    xml_export_from_csv_dir(OUT_DIR, ZIP_PATH)
+    print(f"{ZIP_PATH.relative_to(OUT_DIR.parents[3])}: XML-Export aus denselben Tabellen")
 
 
 if __name__ == "__main__":

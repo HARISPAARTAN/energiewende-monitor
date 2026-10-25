@@ -12,6 +12,7 @@ dependencies = [
   "pyodbc>=5.2",
   "typer>=0.15",
   "tzdata>=2025.2",
+  "lxml>=5.3",
 ]
 
 [project.optional-dependencies]

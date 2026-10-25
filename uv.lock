@@ -301,6 +301,7 @@ name = "ewmonitor"
 version = "0.1.1"
 source = { editable = "." }
 dependencies = [
+    { name = "lxml" },
     { name = "pandas" },
     { name = "pyodbc" },
     { name = "requests" },
@@ -322,6 +323,7 @@ dev = [
 
 [package.metadata]
 requires-dist = [
+    { name = "lxml", specifier = ">=5.3" },
     { name = "open-mastr", marker = "extra == 'mastr'", specifier = ">=1.0,<2" },
     { name = "pandas", specifier = ">=2.2" },
     { name = "pyodbc", specifier = ">=5.2" },

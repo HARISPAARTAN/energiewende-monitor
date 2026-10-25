@@ -1,16 +1,22 @@
-"""Marktstammdatenregister: read the open-mastr 1.0 SQLite store, normalise units, map to the SMARD
-Energietraeger dimension, aggregate installed capacity per Bundesland, Energietraeger and month."""
+"""Marktstammdatenregister: read the unit tables of the bulk export (the Gesamtdatenexport zip directly, or the
+open-mastr 1.0 SQLite store), normalise units, map to the SMARD Energietraeger dimension, aggregate installed
+capacity per Bundesland, Energietraeger and month."""
 
 from __future__ import annotations
 
 import logging
+import re
 import sqlite3
-from collections import Counter
+import time
+import zipfile
+from collections import Counter, defaultdict
 from collections.abc import Iterable, Iterator
 from datetime import date
 from pathlib import Path
+from xml.sax.saxutils import escape
 
 import pandas as pd
+from lxml import etree
 
 log = logging.getLogger(__name__)
 
@@ -84,6 +90,149 @@ def iter_units(sqlite_path: Path, chunksize: int = 500_000) -> Iterator[pd.DataF
                 yield _normalise(chunk)
     finally:
         con.close()
+
+
+# --- Gesamtdatenexport zip (XML) ------------------------------------------------------------------------------
+# The export holds one zip with UTF-16 XML members: `<Tabelle>.xml` or `<Tabelle>_1.xml ... _N.xml`. The root tag is
+# the table name, the row tag its singular (`<EinheitenSolar><EinheitSolar>...`). Catalog-coded fields carry a
+# numeric id that `Katalogwerte.xml` (`<Katalogwerte><Katalogwert><Id>/<Wert>`) resolves; the ids are global.
+KATALOG = "Katalogwerte"
+KATALOG_COLUMNS = tuple(SOURCE_COLUMNS[c] for c in ("bundesland", "status", "energietraeger_mastr", "technologie",
+                                                    "hauptbrennstoff", "lage"))
+EXPORT_PATTERN = re.compile(r"Gesamtdatenexport_(\d{8})\.zip")
+
+
+def xml_members(names: Iterable[str], table: str) -> list[str]:
+    """The zip members of one table in numeric order (`_2` before `_10`); a single `<table>.xml` counts as 0."""
+    pattern = re.compile(rf"{re.escape(table)}(?:_(\d+))?\.xml")
+    hits = [(int(m.group(1) or 0), name) for name in names if (m := pattern.fullmatch(name))]
+    return [name for _, name in sorted(hits)]
+
+
+def _row_tag(table: str) -> str:
+    return table.replace("Einheiten", "Einheit", 1)
+
+
+def _release(elem) -> None:
+    """Free a processed element and everything before it, so memory stays flat over a 400 MB member."""
+    elem.clear(keep_tail=True)
+    while elem.getprevious() is not None:
+        del elem.getparent()[0]
+
+
+def load_katalog(zip_path: Path) -> dict[str, str]:
+    """Catalog id -> text from the `Katalogwerte` member(s) of the export zip."""
+    katalog: dict[str, str] = {}
+    with zipfile.ZipFile(zip_path) as zf:
+        members = xml_members(zf.namelist(), KATALOG)
+        if not members:
+            raise FileNotFoundError(f"{KATALOG}.xml fehlt in {zip_path}")
+        for member in members:
+            with zf.open(member) as f:
+                for _, elem in etree.iterparse(f, events=("end",), tag="Katalogwert"):
+                    katalog[(elem.findtext("Id") or "").strip()] = elem.findtext("Wert")
+                    _release(elem)
+    return katalog
+
+
+def _xml_chunk(table: str, rows: list[dict]) -> pd.DataFrame:
+    df = pd.DataFrame.from_records(rows, columns=list(SOURCE_COLUMNS))
+    kw = df["netto_kw"].astype("string").str.replace(r"\s", "", regex=True).str.replace(",", ".", regex=False)
+    df["netto_kw"] = pd.to_numeric(kw, errors="coerce").astype("float64")
+    df.insert(1, "tabelle", table)
+    return _normalise(df)
+
+
+def iter_units_xml(zip_path: Path, tables: Iterable[str], katalog: dict[str, str],
+                   chunksize: int = 200_000) -> Iterator[pd.DataFrame]:
+    """Yield normalised unit chunks straight from the export zip, the same frame `iter_units` yields.
+
+    Streams every member with lxml iterparse and keeps only the SOURCE_COLUMNS fields. Catalog-coded fields are
+    resolved through `katalog`; a value that is not a catalog id (for example a multi-value `710 3183`) stays as
+    it is. `Nettonennleistung` accepts a comma or a dot as decimal separator and ignores spaces."""
+    wanted = {src: dst for dst, src in SOURCE_COLUMNS.items()}
+    coded = set(KATALOG_COLUMNS)
+    with zipfile.ZipFile(zip_path) as zf:
+        names = zf.namelist()
+        for table in tables:
+            members = xml_members(names, table)
+            if not members:
+                log.warning("MaStR-Tabelle %s fehlt in %s", table, zip_path)
+                continue
+            row_tag, table_units = _row_tag(table), 0
+            for member in members:
+                started, member_units, rows = time.perf_counter(), 0, []
+                with zf.open(member) as f:
+                    for _, elem in etree.iterparse(f, events=("end",), tag=row_tag):
+                        record = {}
+                        for child in elem:
+                            dst = wanted.get(child.tag)
+                            if dst is not None:
+                                text = child.text
+                                if child.tag in coded and text is not None:
+                                    text = katalog.get(text.strip(), text)
+                                record[dst] = text
+                        rows.append(record)
+                        _release(elem)
+                        if len(rows) >= chunksize:
+                            member_units += len(rows)
+                            yield _xml_chunk(table, rows)
+                            rows = []
+                if rows:
+                    member_units += len(rows)
+                    yield _xml_chunk(table, rows)
+                table_units += member_units
+                log.info("%s: %d Einheiten in %.1f s", member, member_units, time.perf_counter() - started)
+            log.info("%s: %d Einheiten aus %d Datei(en)", table, table_units, len(members))
+
+
+def find_zip(output_dir: Path) -> Path:
+    """The newest `Gesamtdatenexport_YYYYMMDD.zip` under `<output_dir>/data/xml_download`."""
+    folder = Path(output_dir) / "data" / "xml_download"
+    candidates = sorted(p for p in folder.glob("Gesamtdatenexport_*.zip") if EXPORT_PATTERN.fullmatch(p.name))
+    if not candidates:
+        raise FileNotFoundError(f"kein Gesamtdatenexport_YYYYMMDD.zip unter {folder}")
+    return candidates[-1]
+
+
+def zip_export_date(zip_path: Path) -> date | None:
+    """The export date in the zip name, or None when the name carries none."""
+    m = EXPORT_PATTERN.fullmatch(Path(zip_path).name)
+    if not m:
+        return None
+    digits = m.group(1)
+    return date(int(digits[:4]), int(digits[4:6]), int(digits[6:]))
+
+
+def xml_export_from_csv_dir(csv_dir: Path, zip_path: Path, rows_per_member: int = 5) -> Path:
+    """Build an export-shaped zip from CSV tables (fixtures and tests): one `Katalogwerte.xml` with an id for every
+    text in a catalog-coded column, and per table the rows with those ids, UTF-16 with BOM like the real export.
+    A table with more than `rows_per_member` rows is split into `<table>_1.xml ... _N.xml`; empty cells are left
+    out, as the export does. Deterministic: same input, same member bytes."""
+    tables = {p.stem: pd.read_csv(p, dtype=str, keep_default_na=False, encoding="utf-8")
+              for p in sorted(Path(csv_dir).glob("*.csv"))}
+    texts = sorted({v for df in tables.values() for col in KATALOG_COLUMNS if col in df for v in df[col] if v})
+    ids = {text: str(1000 + i) for i, text in enumerate(texts)}
+
+    def member(root: str, row: str, records: list[dict]) -> bytes:
+        body = "".join(
+            f"<{row}>" + "".join(f"<{k}>{escape(v)}</{k}>" for k, v in rec.items() if v) + f"</{row}>" for rec in records)
+        return f"<?xml version='1.0' encoding='UTF-16'?><{root}>{body}</{root}>".encode("utf-16")
+
+    out = {f"{KATALOG}.xml": member(KATALOG, "Katalogwert", [
+        {"Id": i, "Wert": text, "KatalogKategorieId": "1"} for text, i in ids.items()])}
+    for table, df in tables.items():
+        records = [{c: (ids[v] if c in KATALOG_COLUMNS and v else v) for c, v in rec.items()}
+                   for rec in df.to_dict(orient="records")]
+        parts = [records[i:i + rows_per_member] for i in range(0, len(records), rows_per_member)] or [[]]
+        for n, part in enumerate(parts, start=1):
+            name = f"{table}.xml" if len(parts) == 1 else f"{table}_{n}.xml"
+            out[name] = member(table, _row_tag(table), part)
+    Path(zip_path).parent.mkdir(parents=True, exist_ok=True)
+    with zipfile.ZipFile(zip_path, "w", zipfile.ZIP_DEFLATED) as zf:
+        for name, data in out.items():
+            zf.writestr(zipfile.ZipInfo(name, date_time=(1980, 1, 1, 0, 0, 0)), data, compress_type=zipfile.ZIP_DEFLATED)
+    return Path(zip_path)
 
 
 def _normalise(df: pd.DataFrame) -> pd.DataFrame:
@@ -247,45 +396,71 @@ def sqlite_from_csv_dir(csv_dir: Path, sqlite_path: Path) -> Path:
     return sqlite_path
 
 
-def profile(sqlite_path: Path, top: int = 25) -> str:
-    """Distinct values with counts for the mapping-relevant columns and NULL rates, as Markdown."""
-    con = sqlite3.connect(str(sqlite_path))
-    out = ["# MaStR-Profil", "", f"Quelle: `{sqlite_path}`", ""]
-    try:
-        tables = {row[0] for row in con.execute("SELECT name FROM sqlite_master WHERE type = 'table'")}
+PROFILE_VALUES = ("status", "energietraeger_mastr", "technologie", "hauptbrennstoff", "lage", "bundesland")
+PROFILE_NULLS = {"bundesland": "Bundesland", "inbetriebnahme": "Inbetriebnahmedatum", "netto_kw": "Nettonennleistung"}
+NULL_TEXT = "NULL"
+
+
+class Profile:
+    """Distinct values with counts per unit table, collected from normalised chunks while they stream past, so
+    profiling the multi-GB export needs no second pass. Works for both readers."""
+
+    def __init__(self) -> None:
+        self.einheiten: Counter = Counter()
+        self.werte: defaultdict[tuple[str, str], Counter] = defaultdict(Counter)
+        self.nulls: Counter = Counter()
+
+    def add(self, chunk: pd.DataFrame) -> None:
+        for table, part in chunk.groupby("tabelle", sort=False):
+            self.einheiten[table] += len(part)
+            for col in PROFILE_VALUES:
+                self.werte[(table, col)].update(part[col].fillna(NULL_TEXT).value_counts().to_dict())
+            for col in PROFILE_NULLS:
+                self.nulls[(table, col)] += int(part[col].isna().sum())
+
+    def wrap(self, chunks: Iterable[pd.DataFrame]) -> Iterator[pd.DataFrame]:
+        for chunk in chunks:
+            self.add(chunk)
+            yield chunk
+
+    def markdown(self, source: str, top: int = 40) -> str:
+        """Markdown per table; a column that is NULL for every unit of a table is left out."""
+        out = ["# MaStR-Profil", "", f"Quelle: `{source}`", ""]
         for table in UNIT_TABLES:
-            if table not in tables:
-                out.append(f"## {table}\n\nfehlt\n")
-                continue
-            present = _existing_columns(con, table)
-            n = con.execute(f'SELECT COUNT(*) FROM "{table}"').fetchone()[0]
+            n = self.einheiten[table]
             out.append(f"## {table}\n\nEinheiten: {n}\n")
-            for col in ("EinheitBetriebsstatus", "Energietraeger", "Technologie", "Hauptbrennstoff", "Lage"):
-                if col not in present:
+            for col in PROFILE_VALUES:
+                counts = self.werte.get((table, col), Counter())
+                if set(counts) <= {NULL_TEXT}:
                     continue
-                rows = con.execute(f'SELECT "{col}", COUNT(*) FROM "{table}" GROUP BY "{col}" ORDER BY 2 DESC LIMIT {top}').fetchall()
-                out.append(f"### {col}\n\n| Wert | Anzahl |\n|---|---|")
-                out.extend(f"| {v if v is not None else 'NULL'} | {c} |" for v, c in rows)
+                out.append(f"### {SOURCE_COLUMNS[col]}\n\n| Wert | Anzahl |\n|---|---|")
+                ranked = sorted(counts.items(), key=lambda kv: (-kv[1], kv[0]))
+                out.extend(f"| {v} | {c} |" for v, c in ranked[:top])
+                if len(ranked) > top:
+                    out.append(f"| ({len(ranked) - top} weitere) | {sum(c for _, c in ranked[top:])} |")
                 out.append("")
-            for col in ("Bundesland", "Inbetriebnahmedatum", "Nettonennleistung"):
-                if col in present:
-                    nulls = con.execute(f'SELECT COUNT(*) FROM "{table}" WHERE "{col}" IS NULL OR "{col}" = \'\'').fetchone()[0]
-                    out.append(f"- {col} NULL: {nulls} von {n}")
+            out.extend(f"- {label} NULL: {self.nulls[(table, col)]} von {n}" for col, label in PROFILE_NULLS.items())
             out.append("")
-    finally:
-        con.close()
-    return "\n".join(out) + "\n"
+        return "\n".join(out) + "\n"
 
 
-def download(output_dir: Path, tables: Iterable[str], date_: str | None = None) -> Path:
-    """Bulk download and parse with open-mastr (optional extra `mastr`); returns the SQLite path."""
+def profile(chunks: Iterable[pd.DataFrame], source: str, top: int = 40) -> str:
+    """Distinct values with counts for the mapping-relevant columns and NULL rates, as Markdown."""
+    prof = Profile()
+    for _ in prof.wrap(chunks):
+        pass
+    return prof.markdown(source, top)
+
+
+def download(output_dir: Path, tables: Iterable[str], date_: str | None = None) -> None:
+    """Bulk download with open-mastr (optional extra `mastr`). open-mastr also parses the zip into its SQLite store;
+    `find_zip` and `find_sqlite` locate the results."""
     try:
         from open_mastr import Mastr
     except ImportError as exc:  # pragma: no cover
         raise SystemExit("open-mastr fehlt: uv sync --extra mastr") from exc
     output_dir.mkdir(parents=True, exist_ok=True)
     Mastr(output_dir=str(output_dir)).download(method="bulk", data=list(tables), date=date_)
-    return find_sqlite(output_dir)
 
 
 def find_sqlite(output_dir: Path) -> Path:

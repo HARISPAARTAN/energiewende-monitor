@@ -78,3 +78,16 @@ def test_seed_mastr_uses_a_valid_date_as_export_date(tmp_path):
     result = CliRunner().invoke(app, ["seed-mastr", "--fixtures", "--date", "20251020", "--out", str(tmp_path / "seed.csv")])
     assert result.exit_code == 0, result.output
     assert "# Exportstand: 2025-10-20" in (tmp_path / "seed.csv").read_text(encoding="utf-8")
+
+
+def test_seed_mastr_rejects_an_unknown_source_before_any_work(tmp_path):
+    result = CliRunner().invoke(app, ["seed-mastr", "--fixtures", "--source", "csv", "--out", str(tmp_path / "seed.csv")])
+    assert result.exit_code == 2
+    assert "--source" in _ANSI.sub("", result.output)
+    assert not (tmp_path / "seed.csv").exists()
+
+
+def test_seed_mastr_reports_the_units_per_table(tmp_path):
+    result = CliRunner().invoke(app, ["seed-mastr", "--fixtures", "--out", str(tmp_path / "seed.csv")])
+    assert result.exit_code == 0, result.output
+    assert "EinheitenSolar=9" in result.output and "EinheitenWind=10" in result.output
