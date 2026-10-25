@@ -9,3 +9,4 @@ data/raw/
 .env
 *.log
 *.part
+docs/mastr-profil-fixture.md

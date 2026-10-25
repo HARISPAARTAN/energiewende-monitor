@@ -120,7 +120,7 @@ Regeln (Begründung in `docs/decisions/ADR-004-mastr-seed.md`):
 - Photovoltaik: Die Nettonennleistung (Wechselrichter) liegt rund 11 % unter der Bruttoleistung der Module, die
   die Bundesnetzagentur in ihren Zubauzahlen meldet (Oktober 2026: 116,6 statt 131,7 GW).
 - **Historie vor 2019 ist unvollständig.** Das Register enthält nur Einheiten, die seit seinem Start 2019
-  registriert wurden, und die damals noch in Betrieb waren; früher stillgelegte oder gelöschte Anlagen fehlen.
+  registriert wurden, sowie die damals schon in Betrieb waren; früher stillgelegte oder gelöschte Anlagen fehlen.
   Bestand und Zubau vor etwa 2019 zeigen daher den heute registrierten Anlagenpark nach Inbetriebnahmedatum,
   nicht den damaligen Bestand. Beispiele: Kernenergie steht von 1990 bis Ende 2021 konstant bei 8,1 GW
   (2010 waren rund 20,5 GW am Netz); Wind an Land hat Ende 2010 24,0 GW statt rund 27 GW.
