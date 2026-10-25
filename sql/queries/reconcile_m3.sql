@@ -1,6 +1,6 @@
 -- Reconciliation of the Power BI measures against the warehouse (milestone 3).
 -- Every statement returns (id, wert); the DAX side lives in tools/pbi/reconcile.py with the same ids.
--- Run: uv run --env-file .env python -m tools.pbi.reconcile --sql
+-- Run: uv run --env-file .env python -m tools.pbi.reconcile sql
 -- R5 to R8 follow the DAX of Kennzahlen.tmdl exactly (see docs/kpi-glossar.md).
 
 -- R1 Erzeugung gesamt 2025 (MWh)           -> [Erzeugung (MWh)] with Datum[Jahr] = 2025

@@ -69,12 +69,13 @@ SUM(Erzeugung[Erzeugung MWh])
 - **Formatierung im Modell:** `#,0`
 - **Hinweise:**
   - Pumpspeicher gehört in der Dimension `Energieträger` zur Kategorie Konventionell.
+  - Ein äußerer Filter auf `Energieträger[Kategorie]` (Slicer Kategorie, Lesezeichen) bleibt wirksam (`KEEPFILTERS`): Bei Auswahl Konventionell ist die Kennzahl leer, der EE-Anteil 0 %.
 
 **Formel**
 
 ```dax
 Erzeugung Erneuerbar (MWh) =
-CALCULATE([Erzeugung (MWh)], Energieträger[Kategorie] = "Erneuerbar")
+CALCULATE([Erzeugung (MWh)], KEEPFILTERS(Energieträger[Kategorie] = "Erneuerbar"))
 ```
 
 ## EE-Anteil %
@@ -86,6 +87,7 @@ CALCULATE([Erzeugung (MWh)], Energieträger[Kategorie] = "Erneuerbar")
 - **Hinweise:**
   - Weicht vom amtlichen Anteil am Bruttostromverbrauch ab: anderer Nenner, nur Marktgebiet DE-LU, keine Eigenversorgung außerhalb der Netze.
   - Im Kontext ohne Erzeugung: leer (DIVIDE).
+  - Bei Auswahl Konventionell im Slicer Kategorie ist der Anteil 0 %, bei Erneuerbar 100 %; er übersteigt nie 100 %.
 
 **Formel**
 
@@ -394,17 +396,22 @@ RETURN CALCULATE(SUM(Kapazität[Bestand MW]), REMOVEFILTERS(Datum), Kapazität[D
   - Die Basis ist der Durchschnitt der Monatsendbestände, nicht der Endbestand: Bei starkem Zubau im Jahr vermeidet das zu niedrige Volllaststunden.
   - Ein unvollständiges Jahr wird nicht hochgerechnet: Erzeugung bis heute durch den Durchschnittsbestand bis heute.
   - Netzreserve und Notstromaggregate stehen in der Kapazitätsbasis (siehe unten) und drücken die Volllaststunden dieser Energieträger.
+  - Nur bundesweit definiert: Die Erzeugung hat keine Beziehung zu `Bundesland`. Unter einer Bundesland-Auswahl (Balkendiagramm als Filter) oder der RLS-Rolle `Landesbehörde BW` ist die Kennzahl deshalb leer (Prüfung: gefiltert oder weniger als 18 sichtbare Zeilen, 16 Länder plus AWZ und Unbekannt), damit keine unmöglichen Werte über 8.760 Stunden entstehen.
 
 **Formel**
 
 ```dax
 Volllaststunden (h) =
+IF(
+ISFILTERED(Bundesland[Bundesland]) || CALCULATE(COUNTROWS(Bundesland), REMOVEFILTERS(Bundesland)) < 18,
+BLANK(),
 VAR ErzStart = CALCULATE(MIN(Erzeugung[Datum Key]))
 VAR ErzEnde = CALCULATE(MAX(Erzeugung[Datum Key]))
 VAR MonatStart = INT(ErzStart / 100) * 100 + 1
 VAR MonateMitBestand = CALCULATETABLE(VALUES(Kapazität[Datum Key]), REMOVEFILTERS(Datum), Kapazität[Datum Key] >= MonatStart && Kapazität[Datum Key] <= ErzEnde)
 VAR MittlererBestand = CALCULATE(AVERAGEX(MonateMitBestand, CALCULATE(SUM(Kapazität[Bestand MW]))), REMOVEFILTERS(Datum))
 RETURN DIVIDE([Erzeugung (MWh)], MittlererBestand)
+)
 ```
 
 ## Anzahl Einheiten Zubau

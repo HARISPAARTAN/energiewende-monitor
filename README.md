@@ -201,7 +201,7 @@ ohne Daten, weil kein Cache im Repository liegt (`.pbi/cache.abf` ist git-ignori
 
 **SQL-Zugangsdaten.** Die Quelle ist `Sql.Database("127.0.0.1,1433", "energiewende")` auf den Ansichten des Schemas `rpt`. Beim
 ersten Aktualisieren fragt Desktop nach den Zugangsdaten: Reiter Datenbank, Benutzer `sa`, das Kennwort aus der `.env`
-(von Hand eingeben), Ebene `127.0.0.1`. Das Kennwort steht in keiner Projektdatei. Fragt Desktop nach der Verschlüsselung,
+(von Hand eingeben), Ebene `127.0.0.1,1433`. Das Kennwort steht in keiner Projektdatei. Fragt Desktop nach der Verschlüsselung,
 mit OK bestätigen.
 
 **Öffentliche Variante.** `uv run python tools/pbi/make_public_variant.py` kopiert das Projekt nach `build/public/` als
@@ -227,6 +227,12 @@ im Glossar unter [Abgleich](docs/kpi-glossar.md#abgleich-mit-dem-data-warehouse)
 `uv sync --dev` installiert die Entwicklungswerkzeuge, lässt aber die optionale Abhängigkeit `open-mastr` weg (und entfernt sie, wenn
 sie schon installiert war). Wer den Seed neu erzeugt, nutzt `uv sync --dev --extra mastr`. Für die optionalen Power-BI-Prüfungen
 (TMDL-Parser, ADOMD-Abgleich) kommt `--group pbi` hinzu (pythonnet).
+
+Quelle der Wahrheit für den Bericht: Vor der Validierungssitzung mit Power BI Desktop erzeugen `tools/pbi/pages.json` und
+`tools/pbi/build_report.py` die Berichtsdateien (`uv run python tools/pbi/build_report.py`; danach darf `git status --short powerbi` nichts
+ausgeben, das ist ein dokumentierter Befehl, kein Test). Nach der Sitzung sind die PBIR-Dateien, die Desktop gespeichert hat, die Quelle;
+`build_report.py` wird dann nicht mehr ausgeführt, und die Lint-Tests laufen weiter auf den gespeicherten Dateien
+(siehe [docs/owner-validierung.md](docs/owner-validierung.md)).
 
 Qualitätstore: `uv run ruff check .`, `uv run pytest tests/unit tests/pbi -m "not live" -q`,
 `uv run --env-file .env pytest tests/dq -m db -q`, `uv lock --check`. CI führt Lint, Unit- und Power-BI-Tests

@@ -193,7 +193,7 @@ committed (`.pbi/cache.abf` is git-ignored). The local database must be running 
 `uv run --env-file .env ewmonitor load`), then Home, Refresh.
 
 **SQL credentials.** The source is `Sql.Database("127.0.0.1,1433", "energiewende")` on the views of schema `rpt`. On the first refresh Desktop asks
-for credentials: tab Database, user `sa`, the password from `.env` (typed by hand), level `127.0.0.1`. The password is in no project file. If
+for credentials: tab Database, user `sa`, the password from `.env` (typed by hand), level `127.0.0.1,1433`. The password is in no project file. If
 Desktop asks about encryption, confirm with OK.
 
 **Public variant.** `uv run python tools/pbi/make_public_variant.py` copies the project to `build/public/` as `EnergiewendeMonitor (öffentlich)` and removes the
@@ -218,6 +218,12 @@ Desktop's DAX query view and compare with the SQL output by hand; the results go
 `uv sync --dev` installs the development tools but leaves out the optional `open-mastr` dependency (and removes it if it was already
 installed). To regenerate the seed use `uv sync --dev --extra mastr`. For the optional Power BI checks (TMDL parser, ADOMD reconciliation) add
 `--group pbi` (pythonnet).
+
+Source of truth for the report: before the validation session with Power BI Desktop, `tools/pbi/pages.json` and
+`tools/pbi/build_report.py` generate the report files (`uv run python tools/pbi/build_report.py`; afterwards `git status --short powerbi`
+must print nothing, a documented command rather than a test). After the session the PBIR files that Desktop saved are the source;
+`build_report.py` is not run again, and the lint tests keep running on the saved files (see
+[docs/owner-validierung.md](docs/owner-validierung.md), in German).
 
 Quality gates: `uv run ruff check .`, `uv run pytest tests/unit tests/pbi -m "not live" -q`,
 `uv run --env-file .env pytest tests/dq -m db -q`, `uv lock --check`. CI runs lint, the unit and Power BI tests
