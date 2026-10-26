@@ -1,0 +1,204 @@
+{
+  "version": "1.1.0",
+  "diagrams": [
+    {
+      "ordinal": 0,
+      "scrollPosition": {
+        "x": 0,
+        "y": 0
+      },
+      "nodes": [
+        {
+          "location": {
+            "x": 147.0,
+            "y": 0
+          },
+          "nodeIndex": "Zeit",
+          "nodeLineageTag": "08ccdd44-bd3c-5bd4-9401-de3c534f2abd",
+          "size": {
+            "height": 280,
+            "width": 234
+          },
+          "zIndex": 0
+        },
+        {
+          "location": {
+            "x": 441.0,
+            "y": 0
+          },
+          "nodeIndex": "Region",
+          "nodeLineageTag": "f3c8687b-2dee-5ee2-862d-fd944dda6d59",
+          "size": {
+            "height": 280,
+            "width": 234
+          },
+          "zIndex": 1
+        },
+        {
+          "location": {
+            "x": 735.0,
+            "y": 0
+          },
+          "nodeIndex": "Datum",
+          "nodeLineageTag": "9842f9df-71a4-5f4a-9978-f2ef8db1fa48",
+          "size": {
+            "height": 280,
+            "width": 234
+          },
+          "zIndex": 2
+        },
+        {
+          "location": {
+            "x": 1029.0,
+            "y": 0
+          },
+          "nodeIndex": "Energieträger",
+          "nodeLineageTag": "5b9b7790-699d-5c1d-a780-d515f049566d",
+          "size": {
+            "height": 280,
+            "width": 234
+          },
+          "zIndex": 3
+        },
+        {
+          "location": {
+            "x": 1323.0,
+            "y": 0
+          },
+          "nodeIndex": "Bundesland",
+          "nodeLineageTag": "0e4dce46-d52d-5cc7-9c17-7cb0b77755e7",
+          "size": {
+            "height": 280,
+            "width": 234
+          },
+          "zIndex": 4
+        },
+        {
+          "location": {
+            "x": 0.0,
+            "y": 430
+          },
+          "nodeIndex": "Preis",
+          "nodeLineageTag": "c969355d-70d9-58b7-8a25-1c35decb63be",
+          "size": {
+            "height": 280,
+            "width": 234
+          },
+          "zIndex": 5
+        },
+        {
+          "location": {
+            "x": 294.0,
+            "y": 430
+          },
+          "nodeIndex": "Last",
+          "nodeLineageTag": "f3c78ad7-7f9c-5ec6-8986-66ad81a901b5",
+          "size": {
+            "height": 280,
+            "width": 234
+          },
+          "zIndex": 6
+        },
+        {
+          "location": {
+            "x": 588.0,
+            "y": 430
+          },
+          "nodeIndex": "Last Stunde",
+          "nodeLineageTag": "cc504fef-e960-5cca-b623-f730b714a234",
+          "size": {
+            "height": 280,
+            "width": 234
+          },
+          "zIndex": 7
+        },
+        {
+          "location": {
+            "x": 882.0,
+            "y": 430
+          },
+          "nodeIndex": "Preisphasen",
+          "nodeLineageTag": "b22482a7-4d40-5125-beb4-84868d02be83",
+          "size": {
+            "height": 280,
+            "width": 234
+          },
+          "zIndex": 8
+        },
+        {
+          "location": {
+            "x": 1176.0,
+            "y": 430
+          },
+          "nodeIndex": "Erzeugung",
+          "nodeLineageTag": "fc9be076-cd10-5792-af10-12a6ad9428ad",
+          "size": {
+            "height": 280,
+            "width": 234
+          },
+          "zIndex": 9
+        },
+        {
+          "location": {
+            "x": 1470.0,
+            "y": 430
+          },
+          "nodeIndex": "Kapazität",
+          "nodeLineageTag": "6bc9d735-b906-5deb-a2d6-b8c9be0eb3d6",
+          "size": {
+            "height": 280,
+            "width": 234
+          },
+          "zIndex": 10
+        },
+        {
+          "location": {
+            "x": 441.0,
+            "y": 860
+          },
+          "nodeIndex": "Kennzahlen",
+          "nodeLineageTag": "92f95086-b97b-5b46-8af4-9650a8e05c7a",
+          "size": {
+            "height": 280,
+            "width": 234
+          },
+          "zIndex": 11
+        },
+        {
+          "location": {
+            "x": 735.0,
+            "y": 860
+          },
+          "nodeIndex": "Kennzahl-Auswahl",
+          "nodeLineageTag": "097dcc3e-85b7-593c-879f-6fafa7c485b2",
+          "size": {
+            "height": 280,
+            "width": 234
+          },
+          "zIndex": 12
+        },
+        {
+          "location": {
+            "x": 1029.0,
+            "y": 860
+          },
+          "nodeIndex": "Datenlücken",
+          "nodeLineageTag": "1d6223fc-56d8-5be0-b6d6-2d133c246bf3",
+          "size": {
+            "height": 280,
+            "width": 234
+          },
+          "zIndex": 13
+        }
+      ],
+      "name": "All tables",
+      "zoomValue": 70,
+      "pinKeyFieldsToTop": false,
+      "showExtraHeaderInfo": false,
+      "hideKeyFieldsWhenCollapsed": false,
+      "tablesLocked": false
+    }
+  ],
+  "selectedDiagram": "All tables",
+  "defaultDiagram": "All tables"
+}

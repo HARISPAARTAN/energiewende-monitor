@@ -1,7 +1,8 @@
 # Screenshot-Liste
 
-Aufnahme in der Validierungssitzung mit Power BI Desktop (Schritt 7 der Klickfolge). Die PNG-Dateien liegen in diesem
-Ordner und werden von `README.md` und `README.en.md` eingebunden.
+Aufnahme in der Validierungssitzung mit Power BI Desktop (Schritt 8 der Klickfolge). Die PNG-Dateien liegen in diesem
+Ordner und werden von `README.md` und `README.en.md` eingebunden. Stand der Aufnahmen: 2026-10-26, Datenstand SMARD 24.10.2026,
+MaStR Oktober 2026.
 
 ## Vorbereitung
 
@@ -21,7 +22,7 @@ Ordner und werden von `README.md` und `README.en.md` eingebunden.
 | `03-preise.png` | Seite Preise | Jahr 2025; Histogramm, negative Stunden je Monat, Streudiagramm und Top-10-Preisphasen sichtbar |
 | `04-ausbau.png` | Seite Ausbau | Alle Energieträger, Jahr 2025 |
 | `05-datenqualitaet.png` | Seite Datenqualität & Quellen | ohne Filter; Datenstand SMARD und MaStR, Quellen und Lizenzen sichtbar |
-| `06-modell.png` | Modellansicht (dritte Leiste) | Sternschema mit Fakten- und Dimensionstabellen, Beziehungen sichtbar, Tabellen so angeordnet, dass keine Linien durch Tabellen laufen |
+| `06-modell.png` | Modellansicht (dritte Leiste) | Sternschema mit Fakten- und Dimensionstabellen, Beziehungen sichtbar, Tabellen so angeordnet, dass keine Linien durch Tabellen laufen (Anordnung aus `tools/pbi/diagram_layout.py`: Dimensionen oben, Fakten darunter) |
 | `07-kennzahl-auswahl.png` | Überblick mit dem Feldparameter-Slicer in Aktion | Kennzahl-Auswahl auf "Day-Ahead Ø (€/MWh)"; das Liniendiagramm unten rechts zeigt die Preise |
 
 ## Nachbereitung

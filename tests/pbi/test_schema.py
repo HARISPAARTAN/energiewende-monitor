@@ -42,7 +42,8 @@ def _validator(schema_uri: str) -> Draft7Validator:
 
 def _project_json_files() -> list[Path]:
     files = [p for p in PBI.rglob("*") if p.is_file() and p.suffix in (".json", ".pbip", ".pbir", ".pbism")]
-    return sorted(p for p in files if ".pbi" not in p.parts and "StaticResources" not in p.parts)
+    # the model diagram has no published schema and Desktop writes it without $schema (test_tmdl_lint checks its tables)
+    return sorted(p for p in files if ".pbi" not in p.parts and "StaticResources" not in p.parts and p.name != "diagramLayout.json")
 
 
 def _template_files() -> list[Path]:

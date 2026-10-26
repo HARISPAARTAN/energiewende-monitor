@@ -4,7 +4,8 @@
 
 Stand: Dateien und Prüfungen sind fertig. In Power BI Desktop sind am 2026-10-26 die Aktualisierung, der Abgleich (9 von 9 Kennzahlen
 innerhalb der Toleranz) und die Zeilensicherheit geprüft (Glossar, Abschnitt Abgleich). Am selben Tag sind alle fünf Seiten in Desktop
-erfasst und durchgesehen; die Korrekturen stehen unten. Offen sind das Speichern in Desktop, die Screenshots und der Tag; das Datum setzt der Tag.
+erfasst und durchgesehen; die Korrekturen stehen unten. Die sieben Screenshots der README sind aufgenommen. Offen sind das Speichern in
+Desktop und der Tag; das Datum setzt der Tag.
 
 - Leitstand-Design: dunkler Bericht mit Seitenleiste (Marke, fünf Schaltflächen, Quellen) und Kopfzeile mit Datenstand auf jeder Seite,
   Kennzahlenzeile, Kacheln mit Haarlinie und schwachem Schimmer und dem Thema `Energiewende Leitstand`. Die Farben sind benannte Werte
@@ -32,6 +33,11 @@ erfasst und durchgesehen; die Korrekturen stehen unten. Offen sind das Speichern
   Text statt Link (Desktop zeichnet Links in Textfeldern dunkelblau), Schaltflächen in 10 pt und Kopfzeile, Datenkarten und Seitenleiste ohne
   abgeschnittenen Text. Die erste Aktualisierung nach dem Öffnen meldete in drei von vier Durchgängen eine zyklische Referenz bei wechselnden Tabellen; die
   zweite lud jedes Mal alles (Checkliste, Punkt 4).
+- Modellansicht: `tools/pbi/diagram_layout.py` schreibt `diagramLayout.json` mit den Dimensionen oben, den Fakten darunter und den Tabellen
+  ohne Beziehung in einer dritten Reihe; die automatische Anordnung von Desktop zog Linien durch Tabellen. Beim Speichern übernimmt Desktop
+  die Datei.
+- Screenshots 01 bis 07 nach `docs/screenshots/SHOTLIST.md` (Jahr 2025, Oktober 2025 auf Erzeugung & Last, Kennzahl-Auswahl
+  Day-Ahead Ø auf 07).
 - Power-BI-Projekt als PBIP (`powerbi/EnergiewendeMonitor.pbip`): Semantikmodell als TMDL, Bericht als PBIR, beide code-first
   erzeugt (`tools/pbi/`). Schemas von Microsoft sind vendort (`tools/pbi/schemas/`, `schema_versions.json`), die Visualvorlagen
   stammen aus microsoft/fabric-toolbox (MIT, `tools/pbi/templates/`). Quelle des Modells: `Sql.Database("127.0.0.1,1433",

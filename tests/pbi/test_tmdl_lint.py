@@ -223,6 +223,22 @@ def test_monatsanfang_is_a_date_for_the_month_axes(model):
     assert column.description
 
 
+def test_diagram_places_every_table_once_without_overlap(model):
+    # the model view of the README: dimensions above the facts, so the relationship lines run between two rows of tables;
+    # checked on what Desktop keeps when it saves the file (names, positions, sizes)
+    import json
+    diagram = json.loads((MODEL_DIR.parent / "diagramLayout.json").read_text(encoding="utf-8"))["diagrams"][0]
+    nodes = {n["nodeIndex"]: (n["location"]["x"], n["location"]["y"], n["size"]["width"], n["size"]["height"]) for n in diagram["nodes"]}
+    assert len(diagram["nodes"]) == len(nodes) and set(nodes) == set(model.tables)
+    boxes = list(nodes.items())
+    for i, (a, (ax, ay, aw, ah)) in enumerate(boxes):
+        for b, (bx, by, bw, bh) in boxes[i + 1:]:
+            assert ax + aw <= bx or bx + bw <= ax or ay + ah <= by or by + bh <= ay, (a, b)
+    dimensions, facts = {"Datum", "Zeit", "Region", "Energieträger", "Bundesland"}, {"Erzeugung", "Last", "Preis", "Last Stunde",
+                                                                                      "Kapazität", "Preisphasen"}
+    assert max(nodes[t][1] + nodes[t][3] for t in dimensions) < min(nodes[t][1] for t in facts)
+
+
 def test_no_description_property_only_triple_slash():
     # descriptions are written as /// lines; a `description:` property would be a second, conflicting source
     for path in MODEL_DIR.rglob("*.tmdl"):
