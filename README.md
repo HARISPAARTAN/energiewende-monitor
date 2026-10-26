@@ -180,7 +180,8 @@ Hinweisen beschrieben.
   EEG 2023) und Wind auf See mindestens 30 GW (§ 1 Abs. 2 WindSeeG); die Gesetzestexte wurden am 2026-10-26 auf gesetze-im-internet.de gelesen.
   Die Leistung stammt aus dem Marktstammdatenregister (Nettonennleistung, Einschränkungen im Glossar) und kann von der amtlichen
   Zielüberwachung der Bundesnetzagentur abweichen. Bezug ist der Wert für 2030, nicht der jährliche Ausbaupfad. Unter einer
-  Bundesland-Auswahl und der RLS-Rolle sind die Messinstrumente leer, weil die Ziele bundesweit gelten.
+  Bundesland-Auswahl und der RLS-Rolle sind die Messinstrumente leer, weil die Ziele bundesweit gelten (dieselbe Prüfung wie bei Volllaststunden;
+  unter der Rolle noch nicht in Desktop angesehen).
 - **Energieträger-Gruppen.** Ein Diagramm hält höchstens acht Farben auseinander, zwölf Energieträger nicht. Die berechnete Spalte `Gruppe`
   faltet sie in sieben Farbgruppen (Biomasse, Wind, Photovoltaik, Wasserkraft, Erdgas, Steinkohle, Braunkohle) und `Sonstige` (Kernenergie,
   Pumpspeicher, Sonstige Erneuerbare, Sonstige Konventionelle). Die drei Diagramme nach Energieträger färben und stapeln nach Gruppe; der

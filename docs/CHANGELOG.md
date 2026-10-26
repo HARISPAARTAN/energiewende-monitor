@@ -14,7 +14,7 @@ Desktop, die Screenshots und der Tag; das Datum setzt der Tag.
   Energieträger färben nach Gruppe, der Bericht liest die Farben nicht mehr aus dem Seed.
 - Zielmessinstrumente: drei Kennzahlen `Zielerreichung …` (Photovoltaik 215 GW, Wind an Land 115 GW, Wind auf See mindestens 30 GW im Jahr 2030;
   § 4 EEG 2023 und § 1 WindSeeG, Gesetzestexte am 2026-10-26 gelesen) und drei Messinstrumente auf Überblick; bundesweit, leer unter einer
-  Bundesland-Auswahl und unter der RLS-Rolle.
+  Bundesland-Auswahl und unter der RLS-Rolle (dieselbe Prüfung wie bei Volllaststunden; unter der Rolle noch nicht in Desktop angesehen).
 - Deutsche Zahlen auf den Kacheln: fünf Anzeigekennzahlen `KPI …` mit `FORMAT(…, "de-DE")` und Einheit, dazu `Datenstand Kopfzeile`; Tabellen und
   Achsen folgen weiter der Sprache des Betrachters.
 - Korrekturen nach der Desktop-Sitzung (1cc1416): Tabellennamen mit Umlauten sind in DAX gequotet (Desktop lehnte `Energieträger[...]` ab), Zeit- und

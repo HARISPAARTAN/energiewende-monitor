@@ -173,7 +173,7 @@ theme. Every measure is described in [docs/kpi-glossar.md](docs/kpi-glossar.md) 
   least 30 GW (§ 1 para. 2 WindSeeG); the law texts were read on gesetze-im-internet.de on 2026-10-26. The capacity comes from the
   Marktstammdatenregister (net rated capacity, limits in the glossary) and can differ from the Bundesnetzagentur's official target monitoring.
   The reference is the 2030 value, not the yearly expansion path. Under a federal-state selection and the RLS role the gauges are blank, because the
-  targets are national.
+  targets are national (same check as full-load hours; not yet looked at under the role in Desktop).
 - **Carrier groups.** A chart keeps at most eight colours apart, twelve carriers it does not. The calculated column `Gruppe` folds them into
   seven colour groups (Biomasse, Wind, Photovoltaik, Wasserkraft, Erdgas, Steinkohle, Braunkohle) and `Sonstige` (Kernenergie, Pumpspeicher,
   Sonstige Erneuerbare, Sonstige Konventionelle). The three carrier charts colour and stack by group; the per-carrier values stay in the

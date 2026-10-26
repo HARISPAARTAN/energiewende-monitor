@@ -43,9 +43,14 @@ darf nichts ausgeben, sonst weicht der Bericht von `tools/pbi/pages.json` ab.
    Die Seiten tragen das dunkle Thema `Energiewende Leitstand` mit Seitenleiste links und Kopfzeile oben (kein rotes Säulendiagramm, kein
    mintfarbener Hintergrund auf der Seite Preise). Dann prüfen:
    - Navigation und Kopfzeile: Die fünf Schaltflächen der Seitenleiste wechseln die Seite (in Desktop mit Strg+Klick); die Schaltfläche der aktuellen
-     Seite ist hervorgehoben. Die Kopfzeile zeigt den Seitentitel und rechts `Datenstand: SMARD TT.MM.JJJJ · MaStR Monat JJJJ`.
-   - Kennzahlenkacheln auf Überblick: deutsches Zahlenformat mit Einheit (zum Beispiel `439,3 TWh`, `89,32 €/MWh`, `303,7 GW` bei Jahr 2025
-     beziehungsweise ohne Filter), nirgends `92.87 €` neben `1.791`.
+     Seite ist hervorgehoben (Fläche `#0F3442`, Text cyan und fett, auch beim Überfahren mit der Maus). Der Text jeder Schaltfläche beginnt nicht
+     am linken Rand, sondern eingerückt (`leftMargin` 20, im Bericht als ganze Zahl `20L` geschrieben); klebt er am Rand, hat Desktop die
+     Eigenschaft nicht übernommen. Die Kopfzeile zeigt den Seitentitel und rechts auf einer Zeile, ohne abgeschnittenes Ende,
+     `Datenstand: SMARD TT.MM.JJJJ · MaStR Monat JJJJ`.
+   - Kennzahlenkacheln auf Überblick: deutsches Zahlenformat mit Einheit, nirgends `92.87 €` neben `1.791`; die Werte stehen vollständig in der Kachel
+     (am breitesten `92,87 €/MWh`) und in der halbfetten Schrift des Themas. Erwartete Werte laut Abfragen vom 2026-10-26 (Erzeugung, EE-Anteil,
+     Day-Ahead Ø, negative Preisstunden, installierte Leistung): Jahr 2025 `439,3 TWh`, `58,9 %`, `89,32 €/MWh`, `573 h`, `287,3 GW`;
+     ohne Datumsfilter `1.707,1 TWh`, `58,5 %`, `92,87 €/MWh`, `1.791 h`, `303,7 GW`.
    - Messinstrumente auf Überblick: Photovoltaik, Wind an Land und Wind auf See zeigen den Anteil am Ziel 2030 (ohne Datumsfilter laut Abfrage vom
      2026-10-26 etwa 54 %, 62 % und 39 %); unter der RLS-Rolle (Punkt "RLS" unten) sind sie leer.
    - Feldparameter: Der Slicer `Kennzahl-Auswahl` ändert das Liniendiagramm unten rechts auf Überblick; alle vier Einträge zeigen eine Linie
