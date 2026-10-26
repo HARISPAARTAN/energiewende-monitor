@@ -2,12 +2,12 @@
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.13.0/schema.json",
   "name": "3c99b9e3724c55cc8210",
   "position": {
-    "height": 220,
-    "tabOrder": 5,
-    "width": 1232,
-    "x": 24,
-    "y": 476,
-    "z": 5
+    "height": 240,
+    "tabOrder": 13,
+    "width": 1048,
+    "x": 216,
+    "y": 464,
+    "z": 13
   },
   "visual": {
     "drillFilterOtherVisuals": true,
@@ -20,7 +20,9 @@
                 "textRuns": [
                   {
                     "textStyle": {
-                      "fontSize": "12pt"
+                      "color": "#E8EEF4",
+                      "fontSize": "12pt",
+                      "fontWeight": "bold"
                     },
                     "value": "Projekt"
                   }
@@ -30,9 +32,18 @@
                 "textRuns": [
                   {
                     "textStyle": {
-                      "fontSize": "12pt"
+                      "color": "#A9B8C8",
+                      "fontSize": "10pt"
                     },
-                    "value": "Code, Pipeline und Modell: https://github.com/HARISPAARTAN/energiewende-monitor"
+                    "value": "Code, Pipeline und Modell: "
+                  },
+                  {
+                    "textStyle": {
+                      "color": "#A9B8C8",
+                      "fontSize": "10pt"
+                    },
+                    "url": "https://github.com/HARISPAARTAN/energiewende-monitor",
+                    "value": "https://github.com/HARISPAARTAN/energiewende-monitor"
                   }
                 ]
               },
@@ -40,9 +51,18 @@
                 "textRuns": [
                   {
                     "textStyle": {
-                      "fontSize": "12pt"
+                      "color": "#A9B8C8",
+                      "fontSize": "10pt"
                     },
-                    "value": "Portfolio: https://harispaartan.github.io/projects/energiewende-monitor/"
+                    "value": "Portfolio: "
+                  },
+                  {
+                    "textStyle": {
+                      "color": "#A9B8C8",
+                      "fontSize": "10pt"
+                    },
+                    "url": "https://harispaartan.github.io/projects/energiewende-monitor/",
+                    "value": "https://harispaartan.github.io/projects/energiewende-monitor/"
                   }
                 ]
               },
@@ -50,13 +70,164 @@
                 "textRuns": [
                   {
                     "textStyle": {
-                      "fontSize": "12pt"
+                      "color": "#A9B8C8",
+                      "fontSize": "10pt"
                     },
                     "value": "Kennzahlen-Glossar: docs/kpi-glossar.md im Repository. Keine Gewähr; kein Ersatz für die amtlichen Veröffentlichungen."
                   }
                 ]
               }
             ]
+          }
+        }
+      ]
+    },
+    "visualContainerObjects": {
+      "background": [
+        {
+          "properties": {
+            "color": {
+              "solid": {
+                "color": {
+                  "expr": {
+                    "Literal": {
+                      "Value": "'#102233'"
+                    }
+                  }
+                }
+              }
+            },
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
+            "transparency": {
+              "expr": {
+                "Literal": {
+                  "Value": "0D"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "border": [
+        {
+          "properties": {
+            "color": {
+              "solid": {
+                "color": {
+                  "expr": {
+                    "Literal": {
+                      "Value": "'#1E3A55'"
+                    }
+                  }
+                }
+              }
+            },
+            "radius": {
+              "expr": {
+                "Literal": {
+                  "Value": "10D"
+                }
+              }
+            },
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "dropShadow": [
+        {
+          "properties": {
+            "angle": {
+              "expr": {
+                "Literal": {
+                  "Value": "45D"
+                }
+              }
+            },
+            "color": {
+              "solid": {
+                "color": {
+                  "expr": {
+                    "Literal": {
+                      "Value": "'#22D3EE'"
+                    }
+                  }
+                }
+              }
+            },
+            "position": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Outer'"
+                }
+              }
+            },
+            "preset": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Custom'"
+                }
+              }
+            },
+            "shadowBlur": {
+              "expr": {
+                "Literal": {
+                  "Value": "12D"
+                }
+              }
+            },
+            "shadowDistance": {
+              "expr": {
+                "Literal": {
+                  "Value": "0D"
+                }
+              }
+            },
+            "shadowSpread": {
+              "expr": {
+                "Literal": {
+                  "Value": "0D"
+                }
+              }
+            },
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
+            "transparency": {
+              "expr": {
+                "Literal": {
+                  "Value": "88D"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "title": [
+        {
+          "properties": {
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "false"
+                }
+              }
+            }
           }
         }
       ]

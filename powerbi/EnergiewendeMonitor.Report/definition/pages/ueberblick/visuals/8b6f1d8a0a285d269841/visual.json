@@ -2,12 +2,12 @@
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.13.0/schema.json",
   "name": "8b6f1d8a0a285d269841",
   "position": {
-    "height": 90,
-    "tabOrder": 7,
-    "width": 236,
-    "x": 780,
-    "y": 100,
-    "z": 7
+    "height": 88,
+    "tabOrder": 15,
+    "width": 200,
+    "x": 852,
+    "y": 124,
+    "z": 15
   },
   "visual": {
     "drillFilterOtherVisuals": true,
@@ -45,7 +45,14 @@
             "fontSize": {
               "expr": {
                 "Literal": {
-                  "Value": "28D"
+                  "Value": "24D"
+                }
+              }
+            },
+            "labelDisplayUnits": {
+              "expr": {
+                "Literal": {
+                  "Value": "1D"
                 }
               }
             }
@@ -65,76 +72,17 @@
                       "Entity": "Kennzahlen"
                     }
                   },
-                  "Property": "Negative Preisstunden"
+                  "Property": "KPI Negative Preisstunden"
                 }
               },
-              "nativeQueryRef": "Negative Preisstunden",
-              "queryRef": "Kennzahlen.Negative Preisstunden"
+              "nativeQueryRef": "KPI Negative Preisstunden",
+              "queryRef": "Kennzahlen.KPI Negative Preisstunden"
             }
           ]
         }
       }
     },
     "visualContainerObjects": {
-      "background": [
-        {
-          "properties": {
-            "color": {
-              "solid": {
-                "color": {
-                  "expr": {
-                    "ThemeDataColor": {
-                      "ColorId": 0,
-                      "Percent": -0.1
-                    }
-                  }
-                }
-              }
-            },
-            "show": {
-              "expr": {
-                "Literal": {
-                  "Value": "false"
-                }
-              }
-            },
-            "transparency": {
-              "expr": {
-                "Literal": {
-                  "Value": "50D"
-                }
-              }
-            }
-          }
-        }
-      ],
-      "border": [
-        {
-          "properties": {
-            "radius": {
-              "expr": {
-                "Literal": {
-                  "Value": "5D"
-                }
-              }
-            },
-            "show": {
-              "expr": {
-                "Literal": {
-                  "Value": "false"
-                }
-              }
-            },
-            "width": {
-              "expr": {
-                "Literal": {
-                  "Value": "1D"
-                }
-              }
-            }
-          }
-        }
-      ],
       "general": [
         {
           "properties": {

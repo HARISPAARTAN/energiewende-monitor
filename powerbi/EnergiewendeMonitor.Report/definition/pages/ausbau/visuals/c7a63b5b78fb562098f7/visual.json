@@ -2,12 +2,12 @@
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.13.0/schema.json",
   "name": "c7a63b5b78fb562098f7",
   "position": {
-    "height": 290,
-    "tabOrder": 3,
-    "width": 608,
-    "x": 648,
-    "y": 100,
-    "z": 3
+    "height": 286,
+    "tabOrder": 11,
+    "width": 518,
+    "x": 746,
+    "y": 124,
+    "z": 11
   },
   "visual": {
     "drillFilterOtherVisuals": true,
@@ -20,7 +20,7 @@
                 "color": {
                   "expr": {
                     "Literal": {
-                      "Value": "'#F2A93B'"
+                      "Value": "'#008300'"
                     }
                   }
                 }
@@ -40,130 +40,7 @@
                             "Entity": "Energieträger"
                           }
                         },
-                        "Property": "Energieträger"
-                      }
-                    },
-                    "Right": {
-                      "Literal": {
-                        "Value": "'Photovoltaik'"
-                      }
-                    }
-                  }
-                }
-              }
-            ]
-          }
-        },
-        {
-          "properties": {
-            "fill": {
-              "solid": {
-                "color": {
-                  "expr": {
-                    "Literal": {
-                      "Value": "'#3D8BDB'"
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "selector": {
-            "data": [
-              {
-                "scopeId": {
-                  "Comparison": {
-                    "ComparisonKind": 0,
-                    "Left": {
-                      "Column": {
-                        "Expression": {
-                          "SourceRef": {
-                            "Entity": "Energieträger"
-                          }
-                        },
-                        "Property": "Energieträger"
-                      }
-                    },
-                    "Right": {
-                      "Literal": {
-                        "Value": "'Wind Onshore'"
-                      }
-                    }
-                  }
-                }
-              }
-            ]
-          }
-        },
-        {
-          "properties": {
-            "fill": {
-              "solid": {
-                "color": {
-                  "expr": {
-                    "Literal": {
-                      "Value": "'#1F5F9E'"
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "selector": {
-            "data": [
-              {
-                "scopeId": {
-                  "Comparison": {
-                    "ComparisonKind": 0,
-                    "Left": {
-                      "Column": {
-                        "Expression": {
-                          "SourceRef": {
-                            "Entity": "Energieträger"
-                          }
-                        },
-                        "Property": "Energieträger"
-                      }
-                    },
-                    "Right": {
-                      "Literal": {
-                        "Value": "'Wind Offshore'"
-                      }
-                    }
-                  }
-                }
-              }
-            ]
-          }
-        },
-        {
-          "properties": {
-            "fill": {
-              "solid": {
-                "color": {
-                  "expr": {
-                    "Literal": {
-                      "Value": "'#5B9A3C'"
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "selector": {
-            "data": [
-              {
-                "scopeId": {
-                  "Comparison": {
-                    "ComparisonKind": 0,
-                    "Left": {
-                      "Column": {
-                        "Expression": {
-                          "SourceRef": {
-                            "Entity": "Energieträger"
-                          }
-                        },
-                        "Property": "Energieträger"
+                        "Property": "Gruppe"
                       }
                     },
                     "Right": {
@@ -184,7 +61,7 @@
                 "color": {
                   "expr": {
                     "Literal": {
-                      "Value": "'#2BB3B1'"
+                      "Value": "'#3987E5'"
                     }
                   }
                 }
@@ -204,7 +81,89 @@
                             "Entity": "Energieträger"
                           }
                         },
-                        "Property": "Energieträger"
+                        "Property": "Gruppe"
+                      }
+                    },
+                    "Right": {
+                      "Literal": {
+                        "Value": "'Wind'"
+                      }
+                    }
+                  }
+                }
+              }
+            ]
+          }
+        },
+        {
+          "properties": {
+            "fill": {
+              "solid": {
+                "color": {
+                  "expr": {
+                    "Literal": {
+                      "Value": "'#C98500'"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "selector": {
+            "data": [
+              {
+                "scopeId": {
+                  "Comparison": {
+                    "ComparisonKind": 0,
+                    "Left": {
+                      "Column": {
+                        "Expression": {
+                          "SourceRef": {
+                            "Entity": "Energieträger"
+                          }
+                        },
+                        "Property": "Gruppe"
+                      }
+                    },
+                    "Right": {
+                      "Literal": {
+                        "Value": "'Photovoltaik'"
+                      }
+                    }
+                  }
+                }
+              }
+            ]
+          }
+        },
+        {
+          "properties": {
+            "fill": {
+              "solid": {
+                "color": {
+                  "expr": {
+                    "Literal": {
+                      "Value": "'#199E70'"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "selector": {
+            "data": [
+              {
+                "scopeId": {
+                  "Comparison": {
+                    "ComparisonKind": 0,
+                    "Left": {
+                      "Column": {
+                        "Expression": {
+                          "SourceRef": {
+                            "Entity": "Energieträger"
+                          }
+                        },
+                        "Property": "Gruppe"
                       }
                     },
                     "Right": {
@@ -225,7 +184,7 @@
                 "color": {
                   "expr": {
                     "Literal": {
-                      "Value": "'#8CC46B'"
+                      "Value": "'#D95926'"
                     }
                   }
                 }
@@ -245,48 +204,7 @@
                             "Entity": "Energieträger"
                           }
                         },
-                        "Property": "Energieträger"
-                      }
-                    },
-                    "Right": {
-                      "Literal": {
-                        "Value": "'Sonstige Erneuerbare'"
-                      }
-                    }
-                  }
-                }
-              }
-            ]
-          }
-        },
-        {
-          "properties": {
-            "fill": {
-              "solid": {
-                "color": {
-                  "expr": {
-                    "Literal": {
-                      "Value": "'#B07AA1'"
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "selector": {
-            "data": [
-              {
-                "scopeId": {
-                  "Comparison": {
-                    "ComparisonKind": 0,
-                    "Left": {
-                      "Column": {
-                        "Expression": {
-                          "SourceRef": {
-                            "Entity": "Energieträger"
-                          }
-                        },
-                        "Property": "Energieträger"
+                        "Property": "Gruppe"
                       }
                     },
                     "Right": {
@@ -307,7 +225,7 @@
                 "color": {
                   "expr": {
                     "Literal": {
-                      "Value": "'#6E6E6E'"
+                      "Value": "'#9085E9'"
                     }
                   }
                 }
@@ -327,7 +245,7 @@
                             "Entity": "Energieträger"
                           }
                         },
-                        "Property": "Energieträger"
+                        "Property": "Gruppe"
                       }
                     },
                     "Right": {
@@ -348,7 +266,7 @@
                 "color": {
                   "expr": {
                     "Literal": {
-                      "Value": "'#8C6D3F'"
+                      "Value": "'#E66767'"
                     }
                   }
                 }
@@ -368,7 +286,7 @@
                             "Entity": "Energieträger"
                           }
                         },
-                        "Property": "Energieträger"
+                        "Property": "Gruppe"
                       }
                     },
                     "Right": {
@@ -389,7 +307,7 @@
                 "color": {
                   "expr": {
                     "Literal": {
-                      "Value": "'#E05A5A'"
+                      "Value": "'#6B7A8C'"
                     }
                   }
                 }
@@ -409,94 +327,12 @@
                             "Entity": "Energieträger"
                           }
                         },
-                        "Property": "Energieträger"
+                        "Property": "Gruppe"
                       }
                     },
                     "Right": {
                       "Literal": {
-                        "Value": "'Kernenergie'"
-                      }
-                    }
-                  }
-                }
-              }
-            ]
-          }
-        },
-        {
-          "properties": {
-            "fill": {
-              "solid": {
-                "color": {
-                  "expr": {
-                    "Literal": {
-                      "Value": "'#4C78A8'"
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "selector": {
-            "data": [
-              {
-                "scopeId": {
-                  "Comparison": {
-                    "ComparisonKind": 0,
-                    "Left": {
-                      "Column": {
-                        "Expression": {
-                          "SourceRef": {
-                            "Entity": "Energieträger"
-                          }
-                        },
-                        "Property": "Energieträger"
-                      }
-                    },
-                    "Right": {
-                      "Literal": {
-                        "Value": "'Pumpspeicher'"
-                      }
-                    }
-                  }
-                }
-              }
-            ]
-          }
-        },
-        {
-          "properties": {
-            "fill": {
-              "solid": {
-                "color": {
-                  "expr": {
-                    "Literal": {
-                      "Value": "'#9E9E9E'"
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "selector": {
-            "data": [
-              {
-                "scopeId": {
-                  "Comparison": {
-                    "ComparisonKind": 0,
-                    "Left": {
-                      "Column": {
-                        "Expression": {
-                          "SourceRef": {
-                            "Entity": "Energieträger"
-                          }
-                        },
-                        "Property": "Energieträger"
-                      }
-                    },
-                    "Right": {
-                      "Literal": {
-                        "Value": "'Sonstige Konventionelle'"
+                        "Value": "'Sonstige'"
                       }
                     }
                   }
@@ -576,11 +412,11 @@
                       "Entity": "Energieträger"
                     }
                   },
-                  "Property": "Energieträger"
+                  "Property": "Gruppe"
                 }
               },
-              "nativeQueryRef": "Energieträger",
-              "queryRef": "Energieträger.Energieträger"
+              "nativeQueryRef": "Gruppe",
+              "queryRef": "Energieträger.Gruppe"
             }
           ]
         },
@@ -622,63 +458,6 @@
       }
     },
     "visualContainerObjects": {
-      "border": [
-        {
-          "properties": {
-            "color": {
-              "solid": {
-                "color": {
-                  "expr": {
-                    "ThemeDataColor": {
-                      "ColorId": 0,
-                      "Percent": 0
-                    }
-                  }
-                }
-              }
-            },
-            "radius": {
-              "expr": {
-                "Literal": {
-                  "Value": "10D"
-                }
-              }
-            },
-            "show": {
-              "expr": {
-                "Literal": {
-                  "Value": "true"
-                }
-              }
-            }
-          }
-        }
-      ],
-      "dropShadow": [
-        {
-          "properties": {
-            "color": {
-              "solid": {
-                "color": {
-                  "expr": {
-                    "ThemeDataColor": {
-                      "ColorId": 0,
-                      "Percent": -0.1
-                    }
-                  }
-                }
-              }
-            },
-            "show": {
-              "expr": {
-                "Literal": {
-                  "Value": "true"
-                }
-              }
-            }
-          }
-        }
-      ],
       "general": [
         {
           "properties": {

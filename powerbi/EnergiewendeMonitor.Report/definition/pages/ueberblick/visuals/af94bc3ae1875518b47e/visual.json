@@ -2,12 +2,12 @@
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.13.0/schema.json",
   "name": "af94bc3ae1875518b47e",
   "position": {
-    "height": 90,
-    "tabOrder": 5,
-    "width": 236,
-    "x": 276,
-    "y": 100,
-    "z": 5
+    "height": 88,
+    "tabOrder": 13,
+    "width": 200,
+    "x": 428,
+    "y": 124,
+    "z": 13
   },
   "visual": {
     "drillFilterOtherVisuals": true,
@@ -45,7 +45,14 @@
             "fontSize": {
               "expr": {
                 "Literal": {
-                  "Value": "28D"
+                  "Value": "24D"
+                }
+              }
+            },
+            "labelDisplayUnits": {
+              "expr": {
+                "Literal": {
+                  "Value": "1D"
                 }
               }
             }
@@ -65,76 +72,17 @@
                       "Entity": "Kennzahlen"
                     }
                   },
-                  "Property": "EE-Anteil %"
+                  "Property": "KPI EE-Anteil"
                 }
               },
-              "nativeQueryRef": "EE-Anteil %",
-              "queryRef": "Kennzahlen.EE-Anteil %"
+              "nativeQueryRef": "KPI EE-Anteil",
+              "queryRef": "Kennzahlen.KPI EE-Anteil"
             }
           ]
         }
       }
     },
     "visualContainerObjects": {
-      "background": [
-        {
-          "properties": {
-            "color": {
-              "solid": {
-                "color": {
-                  "expr": {
-                    "ThemeDataColor": {
-                      "ColorId": 0,
-                      "Percent": -0.1
-                    }
-                  }
-                }
-              }
-            },
-            "show": {
-              "expr": {
-                "Literal": {
-                  "Value": "false"
-                }
-              }
-            },
-            "transparency": {
-              "expr": {
-                "Literal": {
-                  "Value": "50D"
-                }
-              }
-            }
-          }
-        }
-      ],
-      "border": [
-        {
-          "properties": {
-            "radius": {
-              "expr": {
-                "Literal": {
-                  "Value": "5D"
-                }
-              }
-            },
-            "show": {
-              "expr": {
-                "Literal": {
-                  "Value": "false"
-                }
-              }
-            },
-            "width": {
-              "expr": {
-                "Literal": {
-                  "Value": "1D"
-                }
-              }
-            }
-          }
-        }
-      ],
       "general": [
         {
           "properties": {

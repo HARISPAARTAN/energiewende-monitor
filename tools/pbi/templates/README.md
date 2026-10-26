@@ -22,6 +22,8 @@ Source of each template (`SOURCES` in `tools/pbi/capture_templates.py`):
 | `slicer` | FCA `85ebcf71ac1b1f9c1ef2/visuals/baacb70ed1417be32b31` |
 | `scatterChart` | QCC `definition/pages/60a8309d95b9f8104e53/visuals/24bf8d23ffd9064054ee` |
 | `textbox` | FCA `df46552c6a3e07628f04/visuals/05a172cf755d9e5899f4` |
+| `gauge` | FCA `85ebcf71ac1b1f9c1ef2/visuals/0b978f632c4d409c5dde` |
+| `actionButton` | FCA `b73ca32b395d659400ae/visuals/9811c0cd492f3a80c8e7` |
 
 The base theme `basetheme/Fluent2-CY26SU08.json` comes from the QCC report
 (`StaticResources/SharedResources/BaseThemes/`). `bookmark.json` is built from the pinned bookmark schema.
@@ -29,7 +31,10 @@ The base theme `basetheme/Fluent2-CY26SU08.json` comes from the QCC report
 Licence: MIT, Copyright (c) Microsoft Corporation. See `LICENSE-fabric-toolbox.txt` in this folder; the copyright
 notice is kept.
 
-Removed from each sample: query state, filters (`filterConfig`), formatting objects scoped by a selector, the
-title and any data values (field references).
+Removed from each sample: query state, filters (`filterConfig`), formatting objects scoped to series (data and metadata
+selectors; the visual-state selectors `default` and `hover` of the button stay), objects bound to fields of the source
+model (the gauge's conditional `dataPoint` colours), the title, and everything that points into the source report:
+the canvas tooltip page and its header button (`visualHeaderTooltip`, `showTooltipButton`) and the page a button opens
+(`navigationSection`). `test_templates_are_data_free` checks this for every template.
 
 Internal visual type names: `columnChart` is the stacked column chart, `pivotTable` is the matrix visual.

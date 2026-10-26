@@ -2,12 +2,12 @@
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.13.0/schema.json",
   "name": "12a73a97bc245017afbf",
   "position": {
-    "height": 90,
-    "tabOrder": 8,
-    "width": 224,
-    "x": 1032,
-    "y": 100,
-    "z": 8
+    "height": 88,
+    "tabOrder": 16,
+    "width": 200,
+    "x": 1064,
+    "y": 124,
+    "z": 16
   },
   "visual": {
     "drillFilterOtherVisuals": true,
@@ -45,7 +45,14 @@
             "fontSize": {
               "expr": {
                 "Literal": {
-                  "Value": "28D"
+                  "Value": "24D"
+                }
+              }
+            },
+            "labelDisplayUnits": {
+              "expr": {
+                "Literal": {
+                  "Value": "1D"
                 }
               }
             }
@@ -65,76 +72,17 @@
                       "Entity": "Kennzahlen"
                     }
                   },
-                  "Property": "Installierte Leistung (MW)"
+                  "Property": "KPI Installierte Leistung"
                 }
               },
-              "nativeQueryRef": "Installierte Leistung (MW)",
-              "queryRef": "Kennzahlen.Installierte Leistung (MW)"
+              "nativeQueryRef": "KPI Installierte Leistung",
+              "queryRef": "Kennzahlen.KPI Installierte Leistung"
             }
           ]
         }
       }
     },
     "visualContainerObjects": {
-      "background": [
-        {
-          "properties": {
-            "color": {
-              "solid": {
-                "color": {
-                  "expr": {
-                    "ThemeDataColor": {
-                      "ColorId": 0,
-                      "Percent": -0.1
-                    }
-                  }
-                }
-              }
-            },
-            "show": {
-              "expr": {
-                "Literal": {
-                  "Value": "false"
-                }
-              }
-            },
-            "transparency": {
-              "expr": {
-                "Literal": {
-                  "Value": "50D"
-                }
-              }
-            }
-          }
-        }
-      ],
-      "border": [
-        {
-          "properties": {
-            "radius": {
-              "expr": {
-                "Literal": {
-                  "Value": "5D"
-                }
-              }
-            },
-            "show": {
-              "expr": {
-                "Literal": {
-                  "Value": "false"
-                }
-              }
-            },
-            "width": {
-              "expr": {
-                "Literal": {
-                  "Value": "1D"
-                }
-              }
-            }
-          }
-        }
-      ],
       "general": [
         {
           "properties": {

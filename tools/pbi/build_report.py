@@ -2,11 +2,15 @@
 
 Deterministic: fixed names (uuid5 of page id and visual index), sorted keys, two-space indent, UTF-8 without BOM, LF.
 Only page folders carrying the annotation `ewm:generated` are replaced; `bookmarks/` is owned entirely by this script.
+
+pages.json holds the page specs plus `tokens` (the named UI colours) and `palette` (one colour per carrier group). Every
+colour written to the report comes from them, from the theme's data colours (series colours by measure) or from a heatmap
+spec. Every page gets the same chrome: a 200 px navigation panel (brand, one button per page, filler, footer) on the left and
+a header (page title, data stand) on top; the page's own visuals sit to the right of the panel and below the header.
 """
 
 from __future__ import annotations
 
-import csv
 import json
 import shutil
 import sys
@@ -18,16 +22,21 @@ sys.path.insert(0, str(HERE.parent.parent))  # lets `python tools/pbi/build_repo
 from tools.pbi.pbir import SCHEMAS, Visual, field_ref, stable_name  # noqa: E402
 
 REPORT_DIR = HERE.parent.parent / "powerbi" / "EnergiewendeMonitor.Report" / "definition"
+REGISTERED = REPORT_DIR.parent / "StaticResources" / "RegisteredResources"
 SPEC = HERE / "pages.json"
 GENERATED = "ewm:generated"
 CHARTS = {"lineChart", "stackedAreaChart", "columnChart", "clusteredColumnChart", "clusteredBarChart", "scatterChart"}
-COLOURED_BY_CARRIER = {"stackedAreaChart", "columnChart"}
-SEED = HERE.parent.parent / "data" / "seed" / "dim_energietraeger.csv"
-CARRIER = ("Energieträger", "Energieträger")  # the model column that holds name_de of the seed
+COLOURED_BY_GROUP = {"stackedAreaChart", "columnChart"}
+GROUP = ("Energieträger", "Gruppe")  # the model column the carrier charts colour and stack by
+PANEL_WIDTH, NAV_TOP, NAV_HEIGHT = 200, 104, 48  # side panel on the 1280 x 720 canvas: brand 0..104, buttons, filler, footer 616..720
 
 
 def _lit(value: str) -> dict:
     return {"expr": {"Literal": {"Value": value}}}
+
+
+def _solid(hexcode: str) -> dict:
+    return {"solid": {"color": _lit("'" + hexcode + "'")}}
 
 
 def write_json(path: Path, data: dict) -> None:
@@ -40,24 +49,41 @@ def _column(entity: str, prop: str) -> dict:
     return {"Column": {"Expression": {"SourceRef": {"Entity": entity}}, "Property": prop}}
 
 
-def carrier_colours() -> list[tuple[str, str]]:
-    """(name_de, farbe_hex) of every Energieträger in seed order. A new carrier needs a row in the seed, otherwise
-    its series gets no explicit colour."""
-    with SEED.open(encoding="utf-8", newline="") as fh:
-        rows = list(csv.DictReader(fh))
-    return [(r["name_de"], r["farbe_hex"].upper()) for r in rows]
+class Colours:
+    """The colour names of the spec: tokens, palette entries (carrier groups) and, as hex, the data colours of the theme."""
+
+    def __init__(self, spec: dict) -> None:
+        self.tokens = {name: code.upper() for name, code in spec["tokens"].items()}
+        self.palette = {name: code.upper() for name, code in spec["palette"].items()}
+        if set(self.tokens) & set(self.palette):
+            raise ValueError(f"tokens and palette share names: {sorted(set(self.tokens) & set(self.palette))}")
+        theme = json.loads((REGISTERED / spec["theme"]).read_text(encoding="utf-8"))
+        self.data_colours = {code.upper() for code in theme["dataColors"]}
+
+    def __call__(self, ref: str) -> str:
+        for known in (self.tokens, self.palette):
+            if ref in known:
+                return known[ref]
+        if ref.upper() in self.data_colours:
+            return ref.upper()
+        raise ValueError(f"colour {ref!r} is neither a token, a palette entry nor a data colour of the theme")
 
 
-def _series_colours(entity: str, prop: str) -> list[dict]:
-    """One dataPoint entry per carrier in the shape Desktop writes for manual series colours: a `scopeId` comparison
-    on the series column and a literal fill."""
+def _group_colours(entity: str, prop: str, colours: Colours) -> list[dict]:
+    """One dataPoint entry per carrier group in the shape Desktop writes for manual series colours: a `scopeId` comparison
+    on the series column and a literal fill, in palette order."""
     items = []
-    for name, hexcode in carrier_colours():
+    for group, hexcode in colours.palette.items():
         scope = {"Comparison": {"ComparisonKind": 0, "Left": _column(entity, prop),
-                                "Right": {"Literal": {"Value": "'" + name.replace("'", "''") + "'"}}}}
-        items.append({"properties": {"fill": {"solid": {"color": _lit("'" + hexcode + "'")}}},
-                      "selector": {"data": [{"scopeId": scope}]}})
+                                "Right": {"Literal": {"Value": "'" + group.replace("'", "''") + "'"}}}}
+        items.append({"properties": {"fill": _solid(hexcode)}, "selector": {"data": [{"scopeId": scope}]}})
     return items
+
+
+def _measure_colours(series: dict[str, str], colours: Colours) -> list[dict]:
+    """One dataPoint entry per measure series (selector: the queryRef of the measure), for lines coloured by measure."""
+    return [{"properties": {"fill": _solid(colours(colour))}, "selector": {"metadata": query_ref}}
+            for query_ref, colour in series.items()]
 
 
 def _heatmap(spec: dict) -> list[dict]:
@@ -71,24 +97,90 @@ def _heatmap(spec: dict) -> list[dict]:
              "selector": {"data": [{"dataViewWildcard": {"matchingOption": 1}}], "metadata": f"{entity}.{prop}"}}]
 
 
-def _formatting(spec: dict) -> dict:
-    """Visual-level objects: card font size, legend at the bottom, one fill per Energieträger from the seed."""
+def _formatting(spec: dict, colours: Colours) -> dict:
+    """Visual-level objects: card label size, legend at the bottom, one fill per carrier group, series colours by measure,
+    the gauge's scale and fill."""
     objects: dict = {}
     roles = spec.get("roles", {})
     kind = spec["type"]
     if kind == "card":
-        objects["labels"] = [{"properties": {"fontSize": _lit("28D")}}]
+        labels = {"fontSize": _lit(f"{spec.get('label_size', 24)}D"), "labelDisplayUnits": _lit("1D")}
+        if spec.get("label_colour"):
+            labels["color"] = _solid(colours(spec["label_colour"]))
+        objects["labels"] = [{"properties": labels}]
+        objects["categoryLabels"] = [{"properties": {"show": _lit("false")}}]
     if kind in CHARTS and (len(roles.get("Series", [])) or len(roles.get("Y", [])) > 1 or spec.get("legend")):
         objects["legend"] = [{"properties": {"show": _lit("true"), "position": _lit("'Bottom'")}}]
     if kind == "columnChart":
         objects["labels"] = [{"properties": {"show": _lit("false")}}]
-    if kind in COLOURED_BY_CARRIER and any(f[:2] == list(CARRIER) for f in roles.get("Series", [])):
-        objects["dataPoint"] = _series_colours(*CARRIER)
+    if kind in COLOURED_BY_GROUP and any(f[:2] == list(GROUP) for f in roles.get("Series", [])):
+        objects["dataPoint"] = _group_colours(*GROUP, colours)
+    if spec.get("series_colours"):
+        objects["dataPoint"] = _measure_colours(spec["series_colours"], colours)
+    if kind == "gauge":  # a ratio against its limit: scale 0 to 100 %, no target line, the value in the middle
+        objects["axis"] = [{"properties": {"min": _lit("0D"), "max": _lit("1D")}}]
+        objects["target"] = [{"properties": {"show": _lit("false")}}]
+        objects["calloutValue"] = [{"properties": {"show": _lit("true")}}]
+        objects["labels"] = [{"properties": {"show": _lit("false")}}]
+        objects["dataPoint"] = [{"properties": {"fill": _solid(colours(spec["fill"]))}}]
     if spec.get("heatmap"):
         objects["values"] = _heatmap(spec["heatmap"])
     for key, items in spec.get("objects", {}).items():
         objects[key] = items
     return objects
+
+
+def _bare_container() -> dict:
+    """No container background, border or shadow: the visual sits directly on the canvas."""
+    return {key: [{"properties": {"show": _lit("false")}}] for key in ("background", "border", "dropShadow")}
+
+
+def _panel_container(colours: Colours) -> dict:
+    """Tiles of the side panel: flat panel colour, no border, no shadow; they touch, so the panel reads as one surface."""
+    return {
+        "background": [{"properties": {"show": _lit("true"), "color": _solid(colours("panel")), "transparency": _lit("0D")}}],
+        "border": [{"properties": {"show": _lit("false"), "radius": _lit("0D")}}],
+        "dropShadow": [{"properties": {"show": _lit("false")}}],
+    }
+
+
+def _card_container(colours: Colours) -> dict:
+    """The card look of the theme, written out for a text box (the theme switches these off for text boxes): surface,
+    hairline border with radius 10 and the faint accent glow."""
+    glow = {"show": _lit("true"), "position": _lit("'Outer'"), "preset": _lit("'Custom'"), "color": _solid(colours("accent")),
+            "shadowBlur": _lit("12D"), "shadowDistance": _lit("0D"), "shadowSpread": _lit("0D"), "angle": _lit("45D"),
+            "transparency": _lit("88D")}
+    return {
+        "background": [{"properties": {"show": _lit("true"), "color": _solid(colours("surface")), "transparency": _lit("0D")}}],
+        "border": [{"properties": {"show": _lit("true"), "color": _solid(colours("hairline")), "radius": _lit("10D")}}],
+        "dropShadow": [{"properties": glow}],
+    }
+
+
+def _page_link(page_id: str) -> list[dict]:
+    return [{"properties": {"show": _lit("true"), "showDefaultTooltip": _lit("false"), "type": _lit("'PageNavigation'"),
+                            "navigationSection": _lit("'" + page_id + "'")}}]
+
+
+def _button_objects(label: str, current: bool, colours: Colours) -> dict:
+    """Text and fill of a navigation button, each with a default and a hover state; the button of the current page keeps
+    the active fill, the accent colour and bold text in both states."""
+    fills = (colours("panelActive"),) * 2 if current else (colours("panel"), colours("panelHover"))
+    inks = (colours("accent"),) * 2 if current else (colours("inkSecondary"), colours("ink"))
+    bold = {"bold": _lit("true")} if current else {}
+    text = [
+        {"properties": {"show": _lit("true")}},
+        {"properties": {"text": _lit("'" + label.replace("'", "''") + "'"), "fontColor": _solid(inks[0]), "fontSize": _lit("11D"),
+                        "horizontalAlignment": _lit("'left'"), "leftMargin": _lit("20D"), **bold},
+         "selector": {"id": "default"}},
+        {"properties": {"fontColor": _solid(inks[1]), **bold}, "selector": {"id": "hover"}},
+    ]
+    fill = [
+        {"properties": {"show": _lit("true")}},
+        {"properties": {"fillColor": _solid(fills[0]), "transparency": _lit("0D")}, "selector": {"id": "default"}},
+        {"properties": {"fillColor": _solid(fills[1]), "transparency": _lit("0D")}, "selector": {"id": "hover"}},
+    ]
+    return {"text": text, "fill": fill}
 
 
 def _page_json(page: dict) -> dict:
@@ -116,18 +208,75 @@ def _page_json(page: dict) -> dict:
     return data
 
 
-def _visual_json(pid: str, index: int, spec: dict) -> dict:
-    name = stable_name(pid, str(index))
+def _paragraph(paragraph: str | dict, colours: Colours) -> str | dict:
+    """A spec paragraph is a string or {"text", "size", "bold", "colour" (a colour name), "url"}; the colour becomes a hex code."""
+    if isinstance(paragraph, str) or "colour" not in paragraph:
+        return paragraph
+    return {**paragraph, "colour": colours(paragraph["colour"])}
+
+
+def _visual_json(name: str, spec: dict, colours: Colours) -> dict:
     if spec["type"] == "textbox":
-        v = Visual.textbox(name, spec["x"], spec["y"], spec["w"], spec["h"], spec["paragraphs"])
-        v["position"]["z"] = v["position"]["tabOrder"] = index
-        return v
+        container = _card_container(colours) if spec.get("card") else None
+        return Visual.textbox(name, spec["x"], spec["y"], spec["w"], spec["h"],
+                              [_paragraph(p, colours) for p in spec["paragraphs"]], container=container)
     roles = {role: [tuple(f) for f in fields] for role, fields in spec["roles"].items()}
     parameters = {role: {"parameter": tuple(p["parameter"]), "default": tuple(p["default"])}
                   for role, p in spec.get("field_parameters", {}).items()}
     return Visual.from_template(spec["type"], name, spec["x"], spec["y"], spec["w"], spec["h"], spec.get("title"),
-                                roles, z=index, extra_objects=_formatting(spec), alt=spec.get("alt"),
-                                sort=spec.get("sort"), top_n=spec.get("top_n"), field_parameters=parameters)
+                                roles, extra_objects=_formatting(spec, colours), alt=spec.get("alt"),
+                                sort=spec.get("sort"), top_n=spec.get("top_n"), field_parameters=parameters,
+                                subtitle=spec.get("subtitle"), title_hidden=spec.get("title_hidden", False),
+                                container=_bare_container() if spec.get("bare") else None)
+
+
+def _chrome(page: dict, pages: list[dict], colours: Colours) -> dict[str, dict]:
+    """The visuals every page shares, by key; names are stable_name(page id, "chrome", key)."""
+    if len(pages) != 5:
+        raise ValueError(f"the side panel is laid out for five page buttons, the spec has {len(pages)} pages")
+    pid = page["id"]
+    ink, accent, muted = colours("ink"), colours("accent"), colours("inkMuted")
+    panel = _panel_container(colours)
+    name = lambda key: stable_name(pid, "chrome", key)  # noqa: E731
+    out = {
+        "brand": Visual.textbox(name("brand"), 0, 0, PANEL_WIDTH, NAV_TOP, [
+            {"text": "ENERGIEWENDE", "size": 13, "bold": True, "colour": ink},
+            {"text": "MONITOR", "size": 13, "bold": True, "colour": accent},
+            {"text": "Strommarkt und Ausbau in Deutschland", "size": 9, "colour": muted},
+        ], container=panel),
+    }
+    for i, target in enumerate(pages):
+        out[f"nav{i}"] = Visual.from_template(
+            "actionButton", name(f"nav{i}"), 0, NAV_TOP + NAV_HEIGHT * i, PANEL_WIDTH, NAV_HEIGHT, target["displayName"], {},
+            extra_objects=_button_objects(target["displayName"], target["id"] == pid, colours), title_hidden=True,
+            container={**panel, "visualLink": _page_link(target["id"])})
+    nav_end = NAV_TOP + NAV_HEIGHT * len(pages)
+    out["filler"] = Visual.textbox(name("filler"), 0, nav_end, PANEL_WIDTH, 616 - nav_end, [""], container=panel)
+    out["footer"] = Visual.textbox(name("footer"), 0, 616, PANEL_WIDTH, 104, [
+        {"text": "Daten: SMARD (CC BY 4.0), MaStR (dl-de/by-2-0)", "size": 8, "colour": muted},
+        {"text": "Harithas Harikaran", "size": 8, "colour": muted},
+        {"text": "github.com/HARISPAARTAN/energiewende-monitor", "size": 8, "colour": muted,
+         "url": "https://github.com/HARISPAARTAN/energiewende-monitor"},
+    ], container=panel)
+    out["title"] = Visual.textbox(name("title"), 216, 12, 640, 40, [
+        {"text": page["displayName"], "size": 18, "bold": True, "colour": ink}], container=_bare_container())
+    stand = {"type": "card", "x": 964, "y": 12, "w": 300, "h": 40, "title": "Datenstand", "title_hidden": True, "bare": True,
+             "label_size": 10, "label_colour": "inkMuted", "roles": {"Values": [["Kennzahlen", "Datenstand Kopfzeile", "Measure"]]}}
+    out["stand"] = _visual_json(name("stand"), stand, colours)
+    return out
+
+
+def _page_visuals(page: dict, pages: list[dict], colours: Colours) -> list[dict]:
+    """All visuals of a page in tab order: brand, navigation buttons, title, data stand, the page's own visuals in spec order,
+    the panel filler and the footer last. z and tabOrder are that position, so they are unique per page."""
+    pid = page["id"]
+    chrome = _chrome(page, pages, colours)
+    content = [_visual_json(stable_name(pid, str(index)), spec, colours) for index, spec in enumerate(page["visuals"])]
+    ordered = [chrome["brand"], *(chrome[f"nav{i}"] for i in range(len(pages))), chrome["title"], chrome["stand"],
+               *content, chrome["filler"], chrome["footer"]]
+    for position, visual in enumerate(ordered):
+        visual["position"]["z"] = visual["position"]["tabOrder"] = position
+    return ordered
 
 
 def _bookmark_json(page_ids: set[str], bm: dict) -> dict:
@@ -160,7 +309,7 @@ def _bookmark_json(page_ids: set[str], bm: dict) -> dict:
 
 
 def _register_theme(theme: str) -> None:
-    resource = REPORT_DIR.parent / "StaticResources" / "RegisteredResources" / theme
+    resource = REGISTERED / theme
     if not resource.is_file():
         raise FileNotFoundError(f"theme {theme!r} from pages.json is not at {resource}")
     path = REPORT_DIR / "report.json"
@@ -187,14 +336,14 @@ def _remove_generated_pages() -> None:
 
 def main() -> None:
     spec = json.loads(SPEC.read_text(encoding="utf-8"))
+    colours = Colours(spec)
     pages = spec["pages"]
     ids = [p["id"] for p in pages]
     _remove_generated_pages()
     for page in pages:
         pdir = REPORT_DIR / "pages" / page["id"]
         write_json(pdir / "page.json", _page_json(page))
-        for index, vspec in enumerate(page["visuals"]):
-            v = _visual_json(page["id"], index, vspec)
+        for v in _page_visuals(page, pages, colours):
             write_json(pdir / "visuals" / v["name"] / "visual.json", v)
     write_json(REPORT_DIR / "pages" / "pages.json",
                {"$schema": SCHEMAS["pages.json"], "pageOrder": ids, "activePageName": ids[0]})

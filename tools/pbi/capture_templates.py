@@ -33,9 +33,14 @@ SOURCES = {
     "slicer": FCA + "85ebcf71ac1b1f9c1ef2/visuals/baacb70ed1417be32b31/visual.json",
     "scatterChart": QCC + "definition/pages/60a8309d95b9f8104e53/visuals/24bf8d23ffd9064054ee/visual.json",
     "textbox": FCA + "df46552c6a3e07628f04/visuals/05a172cf755d9e5899f4/visual.json",
+    "gauge": FCA + "85ebcf71ac1b1f9c1ef2/visuals/0b978f632c4d409c5dde/visual.json",
+    "actionButton": FCA + "b73ca32b395d659400ae/visuals/9811c0cd492f3a80c8e7/visual.json",
 }
 BASE_THEME = QCC + "StaticResources/SharedResources/BaseThemes/Fluent2-CY26SU08.json"
 DROP_TOP = ("filterConfig", "isHidden", "parentGroupName", "howCreated", "annotations")
+# container objects and properties that point into the source report (its canvas tooltip page, the page a button opens)
+DROP_CONTAINER_OBJECTS = ("title", "visualHeaderTooltip")
+DROP_CONTAINER_PROPERTIES = ("navigationSection", "drillthroughSection", "bookmark", "section", "showTooltipButton")
 
 
 def fetch(rel: str, src: Path | None) -> bytes:
@@ -44,6 +49,31 @@ def fetch(rel: str, src: Path | None) -> bytes:
     url = RAW + urllib.request.quote(rel)
     with urllib.request.urlopen(url, timeout=60) as resp:
         return resp.read()
+
+
+def keeps(entry: dict) -> bool:
+    """Generic formatting stays: an entry without selector or with a visual-state selector (`{"id": "default"}`, `{"id": "hover"}`).
+    Entries scoped to series (data, metadata selectors) and entries bound to fields of the source model go."""
+    selector = entry.get("selector")
+    if selector and set(selector) != {"id"}:
+        return False
+    return "SourceRef" not in json.dumps(entry)
+
+
+def strip_container_references(container: dict) -> dict:
+    """The container objects without the title and without anything that points into the source report."""
+    out = {}
+    for key, entries in container.items():
+        if key in DROP_CONTAINER_OBJECTS:
+            continue
+        kept = []
+        for entry in entries:
+            props = {k: val for k, val in entry.get("properties", {}).items() if k not in DROP_CONTAINER_PROPERTIES}
+            if props:
+                kept.append({**entry, "properties": props})
+        if kept:
+            out[key] = kept
+    return out
 
 
 def minimise(visual: dict, visual_type: str, schema: str) -> dict:
@@ -59,14 +89,13 @@ def minimise(visual: dict, visual_type: str, schema: str) -> dict:
     v.pop("syncGroup", None)
     objects = {}
     for key, entries in v.get("objects", {}).items():
-        kept = [e for e in entries if "selector" not in e]
+        kept = [e for e in entries if keeps(e)]
         if kept:
             objects[key] = kept
     if visual_type == "textbox":
         objects["general"] = [{"properties": {"paragraphs": [{"textRuns": [{"value": "Text"}]}]}}]
     v["objects"] = objects
-    vco = v.get("visualContainerObjects", {})
-    vco.pop("title", None)
+    vco = strip_container_references(v.get("visualContainerObjects", {}))
     if vco:
         v["visualContainerObjects"] = vco
     else:

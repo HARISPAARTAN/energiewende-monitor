@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import copy
 import json
+import re
 import uuid
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -24,8 +25,13 @@ ROLES = {
     "clusteredBarChart": {"Category", "Series", "Y", "Y2"},
     "scatterChart": {"Category", "Series", "X", "Y", "Size"},
     "textbox": set(),
+    "gauge": {"Y", "MinValue", "MaxValue", "TargetValue", "Tooltips"},
+    "actionButton": set(),
 }
-ALT_PREFIX = {"card": "Kennzahl", "tableEx": "Tabelle", "pivotTable": "Matrix"}  # every other type: "Diagramm"
+ALT_PREFIX = {"card": "Kennzahl", "tableEx": "Tabelle", "pivotTable": "Matrix", "gauge": "Messinstrument",
+              "actionButton": "Navigation"}  # every other type: "Diagramm"
+THEME_OWNED_CONTAINER = ("background", "border", "dropShadow")  # styled by the theme; a template's own entries would override it
+URL = re.compile(r"https?://[^\s<>\"]*[^\s<>\".,;:)\]]")  # a link run in a text box; trailing punctuation stays outside
 
 
 def stable_name(*parts: str) -> str:
@@ -49,15 +55,57 @@ def projection(entity: str, prop: str, kind: str, active: bool = False) -> dict:
     return p
 
 
-def _title(title: str | None) -> list[dict]:
-    if title is None:
-        return [{"properties": {"show": {"expr": {"Literal": {"Value": "false"}}}}}]
-    return [{"properties": {"show": {"expr": {"Literal": {"Value": "true"}}},
-                            "text": {"expr": {"Literal": {"Value": "'" + title.replace("'", "''") + "'"}}}}}]
-
-
 def _literal(value: str) -> dict:
     return {"expr": {"Literal": {"Value": value}}}
+
+
+def _text(value: str) -> dict:
+    return _literal("'" + value.replace("'", "''") + "'")
+
+
+def _title(title: str | None, hidden: bool = False) -> list[dict]:
+    """The container title; `hidden` keeps the text (the alt text derives from it) but does not show it."""
+    if title is None:
+        return [{"properties": {"show": _literal("false")}}]
+    return [{"properties": {"show": _literal("false" if hidden else "true"), "text": _text(title)}}]
+
+
+def _subtitle(text: str) -> list[dict]:
+    return [{"properties": {"show": _literal("true"), "text": _text(text)}}]
+
+
+def drop_theme_owned_container(visual: dict) -> None:
+    """Remove the container background, border and drop shadow a template brings from its source report, so that the
+    report theme styles every content visual alike. Chrome visuals set these explicitly afterwards."""
+    container = visual.get("visualContainerObjects", {})
+    for key in THEME_OWNED_CONTAINER:
+        container.pop(key, None)
+
+
+def _text_runs(text: str, style: dict, url: str | None) -> list[dict]:
+    """The runs of one paragraph: one run, or (without an explicit `url`) the text split at every URL, which becomes a link run."""
+    if url:
+        return [{"value": text, "url": url, "textStyle": dict(style)}]
+    runs, pos = [], 0
+    for match in URL.finditer(text):
+        if match.start() > pos:
+            runs.append({"value": text[pos:match.start()], "textStyle": dict(style)})
+        runs.append({"value": match.group(), "url": match.group(), "textStyle": dict(style)})
+        pos = match.end()
+    if pos < len(text) or not runs:
+        runs.append({"value": text[pos:], "textStyle": dict(style)})
+    return runs
+
+
+def _paragraph(paragraph: str | dict, default_size: float) -> dict:
+    """A paragraph is a string or {"text", "size", "bold", "colour" (a hex colour), "url"}."""
+    spec = {"text": paragraph} if isinstance(paragraph, str) else paragraph
+    style = {"fontSize": f"{spec.get('size', default_size):g}pt"}
+    if spec.get("bold"):
+        style["fontWeight"] = "bold"
+    if spec.get("colour"):
+        style["color"] = spec["colour"]
+    return {"textRuns": _text_runs(spec["text"], style, spec.get("url"))}
 
 
 def _set_alt_text(v: dict, alt: str | None) -> None:
@@ -135,10 +183,13 @@ class Visual:
     def from_template(visual_type: str, name: str, x: float, y: float, w: float, h: float, title: str | None,
                       roles: dict[str, list[tuple[str, str, str]]], z: int = 0, extra_objects: dict | None = None,
                       alt: str | None = None, sort: dict | None = None, top_n: dict | None = None,
-                      field_parameters: dict[str, dict] | None = None) -> dict:
+                      field_parameters: dict[str, dict] | None = None, subtitle: str | None = None,
+                      title_hidden: bool = False, container: dict | None = None) -> dict:
         """alt: alt text (None derives a German one from the title, "" leaves none); sort: {"field": [e, p, kind],
         "direction": "Descending"}; top_n: {"field": [e, p], "by": [e, p, aggregation], "n": 10};
-        field_parameters: {role: {"parameter": (entity, column), "default": (entity, measure, "Measure")}}."""
+        field_parameters: {role: {"parameter": (entity, column), "default": (entity, measure, "Measure")}};
+        subtitle: shown under the title; title_hidden: the title text is kept (alt text) but not shown;
+        container: container objects (background, border, dropShadow, visualLink ...) that replace the template's."""
         if visual_type not in ROLES:
             raise ValueError(f"unknown visual type {visual_type!r}")
         bad = set(roles) - ROLES[visual_type]
@@ -147,18 +198,24 @@ class Visual:
         tpl = json.loads((TEMPLATES / f"{visual_type}.json").read_text(encoding="utf-8-sig"))
         v = copy.deepcopy(tpl)
         strip_hardcoded_colours(v["visual"])
+        drop_theme_owned_container(v["visual"])
         v["$schema"] = SCHEMAS["visual.json"]
         v["name"] = name
         v["position"] = {"x": x, "y": y, "z": z, "width": w, "height": h, "tabOrder": z}
         v["visual"]["visualType"] = visual_type
-        state = v["visual"].setdefault("query", {}).setdefault("queryState", {})
-        state.clear()
-        for role, fields in roles.items():
-            active = role in ("Category", "Rows", "Columns") or visual_type == "slicer"
-            state[role] = {"projections": [projection(e, p, k, active and k == "Column") for e, p, k in fields]}
-        for role, fp in (field_parameters or {}).items():
-            state[role] = _field_parameter_role(fp["parameter"], fp["default"])
-        v["visual"].setdefault("visualContainerObjects", {})["title"] = _title(title)
+        if roles or field_parameters or "query" in v["visual"]:  # a button has no data roles and no query
+            state = v["visual"].setdefault("query", {}).setdefault("queryState", {})
+            state.clear()
+            for role, fields in roles.items():
+                active = role in ("Category", "Rows", "Columns") or visual_type == "slicer"
+                state[role] = {"projections": [projection(e, p, k, active and k == "Column") for e, p, k in fields]}
+            for role, fp in (field_parameters or {}).items():
+                state[role] = _field_parameter_role(fp["parameter"], fp["default"])
+        container_objects = v["visual"].setdefault("visualContainerObjects", {})
+        container_objects["title"] = _title(title, title_hidden)
+        if subtitle:
+            container_objects["subTitle"] = _subtitle(subtitle)
+        container_objects.update(container or {})
         _set_alt_text(v, default_alt_text(visual_type, title) if alt is None else alt)
         if sort:
             e, p, k = sort["field"]
@@ -177,15 +234,18 @@ class Visual:
         return v
 
     @staticmethod
-    def textbox(name: str, x: float, y: float, w: float, h: float, paragraphs: list[str], font_size: int = 12) -> dict:
+    def textbox(name: str, x: float, y: float, w: float, h: float, paragraphs: list[str | dict], font_size: float = 12,
+                container: dict | None = None) -> dict:
+        """paragraphs: strings (font_size pt) or {"text", "size", "bold", "colour" (hex), "url"}; a URL in the text becomes a
+        link run. container: container objects (background, border, dropShadow) added next to the hidden title."""
         tpl = json.loads((TEMPLATES / "textbox.json").read_text(encoding="utf-8-sig"))
         v = copy.deepcopy(tpl)
         v["$schema"] = SCHEMAS["visual.json"]
         v["name"] = name
         v["position"] = {"x": x, "y": y, "z": 0, "width": w, "height": h, "tabOrder": 0}
         _set_alt_text(v, None)
-        v["visual"]["objects"]["general"] = [{"properties": {"paragraphs": [
-            {"textRuns": [{"value": p, "textStyle": {"fontSize": f"{font_size}pt"}}]} for p in paragraphs]}}]
+        v["visual"]["objects"]["general"] = [{"properties": {"paragraphs": [_paragraph(p, font_size) for p in paragraphs]}}]
+        v["visual"]["visualContainerObjects"] = {"title": _title(None), **(container or {})}
         return v
 
 

@@ -78,10 +78,24 @@ def test_json_validates_against_pinned_schema(path):
     assert not errors, "\n".join(f"{'/'.join(map(str, e.absolute_path))}: {e.message}" for e in errors[:10])
 
 
+# keys and values that would tie a template to the report it was captured from: bound fields, conditional colours, the page a
+# button opens, the canvas tooltip page and its header button, and the 20-hex names of the source pages and visuals
+SOURCE_RESIDUE = ('"SourceRef"', '"filterConfig"', '"Conditional"', '"navigationSection"', '"drillthroughSection"',
+                  '"visualHeaderTooltip"', '"showTooltipButton"', '"section"')
+SOURCE_NAME = re.compile(r"\b[0-9a-f]{20}\b")
+
+
 def test_templates_are_data_free():
     for path in _template_files():
         text = path.read_text(encoding="utf-8")
-        assert "SourceRef" not in text and '"filterConfig"' not in text, path.name
+        assert not [word for word in SOURCE_RESIDUE if word in text], path.name
+        assert not SOURCE_NAME.findall(text), (path.name, SOURCE_NAME.findall(text))
+
+
+def test_every_visual_type_has_a_template():
+    from tools.pbi.pbir import ROLES
+
+    assert {p.stem for p in _template_files()} - {"bookmark"} == set(ROLES)
 
 
 def _tmdl_files() -> list[Path]:
