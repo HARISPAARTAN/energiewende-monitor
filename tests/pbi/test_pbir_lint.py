@@ -331,6 +331,26 @@ def heatmap_colours():
     return {s["heatmap"][end].upper() for p in SPEC["pages"] for s in p["visuals"] if s.get("heatmap") for end in ("min", "max")}
 
 
+def card_text_boxes():
+    """Names of the content text boxes whose spec says `card: true`: the only content visuals that write literal container colours."""
+    return {stable_name(page["id"], str(index)) for page in SPEC["pages"] for index, spec in enumerate(page["visuals"])
+            if spec["type"] == "textbox" and spec.get("card")}
+
+
+def container_literal_problems(page, visual, card_boxes):
+    """Literal solid colours in the container objects (background, border, shadow ...) exist only on the chrome and on the text boxes
+    whose spec says `card: true`; every other visual takes them from the theme."""
+    if is_chrome(page, visual) or visual.name in card_boxes:
+        return []
+    out = []
+    for group, entries in visual.raw.get("visual", {}).get("visualContainerObjects", {}).items():
+        for entry in entries:
+            for prop, value in entry.get("properties", {}).items():
+                if isinstance(value, dict) and "Literal" in json.dumps(value.get("solid", {})):
+                    out.append(f"{page.display_name}/{visual.title or visual.name}: a literal colour in {group}.{prop}")
+    return out
+
+
 def test_no_template_colour_literals_survive(report):
     """None of the template's hard-coded colours (red fill, mint background, white, border grey) remains; every hex colour in a
     visual is a token, a palette colour, the first data colour of the theme (series colours by measure) or a heatmap colour of
@@ -344,12 +364,7 @@ def test_no_template_colour_literals_survive(report):
                 assert bad not in text, (p.display_name, v.name, bad)
             stray = {c.upper() for c in HEX.findall(text)} - allowed
             assert not stray, (p.display_name, v.title or v.name, sorted(stray))
-            may_have_literals = is_chrome(p, v) or v.visual_type == "textbox"
-            for entries in v.raw.get("visual", {}).get("visualContainerObjects", {}).values():
-                for entry in entries:
-                    for prop, value in entry.get("properties", {}).items():
-                        literal = isinstance(value, dict) and "Literal" in json.dumps(value.get("solid", {}))
-                        assert may_have_literals or not literal, (p.display_name, v.title or v.name, prop)
+            assert container_literal_problems(p, v, card_text_boxes()) == []
 
 
 def test_content_visuals_take_background_border_and_glow_from_the_theme(report):
@@ -991,3 +1006,18 @@ def test_mutation_card_with_its_own_font_is_caught(report):
         broken = copy.deepcopy(card)
         props(broken, "labels")[key] = {"expr": {"Literal": {"Value": value}}}
         assert card_font_problems(broken, "card"), key
+
+
+def test_mutation_literal_container_colours_only_on_the_chrome_and_card_text_boxes(report):
+    page = _page(report, "Datenqualität & Quellen")
+    boxes = [v for v in content(page) if v.visual_type == "textbox"]
+    assert len(boxes) == 2 and {v.name for v in boxes} == card_text_boxes()  # both content text boxes are cards in the spec
+    for box in boxes:
+        assert container_literal_problems(page, box, card_text_boxes()) == []
+        assert container_literal_problems(page, box, set())  # the same colours on a text box without `card: true` are a finding
+    stray = copy.deepcopy(next(v for v in content(page) if v.visual_type == "card"))  # any other content visual, too
+    stray.raw["visual"]["visualContainerObjects"]["background"] = [
+        {"properties": {"color": {"solid": {"color": {"expr": {"Literal": {"Value": "'#102233'"}}}}}}}]
+    assert container_literal_problems(page, stray, card_text_boxes())
+    brand = next(v for v in page.visuals if v.name == chrome_names(page)["brand"])
+    assert container_literal_problems(page, brand, set()) == []  # the chrome may carry them

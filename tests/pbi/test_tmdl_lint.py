@@ -210,6 +210,18 @@ def test_renewable_generation_respects_an_outer_kategorie_filter(model):
 # --- Leitstand additions: KPI display text, 2030 target measures, carrier groups ----------------------------------------
 
 
+# a filter context without data must show an empty tile, not a bare unit or a zero text
+KPI_BLANK_GUARD = re.compile(r"IF\(ISBLANK\(Wert\),\s*BLANK\(\),\s*FORMAT\(Wert,")
+
+
+def test_kpi_blank_guard_pattern_rejects_a_missing_or_wrong_guard():
+    assert KPI_BLANK_GUARD.search('RETURN IF(ISBLANK(Wert), BLANK(), FORMAT(Wert, "#,0", "de-DE") & " h")')
+    for broken in ('RETURN FORMAT(Wert, "#,0", "de-DE") & " h"',  # no guard: an empty filter shows a bare unit
+                   'RETURN IF(ISBLANK(Wert), "0 h", FORMAT(Wert, "#,0", "de-DE") & " h")',  # zero text instead of an empty tile
+                   'RETURN IF(ISBLANK(Wert), FORMAT(Wert, "#,0", "de-DE"), BLANK())'):  # branches swapped
+        assert not KPI_BLANK_GUARD.search(broken), broken
+
+
 def test_kpi_measures_are_display_only_text_in_the_german_locale(model):
     kz = model.tables["Kennzahlen"].measures
     assert sorted(n for n in kz if n.startswith("KPI ")) == sorted(KPI_MEASURES)
@@ -217,6 +229,7 @@ def test_kpi_measures_are_display_only_text_in_the_german_locale(model):
         m = kz[name]
         # the explicit locale is the point: visuals format numbers by the viewer's setting, FORMAT(..., "de-DE") does not
         assert 'FORMAT(Wert, "' in m.expression and '", "de-DE")' in m.expression, name
+        assert KPI_BLANK_GUARD.search(m.expression), name
         assert m.format_string is None, name
         assert "de-DE" in m.description and "display-only" in m.description.lower(), name
         assert "calculation" in m.description.lower(), name
