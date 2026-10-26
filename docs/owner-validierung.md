@@ -29,7 +29,10 @@ darf nichts ausgeben, sonst weicht der Bericht von `tools/pbi/pages.json` ab.
 4. Der Bericht öffnet ohne Daten (kein Cache). Start, Aktualisieren. Im Dialog für `127.0.0.1,1433;energiewende` den Reiter **Datenbank**
    wählen, Benutzer `sa` und das Kennwort aus der `.env` eingeben, bei "Select which level to apply these settings to" `127.0.0.1,1433`
    wählen, Verbinden. Fragt Desktop nach der Verschlüsselung ("unable to connect using an encrypted connection"), OK wählen oder, falls angeboten,
-   "Trust server certificate" ankreuzen. Warten, bis die Aktualisierung fertig ist. Schlägt eine Tabelle fehl, den Fehlertext an den Agenten geben.
+   "Trust server certificate" ankreuzen. Warten, bis die Aktualisierung fertig ist. Meldet die erste Aktualisierung nach dem Öffnen
+   "A cyclic reference was encountered during evaluation" bei einer beliebigen Tabelle (am 2026-10-26 bei `Zeit`, `Erzeugung` und `Datum`), den Dialog
+   schließen und ein zweites Mal aktualisieren; das zweite Mal lud jedes Mal alle Tabellen. Schlägt eine Tabelle auch dann fehl, den Fehlertext an
+   den Agenten geben.
 5. Modellansicht (drittes Symbol links): Die Beziehungen zwischen Fakten und Dimensionen sind gezeichnet; `Datum`, Tabellentools, prüfen, dass
    "Als Datumstabelle markieren" auf `Datum[Datum]` gesetzt ist.
 6. **Abgleich sofort nach der Aktualisierung**, vor allen Screenshots: Desktop offen lassen und dem Agenten "Desktop ist offen" sagen. Der Agent führt
@@ -54,13 +57,21 @@ darf nichts ausgeben, sonst weicht der Bericht von `tools/pbi/pages.json` ab.
    - Messinstrumente auf Überblick: Photovoltaik, Wind an Land und Wind auf See zeigen den Anteil am Ziel 2030 (ohne Datumsfilter laut Abfrage vom
      2026-10-26 etwa 54 %, 62 % und 39 %); unter der RLS-Rolle (Punkt "RLS" unten) sind sie leer.
    - Feldparameter: Der Slicer `Kennzahl-Auswahl` ändert das Liniendiagramm unten rechts auf Überblick; alle vier Einträge zeigen eine Linie
-     (nicht leer, nicht "Anzahl von ..."). Fallback: Feld im Bereich Y entfernen, den Parameter `Kennzahl-Auswahl` hineinziehen, speichern
-     und die Form dem Agenten zeigen.
+     (nicht leer, nicht "Anzahl von ..."). Er wählt genau einen Eintrag, ohne "Alle auswählen"; ohne Auswahl steht er auf `Erzeugung (MWh)`.
+     Fallback: Feld im Bereich Y entfernen, den Parameter `Kennzahl-Auswahl` hineinziehen, speichern und die Form dem Agenten zeigen.
    - Energieträgerfarben: Die drei gestapelten Diagramme (Überblick, Erzeugung & Last, Ausbau) zeigen je Gruppe die Farbe der Palette aus
      `tools/pbi/pages.json` (Biomasse grün, Wind blau, Photovoltaik gelb, Wasserkraft türkisgrün, Erdgas orange, Steinkohle violett, Braunkohle rot,
-     Sonstige grau); die Legende hat acht Einträge in dieser Reihenfolge. Fallback: Format, Datenfarben, je Gruppe von Hand. Nicht "fx": das
+     Sonstige grau); die Legende zeigt alle acht Einträge in dieser Reihenfolge, ohne Blätterpfeil und ohne gekürzte Namen (Überblick unten in
+     8 pt, die beiden Säulendiagramme rechts). Fallback: Format, Datenfarben, je Gruppe von Hand. Nicht "fx": das
      bietet Desktop mit Legende und bei Flächendiagrammen nicht an.
-   - Der Slicer `Kategorie` (Überblick) ist horizontal. Fallback: Format, Slicer-Einstellungen, Ausrichtung, Horizontal.
+   - Der Slicer `Kategorie` (Überblick) ist horizontal, mit zwei Kacheln und ohne "Alle auswählen". Fallback: Format, Slicer-Einstellungen,
+     Ausrichtung, Horizontal.
+   - Zeitachsen und Zeiträume: Die fünf Monatsdiagramme (Flächendiagramm, EE-Anteil, Kennzahl-Auswahl, negative Preisstunden, Zubau) zeigen alle
+     Monate ohne Bildlaufleiste. Die Jahresfilter bieten nur Jahre mit Daten an (Überblick und Preise 2023 bis 2026, Ausbau 1990 bis 2026), der
+     Datumsbereich auf Erzeugung & Last reicht vom 01.01.2023 bis zum Datenstand, die Linien auf "EE-Anteil vs. Vorjahr" enden am Datenstand, der
+     Zubau beginnt 2019, und "Volllaststunden nach Energieträger und Jahr" zeigt nur 2023 bis 2026 mit allen fünf Spalten.
+   - Texte ohne Links: Seitenleiste unten und die Karten auf Datenqualität & Quellen zeigen die Adressen als normalen Text (Desktop zeichnet Links in
+     Textfeldern immer dunkelblau); kein Text klebt am Rand einer Karte, und keine Kachel zeigt einen englischen Untertitel wie "… by …".
    - Lesezeichen: Slicer `Kategorie` zurücksetzen, dann Ansicht, Lesezeichen, `Erneuerbar` und `Konventionell` wählen. Lesezeichen erfassen den
      Seitenfilter, nicht den Zustand des Slicers; steht der Slicer auf Konventionell und wird `Erneuerbar` angewendet, ist die Seite leer. Fallback:
      beide Lesezeichen in Desktop neu aufnehmen (Slicer leer, Filter setzen, Lesezeichen aktualisieren).

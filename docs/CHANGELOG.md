@@ -3,8 +3,8 @@
 ## v0.3.0 (unreleased) Meilenstein 3 Modell und Bericht
 
 Stand: Dateien und Prüfungen sind fertig. In Power BI Desktop sind am 2026-10-26 die Aktualisierung, der Abgleich (9 von 9 Kennzahlen
-innerhalb der Toleranz) und die Zeilensicherheit geprüft (Glossar, Abschnitt Abgleich). Offen sind der Look des Leitstand-Berichts in
-Desktop, die Screenshots und der Tag; das Datum setzt der Tag.
+innerhalb der Toleranz) und die Zeilensicherheit geprüft (Glossar, Abschnitt Abgleich). Am selben Tag sind alle fünf Seiten in Desktop
+erfasst und durchgesehen; die Korrekturen stehen unten. Offen sind das Speichern in Desktop, die Screenshots und der Tag; das Datum setzt der Tag.
 
 - Leitstand-Design: dunkler Bericht mit Seitenleiste (Marke, fünf Schaltflächen, Quellen) und Kopfzeile mit Datenstand auf jeder Seite,
   Kennzahlenzeile, Kacheln mit Haarlinie und schwachem Schimmer und dem Thema `Energiewende Leitstand`. Die Farben sind benannte Werte
@@ -24,6 +24,14 @@ Desktop, die Screenshots und der Tag; das Datum setzt der Tag.
   neuer Test sucht im Modell Zyklen über Formeln und Sortierspalten.
 - Abgleich und Zeilensicherheit am 2026-10-26: Die neun Abgleichswerte R1 bis R9 stimmen mit SQL überein; die Rolle `Landesbehörde BW` zeigt nur
   Baden-Württemberg.
+- Korrekturen nach der Durchsicht in Desktop am 2026-10-26: Die Monatsdiagramme stehen auf der neuen Datumsspalte `Monatsanfang` (stetige Achse;
+  auf dem Text `Jahr-Monat` brauchte Desktop etwa 20 px je Monat und zeigte eine Bildlaufleiste), sie ist auch das Drillthrough-Feld.
+  Vergleichsfilter auf Visualebene (`filters` in `pages.json`, auf Spalte oder Kennzahl) begrenzen Jahresfilter, Datumsbereich, EE-Anteil,
+  Zubau und Volllaststunden auf Zeiträume mit Daten. Dazu kurze Spaltenköpfe (`displayName` der Projektion), die Heatmap mit Wochentagen als
+  Zeilen, vollständige Energieträger-Legenden, Innenabstand in den Textkarten, keine automatischen englischen Untertitel (Thema), Adressen als
+  Text statt Link (Desktop zeichnet Links in Textfeldern dunkelblau), Schaltflächen in 10 pt und Kopfzeile, Datenkarten und Seitenleiste ohne
+  abgeschnittenen Text. Die erste Aktualisierung nach dem Öffnen meldete in drei von vier Durchgängen eine zyklische Referenz bei wechselnden Tabellen; die
+  zweite lud jedes Mal alles (Checkliste, Punkt 4).
 - Power-BI-Projekt als PBIP (`powerbi/EnergiewendeMonitor.pbip`): Semantikmodell als TMDL, Bericht als PBIR, beide code-first
   erzeugt (`tools/pbi/`). Schemas von Microsoft sind vendort (`tools/pbi/schemas/`, `schema_versions.json`), die Visualvorlagen
   stammen aus microsoft/fabric-toolbox (MIT, `tools/pbi/templates/`). Quelle des Modells: `Sql.Database("127.0.0.1,1433",
