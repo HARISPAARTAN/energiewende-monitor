@@ -176,7 +176,7 @@ theme. Every measure is described in [docs/kpi-glossar.md](docs/kpi-glossar.md) 
   targets are national.
 - **Carrier groups.** A chart keeps at most eight colours apart, twelve carriers it does not. The calculated column `Gruppe` folds them into
   seven colour groups (Biomasse, Wind, Photovoltaik, Wasserkraft, Erdgas, Steinkohle, Braunkohle) and `Sonstige` (Kernenergie, Pumpspeicher,
-  Sonstige Erneuerbare, Sonstige Konventionelle). The three charts by carrier colour and stack by group; the per-carrier values stay in the
+  Sonstige Erneuerbare, Sonstige Konventionelle). The three carrier charts colour and stack by group; the per-carrier values stay in the
   tables and slicers. According to the design spec the palette was checked on 2026-10-26 on the tile surface `#102233` with the dataviz
   method's validator (worst adjacent colour-vision ΔE 8.4, normal-vision ΔE 19.8, all contrasts at least 3:1).
 - **Dark theme.** Page background, tiles with a hairline border and a faint glow, text in three grades. The colours are named values in
