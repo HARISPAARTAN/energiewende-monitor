@@ -16,6 +16,8 @@ class Column:
     format_string: str | None = None
     summarize_by: str | None = None
     sort_by_column: str | None = None
+    expression: str | None = None  # DAX of a calculated column (`column Name = <DAX>`); None for a column read from the source
+    description: str | None = None  # the /// lines above the declaration
 
 
 @dataclass
@@ -159,6 +161,20 @@ def _measure_expression(first: str | None, body: list[str]) -> str:
     return "\n".join(out)
 
 
+def _column_expression(first: str | None, body: list[str]) -> str | None:
+    """DAX of a calculated column: on the declaration line (`column Name = <DAX>`) or on the deeper-indented lines below it,
+    which end at the first property of the column (properties sit one level above the expression). None for a source column."""
+    if first is not None and first.strip():
+        return first.strip()
+    out = []
+    for line in body:
+        if line.strip() and not line.startswith("\t"):
+            break
+        if line.strip():
+            out.append(line.strip())
+    return "\n".join(out) or None
+
+
 def load_model(definition_dir: Path) -> Model:
     tables = {}
     for path in sorted((Path(definition_dir) / "tables").glob("*.tmdl")):
@@ -176,6 +192,8 @@ def load_model(definition_dir: Path) -> Model:
                     _prop(cbody, "formatString"),
                     _prop(cbody, "summarizeBy"),
                     _unquote(_prop(cbody, "sortByColumn") or "") or None,
+                    _column_expression(_cfirst, cbody),
+                    descs.get(cname),
                 )
             for hname, _hfirst, hbody, _ in _blocks(inner, "hierarchy"):
                 t.hierarchies[hname] = [

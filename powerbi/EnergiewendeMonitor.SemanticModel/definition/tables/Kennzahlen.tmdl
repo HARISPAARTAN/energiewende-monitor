@@ -171,6 +171,92 @@ table Kennzahlen
 		displayFolder: Qualität
 		lineageTag: e294e8e1-0e53-502f-8789-e0d3b302aff0
 
+	/// Display-only text of Erzeugung (MWh) in TWh with one decimal and the unit.
+	/// Formatted with the de-DE locale so the German report shows German numbers whatever the viewer's language setting (Desktop showed "92.87 €" next to "1.791" on one page). Never used in calculations.
+	measure 'KPI Erzeugung' =
+			VAR Wert = DIVIDE([Erzeugung (MWh)], 1000000)
+			RETURN IF(ISBLANK(Wert), BLANK(), FORMAT(Wert, "#,0.0", "de-DE") & " TWh")
+		displayFolder: Anzeige
+		lineageTag: 78c16b5f-a39e-562a-abe4-932cda4ead1a
+
+	/// Display-only text of EE-Anteil % in percent with one decimal.
+	/// Formatted with the de-DE locale so the German report shows German numbers whatever the viewer's language setting (Desktop showed "92.87 €" next to "1.791" on one page). Never used in calculations.
+	measure 'KPI EE-Anteil' =
+			VAR Wert = [EE-Anteil %]
+			RETURN IF(ISBLANK(Wert), BLANK(), FORMAT(Wert, "0.0 %", "de-DE"))
+		displayFolder: Anzeige
+		lineageTag: 82b5ae9d-9024-5211-ad4b-793a2a9b0cde
+
+	/// Display-only text of Day-Ahead Ø (€/MWh) with two decimals and the unit €/MWh.
+	/// Formatted with the de-DE locale so the German report shows German numbers whatever the viewer's language setting (Desktop showed "92.87 €" next to "1.791" on one page). Never used in calculations.
+	measure 'KPI Day-Ahead Ø' =
+			VAR Wert = [Day-Ahead Ø (€/MWh)]
+			RETURN IF(ISBLANK(Wert), BLANK(), FORMAT(Wert, "#,0.00", "de-DE") & " €/MWh")
+		displayFolder: Anzeige
+		lineageTag: 61fe4049-e55f-5deb-8cba-6f643df04c74
+
+	/// Display-only text of Negative Preisstunden with the unit h.
+	/// Formatted with the de-DE locale so the German report shows German numbers whatever the viewer's language setting (Desktop showed "92.87 €" next to "1.791" on one page). Never used in calculations.
+	measure 'KPI Negative Preisstunden' =
+			VAR Wert = [Negative Preisstunden]
+			RETURN IF(ISBLANK(Wert), BLANK(), FORMAT(Wert, "#,0", "de-DE") & " h")
+		displayFolder: Anzeige
+		lineageTag: 9ac88e55-6009-5313-bcb8-e2498073c52a
+
+	/// Display-only text of Installierte Leistung (MW) in GW with one decimal and the unit.
+	/// Formatted with the de-DE locale so the German report shows German numbers whatever the viewer's language setting (Desktop showed "92.87 €" next to "1.791" on one page). Never used in calculations.
+	measure 'KPI Installierte Leistung' =
+			VAR Wert = DIVIDE([Installierte Leistung (MW)], 1000)
+			RETURN IF(ISBLANK(Wert), BLANK(), FORMAT(Wert, "#,0.0", "de-DE") & " GW")
+		displayFolder: Anzeige
+		lineageTag: c0a5aa1b-b143-5af5-b60b-f17e1c83f289
+
+	/// Installed capacity of the carrier Photovoltaik (Photovoltaik) at the end of the selected period (Installierte Leistung (MW)) as a share of the statutory 2030 value of 215 GW (EEG 2023 § 4 Nr. 3 Buchst. d).
+	/// Blank under a federal-state filter or the RLS role because the target is national; ignores carrier, group and category filters.
+	measure 'Zielerreichung Photovoltaik %' =
+			IF(
+				ISFILTERED(Bundesland[Bundesland]) || CALCULATE(COUNTROWS(Bundesland), REMOVEFILTERS(Bundesland)) < 18,
+				BLANK(),
+				DIVIDE(CALCULATE([Installierte Leistung (MW)], REMOVEFILTERS('Energieträger'), 'Energieträger'[Energieträger] = "Photovoltaik"), 215000)
+			)
+		formatString: 0 %
+		displayFolder: Ausbau
+		lineageTag: a5b505a7-19f9-5e93-9ff7-d1124256edf1
+
+	/// Installed capacity of the carrier Wind Onshore (Wind an Land) at the end of the selected period (Installierte Leistung (MW)) as a share of the statutory 2030 value of 115 GW (EEG 2023 § 4 Nr. 1 Buchst. d).
+	/// Blank under a federal-state filter or the RLS role because the target is national; ignores carrier, group and category filters.
+	measure 'Zielerreichung Wind an Land %' =
+			IF(
+				ISFILTERED(Bundesland[Bundesland]) || CALCULATE(COUNTROWS(Bundesland), REMOVEFILTERS(Bundesland)) < 18,
+				BLANK(),
+				DIVIDE(CALCULATE([Installierte Leistung (MW)], REMOVEFILTERS('Energieträger'), 'Energieträger'[Energieträger] = "Wind Onshore"), 115000)
+			)
+		formatString: 0 %
+		displayFolder: Ausbau
+		lineageTag: c28d5e86-5ead-5ab0-9c70-04fe206f9718
+
+	/// Installed capacity of the carrier Wind Offshore (Wind auf See) at the end of the selected period (Installierte Leistung (MW)) as a share of the statutory 2030 value of at least 30 GW by 2030 (WindSeeG § 1 Abs. 2).
+	/// Blank under a federal-state filter or the RLS role because the target is national; ignores carrier, group and category filters.
+	measure 'Zielerreichung Wind auf See %' =
+			IF(
+				ISFILTERED(Bundesland[Bundesland]) || CALCULATE(COUNTROWS(Bundesland), REMOVEFILTERS(Bundesland)) < 18,
+				BLANK(),
+				DIVIDE(CALCULATE([Installierte Leistung (MW)], REMOVEFILTERS('Energieträger'), 'Energieträger'[Energieträger] = "Wind Offshore"), 30000)
+			)
+		formatString: 0 %
+		displayFolder: Ausbau
+		lineageTag: 597a4d43-c4c8-57d9-b5cf-e5b5201b7cdd
+
+	/// One header line for every page: the date of the latest SMARD quarter hour (UTC) and the MaStR stock month, in German date format (de-DE) whatever the viewer's language setting. Independent of filters.
+	measure 'Datenstand Kopfzeile' =
+			VAR Smard = CALCULATE(MAX(Erzeugung[Zeitstempel UTC]), REMOVEFILTERS())
+			VAR MastrKey = CALCULATE(MAX('Kapazität'[Datum Key]), REMOVEFILTERS())
+			RETURN
+				"Datenstand: SMARD " & FORMAT(Smard, "dd.MM.yyyy", "de-DE")
+					& " · MaStR " & FORMAT(DATE(INT(MastrKey / 10000), MOD(INT(MastrKey / 100), 100), 1), "MMMM yyyy", "de-DE")
+		displayFolder: Qualität
+		lineageTag: b4011b2e-191f-5579-8d68-919780b8929e
+
 	column Spalte
 		dataType: int64
 		isHidden

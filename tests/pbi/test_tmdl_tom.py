@@ -44,3 +44,17 @@ def test_tom_parses_the_model(serializer):
         for partition in table.Partitions:
             if str(partition.SourceType) == "M":
                 assert 'Sql.Database("127.0.0.1,1433", "energiewende")' in str(partition.Source.Expression), table.Name
+
+
+def test_tom_reads_the_carrier_groups_and_the_35_measures(serializer):
+    db = serializer.DeserializeDatabaseFromFolder(str(MODEL))
+    tables = {t.Name: t for t in db.Model.Tables}
+    columns = {c.Name: c for c in tables["Energieträger"].Columns}
+    for name, data_type in (("Gruppe", "String"), ("Gruppe Sortierung", "Int64")):
+        assert str(columns[name].Type) == "Calculated" and str(columns[name].DataType) == data_type, name
+        assert columns[name].Expression.startswith("SWITCH('Energieträger'["), name
+    assert columns["Gruppe"].SortByColumn.Name == "Gruppe Sortierung" and columns["Gruppe Sortierung"].IsHidden
+    measures = {m.Name: m for m in tables["Kennzahlen"].Measures}
+    assert len(measures) == 35
+    assert all(measures[n].DisplayFolder == "Anzeige" for n in measures if n.startswith("KPI "))
+    assert all(measures[n].FormatString == "0 %" for n in measures if n.startswith("Zielerreichung "))

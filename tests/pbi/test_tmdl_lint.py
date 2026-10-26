@@ -1,3 +1,4 @@
+import csv
 import re
 from pathlib import Path
 
@@ -14,7 +15,19 @@ MEASURES = [
     "EE-Anteil Vorjahr %", "EE-Anteil Δ Vorjahr (pp)", "Netzlast Vormonat (MWh)", "Netzlast Δ Vormonat %", "Zubau (MW)",
     "Zubau YTD (MW)", "Installierte Leistung (MW)", "Volllaststunden (h)", "Anzahl Einheiten Zubau", "Datenstand", "Zeilen",
     "Datenstand MaStR",
+    "KPI Erzeugung", "KPI EE-Anteil", "KPI Day-Ahead Ø", "KPI Negative Preisstunden", "KPI Installierte Leistung",
+    "Zielerreichung Photovoltaik %", "Zielerreichung Wind an Land %", "Zielerreichung Wind auf See %", "Datenstand Kopfzeile",
 ]
+KPI_MEASURES = ["KPI Erzeugung", "KPI EE-Anteil", "KPI Day-Ahead Ø", "KPI Negative Preisstunden", "KPI Installierte Leistung"]
+TEXT_MEASURES = {"Datenstand", "Datenstand MaStR", "Datenstand Kopfzeile", *KPI_MEASURES}  # text results carry no formatString
+# measure -> (carrier of Energieträger[Energieträger], statutory 2030 value in MW)
+TARGETS = {
+    "Zielerreichung Photovoltaik %": ("Photovoltaik", 215000),
+    "Zielerreichung Wind an Land %": ("Wind Onshore", 115000),
+    "Zielerreichung Wind auf See %": ("Wind Offshore", 30000),
+}
+SEED = Path(__file__).resolve().parents[2] / "data" / "seed" / "dim_energietraeger.csv"
+GROUPS = ["Biomasse", "Wind", "Photovoltaik", "Wasserkraft", "Erdgas", "Steinkohle", "Braunkohle", "Sonstige"]  # stack and sort order
 RELATIONSHIPS = {
     ("Erzeugung.Datum Key", "Datum.Datum Key"), ("Erzeugung.Zeit Key", "Zeit.Zeit Key"),
     ("Erzeugung.Region Key", "Region.Region Key"), ("Erzeugung.Energieträger Key", "Energieträger.Energieträger Key"),
@@ -37,14 +50,17 @@ def test_tables_present(model):
     assert set(TABLES) <= set(model.tables)
 
 
-def test_all_26_measures_exist_with_format_and_description(model):
+def test_all_35_measures_exist_with_format_and_description(model):
     kz = model.tables["Kennzahlen"].measures
     missing = [m for m in MEASURES if m not in kz]
     assert not missing, missing
+    assert len(MEASURES) == len(kz) == 35, sorted(set(kz) - set(MEASURES))
     for name in MEASURES:
         m = kz[name]
         assert m.description, name
-        if name not in ("Datenstand", "Datenstand MaStR"):  # text results carry no formatString
+        if name in TEXT_MEASURES:
+            assert m.format_string is None, name
+        else:
             assert m.format_string, name
 
 
@@ -66,6 +82,7 @@ def test_dax_quotes_table_names_that_are_not_plain_ascii(model):
     bare = re.compile(r"(?<![\w'])(" + "|".join(map(re.escape, special)) + r")(?=\s*[\[),])")
     expressions = [(m.name, m.expression) for tab in model.tables.values() for m in tab.measures.values()]
     expressions += [(f"{r.name}/{t}", e) for r in model.roles for t, e in r.table_permissions.items()]
+    expressions += [(f"{t.name}[{c.name}]", c.expression) for t in model.tables.values() for c in t.columns.values() if c.expression]
     expressions += [(t.name, t.partition_source or "") for t in model.tables.values()]
     offenders = [(name, hit) for name, expr in expressions for hit in bare.findall(expr)]
     assert not offenders, offenders
@@ -138,6 +155,7 @@ def test_sort_by_columns(model):
         ("Datum", "Wochentag"): "Wochentag Nr", ("Datum", "Wochentag (EN)"): "Wochentag Nr",
         ("Zeit", "Tageszeit"): "Tageszeit Nr", ("Zeit", "Tageszeit (EN)"): "Tageszeit Nr",
         ("Energieträger", "Energieträger"): "Sortierung", ("Energieträger", "Energieträger (EN)"): "Sortierung",
+        ("Energieträger", "Gruppe"): "Gruppe Sortierung",
         ("Preis", "Preis Klasse (10 €)"): "Preis Klasse Sortierung",
     }
     for (table, col), sort_col in expected.items():
@@ -187,3 +205,119 @@ def test_volllaststunden_are_blank_unless_all_bundeslaender_are_visible(model):
 def test_renewable_generation_respects_an_outer_kategorie_filter(model):
     m = model.tables["Kennzahlen"].measures["Erzeugung Erneuerbar (MWh)"]
     assert "KEEPFILTERS('Energieträger'[Kategorie] = \"Erneuerbar\")" in m.expression
+
+
+# --- Leitstand additions: KPI display text, 2030 target measures, carrier groups ----------------------------------------
+
+
+def test_kpi_measures_are_display_only_text_in_the_german_locale(model):
+    kz = model.tables["Kennzahlen"].measures
+    assert sorted(n for n in kz if n.startswith("KPI ")) == sorted(KPI_MEASURES)
+    for name in KPI_MEASURES:
+        m = kz[name]
+        # the explicit locale is the point: visuals format numbers by the viewer's setting, FORMAT(..., "de-DE") does not
+        assert 'FORMAT(Wert, "' in m.expression and '", "de-DE")' in m.expression, name
+        assert m.format_string is None, name
+        assert "de-DE" in m.description and "display-only" in m.description.lower(), name
+        assert "calculation" in m.description.lower(), name
+        formatted = re.search(r"\[([^\]]+)\]", m.expression).group(1)  # the measure the text is made from
+        assert formatted in m.description, name
+    # display text feeds no calculation
+    display = [f"[{n}]" for n in (*KPI_MEASURES, "Datenstand Kopfzeile")]
+    for name, m in kz.items():
+        assert not any(ref in m.expression for ref in display), name
+
+
+def test_target_measures_carry_the_national_guard_their_carrier_and_constant(model):
+    kz = model.tables["Kennzahlen"].measures
+    flat = lambda m: re.sub(r"\s+", " ", m.expression)  # noqa: E731
+    volllast = flat(kz["Volllaststunden (h)"])
+    guard = volllast[: volllast.index("BLANK(),") + len("BLANK(),")]  # IF( ISFILTERED(...) || ... < 18, BLANK(),
+    assert guard == "IF( ISFILTERED(Bundesland[Bundesland]) || CALCULATE(COUNTROWS(Bundesland), REMOVEFILTERS(Bundesland)) < 18, BLANK(),"
+    for name, (carrier, megawatt) in TARGETS.items():
+        m = kz[name]
+        assert flat(m).startswith(guard), name
+        assert (f"DIVIDE(CALCULATE([Installierte Leistung (MW)], REMOVEFILTERS('Energieträger'), "
+                f"'Energieträger'[Energieträger] = \"{carrier}\"), {megawatt})") in flat(m), name
+        assert m.format_string == "0 %", name
+        assert "national" in m.description.lower() and "RLS" in m.description, name
+        assert "2030" in m.description and "carrier, group and category" in m.description, name
+    # the source with paragraph, as read on gesetze-im-internet.de
+    assert "EEG 2023 § 4 Nr. 3 Buchst. d" in kz["Zielerreichung Photovoltaik %"].description
+    assert "EEG 2023 § 4 Nr. 1 Buchst. d" in kz["Zielerreichung Wind an Land %"].description
+    assert "WindSeeG § 1 Abs. 2" in kz["Zielerreichung Wind auf See %"].description
+
+
+def test_datenstand_kopfzeile_is_one_german_line_over_both_sources(model):
+    m = model.tables["Kennzahlen"].measures["Datenstand Kopfzeile"]
+    assert "Erzeugung[Zeitstempel UTC]" in m.expression and "'Kapazität'[Datum Key]" in m.expression
+    assert m.expression.count("REMOVEFILTERS()") == 2 and m.expression.count('"de-DE"') == 2
+    assert m.format_string is None
+
+
+def split_dax_args(call: str) -> list[str]:
+    """The top-level arguments of `NAME(a, b, ...)`; commas inside quotes, brackets and nested calls are kept."""
+    body = call[call.index("(") + 1 : call.rstrip().rindex(")")]
+    args, buf, depth, quote = [], [], 0, None
+    for ch in body:
+        if quote:
+            buf.append(ch)
+            quote = None if ch == quote else quote  # a doubled quote closes and reopens on the next character
+            continue
+        if ch in "\"'":
+            quote = ch
+        elif ch in "([":
+            depth += 1
+        elif ch in ")]":
+            depth -= 1
+        elif ch == "," and depth == 0:
+            args.append("".join(buf).strip())
+            buf = []
+            continue
+        buf.append(ch)
+    args.append("".join(buf).strip())
+    return args
+
+
+def parse_switch(expression: str):
+    """(subject, [(value, result), ...], default or None) of `SWITCH(subject, v1, r1, ..., default)`; strings and integers."""
+    assert expression.startswith("SWITCH("), expression[:30]
+    subject, *rest = split_dax_args(expression)
+    value = lambda text: text[1:-1] if text.startswith('"') else int(text)  # noqa: E731
+    default = value(rest.pop()) if len(rest) % 2 else None
+    return subject, [(value(k), value(v)) for k, v in zip(rest[0::2], rest[1::2], strict=True)], default
+
+
+def test_gruppe_folds_the_twelve_seed_carriers_into_eight_groups(model):
+    column = model.tables["Energieträger"].columns["Gruppe"]
+    assert column.data_type == "string" and column.summarize_by == "none" and not column.is_hidden
+    assert column.expression, "Gruppe is a calculated column: `column Gruppe = <DAX>`"
+    with SEED.open(encoding="utf-8", newline="") as fh:
+        carriers = [r["name_de"] for r in csv.DictReader(fh)]
+    assert len(carriers) == 12
+    subject, pairs, default = parse_switch(column.expression)
+    assert subject == "'Energieträger'[Energieträger]"
+    mapping = dict(pairs)
+    assert len(mapping) == len(pairs), "a carrier is listed twice"
+    assert set(mapping) <= set(carriers), sorted(set(mapping) - set(carriers))
+    assert mapping == {"Biomasse": "Biomasse", "Wind Onshore": "Wind", "Wind Offshore": "Wind", "Photovoltaik": "Photovoltaik",
+                       "Wasserkraft": "Wasserkraft", "Erdgas": "Erdgas", "Steinkohle": "Steinkohle", "Braunkohle": "Braunkohle"}
+    assert default == "Sonstige"
+    # what the default branch catches: exactly these four carriers of the seed
+    assert set(carriers) - set(mapping) == {"Kernenergie", "Pumpspeicher", "Sonstige Erneuerbare", "Sonstige Konventionelle"}
+    assert {mapping.get(c, default) for c in carriers} == set(GROUPS)
+
+
+def test_gruppe_sorts_by_the_hidden_sort_key_in_stack_order(model):
+    table = model.tables["Energieträger"]
+    gruppe, key = table.columns["Gruppe"], table.columns["Gruppe Sortierung"]
+    assert gruppe.sort_by_column == "Gruppe Sortierung"
+    assert key.is_hidden and key.data_type == "int64" and key.format_string == "0" and key.summarize_by == "none"
+    assert key.expression, "Gruppe Sortierung is a calculated column"
+    subject, pairs, default = parse_switch(key.expression)
+    assert subject == "'Energieträger'[Gruppe]"
+    by_number = sorted(pairs, key=lambda p: p[1])
+    assert [n for _, n in by_number] == list(range(1, len(GROUPS)))
+    assert [group for group, _ in by_number] + ["Sonstige"] == GROUPS and default == len(GROUPS)  # Sonstige is the default, 8
+    _, group_pairs, group_default = parse_switch(gruppe.expression)
+    assert {g for _, g in group_pairs} | {group_default} == set(GROUPS)
