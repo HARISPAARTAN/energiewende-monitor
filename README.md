@@ -6,8 +6,8 @@ Deutsche Strommarktdaten (SMARD) als Star-Schema in SQL Server, Basis für ein �
 English version: [README.en.md](README.en.md).
 
 **Stand:** Meilenstein 3 (Version 0.3.0): Datenpipeline, SQL-Schema, Tests, CI, installierte Leistung aus dem
-Marktstammdatenregister sowie Power-BI-Modell und Bericht als PBIP-Projekt (Abschnitt [Bericht](#bericht)). Die erste
-Validierung in Power BI Desktop und die Screenshots folgen in einer eigenen Sitzung; das Veröffentlichen ist Meilenstein 4.
+Marktstammdatenregister sowie Power-BI-Modell und Bericht als PBIP-Projekt (Abschnitt [Bericht](#bericht)). Modell und
+Bericht sind am 2026-10-26 in Power BI Desktop geprüft (Abgleich mit SQL, Zeilensicherheit, Screenshots); das Veröffentlichen ist Meilenstein 4.
 
 Datenstand: SMARD 2026-10-25 (ab 2023-01-01, DE-LU; Ladezeit ca. 3 Minuten auf einem Laptop);
 Marktstammdatenregister Exportstand 2026-10-25.
@@ -181,7 +181,7 @@ Hinweisen beschrieben.
   Die Leistung stammt aus dem Marktstammdatenregister (Nettonennleistung, Einschränkungen im Glossar) und kann von der amtlichen
   Zielüberwachung der Bundesnetzagentur abweichen. Bezug ist der Wert für 2030, nicht der jährliche Ausbaupfad. Unter einer
   Bundesland-Auswahl und der RLS-Rolle sind die Messinstrumente leer, weil die Ziele bundesweit gelten (dieselbe Prüfung wie bei Volllaststunden;
-  unter der Rolle noch nicht in Desktop angesehen).
+  unter der Rolle per Live-Test geprüft).
 - **Energieträger-Gruppen.** Ein Diagramm hält höchstens acht Farben auseinander, zwölf Energieträger nicht. Die berechnete Spalte `Gruppe`
   faltet sie in sieben Farbgruppen (Biomasse, Wind, Photovoltaik, Wasserkraft, Erdgas, Steinkohle, Braunkohle) und `Sonstige` (Kernenergie,
   Pumpspeicher, Sonstige Erneuerbare, Sonstige Konventionelle). Die drei Diagramme nach Energieträger färben und stapeln nach Gruppe; der
@@ -219,7 +219,7 @@ Modellansicht und der Feldparameter-Slicer in Aktion:
 ![Modell](docs/screenshots/06-modell.png)
 ![Kennzahl-Auswahl](docs/screenshots/07-kennzahl-auswahl.png)
 
-(Die Bilder entstehen in der Validierungssitzung mit Power BI Desktop, Liste: [docs/screenshots/SHOTLIST.md](docs/screenshots/SHOTLIST.md), Ablauf: [docs/owner-validierung.md](docs/owner-validierung.md).)
+(Die Bilder stammen aus der Validierungssitzung mit Power BI Desktop am 2026-10-26, Liste: [docs/screenshots/SHOTLIST.md](docs/screenshots/SHOTLIST.md), Ablauf: [docs/owner-validierung.md](docs/owner-validierung.md).)
 
 **Projekt öffnen.** Power BI Desktop mit den Vorschaufunktionen `Power BI Project (.pbip) save option` und
 `Store semantic model using TMDL format` (Datei, Optionen, Vorschaufeatures), dann `powerbi/EnergiewendeMonitor.pbip` öffnen. Der Bericht öffnet

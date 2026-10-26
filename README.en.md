@@ -6,8 +6,8 @@ German electricity-market data (SMARD) as a star schema in SQL Server, the basis
 German version: [README.md](README.md).
 
 **Status:** milestone 3 (version 0.3.0): data pipeline, SQL schema, tests, CI, installed capacity from the
-Marktstammdatenregister, and the Power BI model and report as a PBIP project (section [Report](#report)). The first validation in
-Power BI Desktop and the screenshots follow in a session of their own; publishing is milestone 4.
+Marktstammdatenregister, and the Power BI model and report as a PBIP project (section [Report](#report)). The model and report
+were validated in Power BI Desktop on 2026-10-26 (reconciliation against SQL, row-level security, screenshots); publishing is milestone 4.
 
 Data as of: SMARD 2026-10-25 (from 2023-01-01, DE-LU; load time about 3 minutes on a laptop);
 Marktstammdatenregister export of 2026-10-25.
@@ -173,7 +173,7 @@ theme. Every measure is described in [docs/kpi-glossar.md](docs/kpi-glossar.md) 
   least 30 GW (§ 1 para. 2 WindSeeG); the law texts were read on gesetze-im-internet.de on 2026-10-26. The capacity comes from the
   Marktstammdatenregister (net rated capacity, limits in the glossary) and can differ from the Bundesnetzagentur's official target monitoring.
   The reference is the 2030 value, not the yearly expansion path. Under a federal-state selection and the RLS role the gauges are blank, because the
-  targets are national (same check as full-load hours; not yet looked at under the role in Desktop).
+  targets are national (same check as full-load hours; checked under the role by a live test).
 - **Carrier groups.** A chart keeps at most eight colours apart, twelve carriers it does not. The calculated column `Gruppe` folds them into
   seven colour groups (Biomasse, Wind, Photovoltaik, Wasserkraft, Erdgas, Steinkohle, Braunkohle) and `Sonstige` (Kernenergie, Pumpspeicher,
   Sonstige Erneuerbare, Sonstige Konventionelle). The three carrier charts colour and stack by group; the per-carrier values stay in the
@@ -210,7 +210,7 @@ Model view and the field-parameter slicer in action:
 ![Model](docs/screenshots/06-modell.png)
 ![Measure selection](docs/screenshots/07-kennzahl-auswahl.png)
 
-(The images are taken in the validation session with Power BI Desktop; list: [docs/screenshots/SHOTLIST.md](docs/screenshots/SHOTLIST.md), procedure: [docs/owner-validierung.md](docs/owner-validierung.md), in German.)
+(The images come from the validation session with Power BI Desktop on 2026-10-26; list: [docs/screenshots/SHOTLIST.md](docs/screenshots/SHOTLIST.md), procedure: [docs/owner-validierung.md](docs/owner-validierung.md), in German.)
 
 **Open the project.** Power BI Desktop with the preview features `Power BI Project (.pbip) save option` and `Store semantic model using TMDL format`
 (File, Options, Preview features), then open `powerbi/EnergiewendeMonitor.pbip`. The report opens without data, because no cache is

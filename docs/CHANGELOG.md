@@ -1,11 +1,11 @@
 # Changelog
 
-## v0.3.0 (unreleased) Meilenstein 3 Modell und Bericht
+## v0.3.0 (2026-10-26) Meilenstein 3 Modell und Bericht
 
 Stand: Dateien und Prüfungen sind fertig. In Power BI Desktop sind am 2026-10-26 die Aktualisierung, der Abgleich (9 von 9 Kennzahlen
 innerhalb der Toleranz) und die Zeilensicherheit geprüft (Glossar, Abschnitt Abgleich). Am selben Tag sind alle fünf Seiten in Desktop
 erfasst und durchgesehen; die Korrekturen stehen unten. Die sieben Screenshots der README sind aufgenommen, und das Projekt ist in
-Desktop gespeichert (Befunde unten). Offen ist der Tag; das Datum setzt der Tag.
+Desktop gespeichert (Befunde unten).
 
 - Leitstand-Design: dunkler Bericht mit Seitenleiste (Marke, fünf Schaltflächen, Quellen) und Kopfzeile mit Datenstand auf jeder Seite,
   Kennzahlenzeile, Kacheln mit Haarlinie und schwachem Schimmer und dem Thema `Energiewende Leitstand`. Die Farben sind benannte Werte
@@ -15,7 +15,7 @@ Desktop gespeichert (Befunde unten). Offen ist der Tag; das Datum setzt der Tag.
   Energieträger färben nach Gruppe, der Bericht liest die Farben nicht mehr aus dem Seed.
 - Zielmessinstrumente: drei Kennzahlen `Zielerreichung …` (Photovoltaik 215 GW, Wind an Land 115 GW, Wind auf See mindestens 30 GW im Jahr 2030;
   § 4 EEG 2023 und § 1 WindSeeG, Gesetzestexte am 2026-10-26 gelesen) und drei Messinstrumente auf Überblick; bundesweit, leer unter einer
-  Bundesland-Auswahl und unter der RLS-Rolle (dieselbe Prüfung wie bei Volllaststunden; unter der Rolle noch nicht in Desktop angesehen).
+  Bundesland-Auswahl und unter der RLS-Rolle (dieselbe Prüfung wie bei Volllaststunden; unter der Rolle per Live-Test geprüft).
 - Deutsche Zahlen auf den Kacheln: fünf Anzeigekennzahlen `KPI …` mit `FORMAT(…, "de-DE")` und Einheit, dazu `Datenstand Kopfzeile`; Tabellen und
   Achsen folgen weiter der Sprache des Betrachters.
 - Korrekturen nach der Desktop-Sitzung (1cc1416): Tabellennamen mit Umlauten sind in DAX gequotet (Desktop lehnte `Energieträger[...]` ab), Zeit- und
