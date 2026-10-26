@@ -42,8 +42,9 @@
                 "textRuns": [
                   {
                     "textStyle": {
-                      "color": "#8291A3",
-                      "fontSize": "8pt"
+                      "color": "#22D3EE",
+                      "fontSize": "8pt",
+                      "textDecoration": "underline"
                     },
                     "url": "https://github.com/HARISPAARTAN/energiewende-monitor",
                     "value": "github.com/HARISPAARTAN/energiewende-monitor"

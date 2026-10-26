@@ -31,6 +31,7 @@ ROLES = {
 ALT_PREFIX = {"card": "Kennzahl", "tableEx": "Tabelle", "pivotTable": "Matrix", "gauge": "Messinstrument",
               "actionButton": "Navigation"}  # every other type: "Diagramm"
 THEME_OWNED_CONTAINER = ("background", "border", "dropShadow")  # styled by the theme; a template's own entries would override it
+THEME_OWNED_CARD_FONT = ("fontFamily", "bold")  # a card's value is drawn in the theme's callout class; these would override it
 URL = re.compile(r"https?://[^\s<>\"]*[^\s<>\".,;:)\]]")  # a link run in a text box; trailing punctuation stays outside
 
 
@@ -82,30 +83,40 @@ def drop_theme_owned_container(visual: dict) -> None:
         container.pop(key, None)
 
 
-def _text_runs(text: str, style: dict, url: str | None) -> list[dict]:
-    """The runs of one paragraph: one run, or (without an explicit `url`) the text split at every URL, which becomes a link run."""
+def drop_theme_owned_card_font(visual: dict) -> None:
+    """Remove the font family and the bold flag a card template brings from its source report (a generic font, regular
+    weight), so that the value is drawn in the theme's `callout` text class, Segoe UI Semibold."""
+    for entry in visual.get("objects", {}).get("labels", []):
+        for key in THEME_OWNED_CARD_FONT:
+            entry.get("properties", {}).pop(key, None)
+
+
+def _text_runs(text: str, style: dict, url: str | None, link_style: dict) -> list[dict]:
+    """The runs of one paragraph: one run, or (without an explicit `url`) the text split at every URL, which becomes a link run.
+    A link run keeps the paragraph's size and weight and takes `link_style` (accent colour, underline) so that it looks like a link."""
+    link = {**style, **link_style}
     if url:
-        return [{"value": text, "url": url, "textStyle": dict(style)}]
+        return [{"value": text, "url": url, "textStyle": link}]
     runs, pos = [], 0
     for match in URL.finditer(text):
         if match.start() > pos:
             runs.append({"value": text[pos:match.start()], "textStyle": dict(style)})
-        runs.append({"value": match.group(), "url": match.group(), "textStyle": dict(style)})
+        runs.append({"value": match.group(), "url": match.group(), "textStyle": dict(link)})
         pos = match.end()
     if pos < len(text) or not runs:
         runs.append({"value": text[pos:], "textStyle": dict(style)})
     return runs
 
 
-def _paragraph(paragraph: str | dict, default_size: float) -> dict:
-    """A paragraph is a string or {"text", "size", "bold", "colour" (a hex colour), "url"}."""
+def _paragraph(paragraph: str | dict, default_size: float, link_style: dict) -> dict:
+    """A paragraph is a string or {"text", "size", "bold", "colour" (a hex colour), "url"}; its link runs take `link_style`."""
     spec = {"text": paragraph} if isinstance(paragraph, str) else paragraph
     style = {"fontSize": f"{spec.get('size', default_size):g}pt"}
     if spec.get("bold"):
         style["fontWeight"] = "bold"
     if spec.get("colour"):
         style["color"] = spec["colour"]
-    return {"textRuns": _text_runs(spec["text"], style, spec.get("url"))}
+    return {"textRuns": _text_runs(spec["text"], style, spec.get("url"), link_style)}
 
 
 def _set_alt_text(v: dict, alt: str | None) -> None:
@@ -199,6 +210,8 @@ class Visual:
         v = copy.deepcopy(tpl)
         strip_hardcoded_colours(v["visual"])
         drop_theme_owned_container(v["visual"])
+        if visual_type == "card":
+            drop_theme_owned_card_font(v["visual"])
         v["$schema"] = SCHEMAS["visual.json"]
         v["name"] = name
         v["position"] = {"x": x, "y": y, "z": z, "width": w, "height": h, "tabOrder": z}
@@ -235,16 +248,19 @@ class Visual:
 
     @staticmethod
     def textbox(name: str, x: float, y: float, w: float, h: float, paragraphs: list[str | dict], font_size: float = 12,
-                container: dict | None = None) -> dict:
+                container: dict | None = None, link_colour: str | None = None) -> dict:
         """paragraphs: strings (font_size pt) or {"text", "size", "bold", "colour" (hex), "url"}; a URL in the text becomes a
-        link run. container: container objects (background, border, dropShadow) added next to the hidden title."""
+        link run, underlined and in `link_colour` (a hex colour; None keeps the paragraph's colour).
+        container: container objects (background, border, dropShadow) added next to the hidden title."""
         tpl = json.loads((TEMPLATES / "textbox.json").read_text(encoding="utf-8-sig"))
         v = copy.deepcopy(tpl)
         v["$schema"] = SCHEMAS["visual.json"]
         v["name"] = name
         v["position"] = {"x": x, "y": y, "z": 0, "width": w, "height": h, "tabOrder": 0}
         _set_alt_text(v, None)
-        v["visual"]["objects"]["general"] = [{"properties": {"paragraphs": [_paragraph(p, font_size) for p in paragraphs]}}]
+        link_style = {"textDecoration": "underline", **({"color": link_colour} if link_colour else {})}
+        v["visual"]["objects"]["general"] = [
+            {"properties": {"paragraphs": [_paragraph(p, font_size, link_style) for p in paragraphs]}}]
         v["visual"]["visualContainerObjects"] = {"title": _title(None), **(container or {})}
         return v
 

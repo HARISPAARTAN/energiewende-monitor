@@ -211,7 +211,7 @@ table Kennzahlen
 		displayFolder: Anzeige
 		lineageTag: c0a5aa1b-b143-5af5-b60b-f17e1c83f289
 
-	/// Installed capacity of the carrier Photovoltaik (Photovoltaik) at the end of the selected period (Installierte Leistung (MW)) as a share of the statutory 2030 value of 215 GW (EEG 2023 § 4 Nr. 3 Buchst. d).
+	/// Installed capacity of the carrier Photovoltaik at the end of the selected period (Installierte Leistung (MW)) as a share of the statutory 2030 value of 215 GW (EEG 2023 § 4 Nr. 3 Buchst. d).
 	/// Blank under a federal-state filter or the RLS role because the target is national; ignores carrier, group and category filters.
 	measure 'Zielerreichung Photovoltaik %' =
 			IF(
@@ -235,7 +235,7 @@ table Kennzahlen
 		displayFolder: Ausbau
 		lineageTag: c28d5e86-5ead-5ab0-9c70-04fe206f9718
 
-	/// Installed capacity of the carrier Wind Offshore (Wind auf See) at the end of the selected period (Installierte Leistung (MW)) as a share of the statutory 2030 value of at least 30 GW by 2030 (WindSeeG § 1 Abs. 2).
+	/// Installed capacity of the carrier Wind Offshore (Wind auf See) at the end of the selected period (Installierte Leistung (MW)) as a share of the statutory minimum of 30 GW by 2030 (WindSeeG § 1 Abs. 2).
 	/// Blank under a federal-state filter or the RLS role because the target is national; ignores carrier, group and category filters.
 	measure 'Zielerreichung Wind auf See %' =
 			IF(

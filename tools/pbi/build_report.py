@@ -4,8 +4,8 @@ Deterministic: fixed names (uuid5 of page id and visual index), sorted keys, two
 Only page folders carrying the annotation `ewm:generated` are replaced; `bookmarks/` is owned entirely by this script.
 
 pages.json holds the page specs plus `tokens` (the named UI colours) and `palette` (one colour per carrier group). Every
-colour written to the report comes from them, from the theme's data colours (series colours by measure) or from a heatmap
-spec. Every page gets the same chrome: a 200 px navigation panel (brand, one button per page, filler, footer) on the left and
+colour written to the report comes from them, from the theme's first data colour (series colours by measure) or from a
+heatmap spec. Every page gets the same chrome: a 200 px navigation panel (brand, one button per page, filler, footer) on the left and
 a header (page title, data stand) on top; the page's own visuals sit to the right of the panel and below the header.
 """
 
@@ -50,7 +50,8 @@ def _column(entity: str, prop: str) -> dict:
 
 
 class Colours:
-    """The colour names of the spec: tokens, palette entries (carrier groups) and, as hex, the data colours of the theme."""
+    """The colour names of the spec: tokens, palette entries (carrier groups) and, as hex, the first data colour of the theme
+    (the series colour of a measure, for example the current year of EE-Anteil vs. Vorjahr)."""
 
     def __init__(self, spec: dict) -> None:
         self.tokens = {name: code.upper() for name, code in spec["tokens"].items()}
@@ -58,15 +59,16 @@ class Colours:
         if set(self.tokens) & set(self.palette):
             raise ValueError(f"tokens and palette share names: {sorted(set(self.tokens) & set(self.palette))}")
         theme = json.loads((REGISTERED / spec["theme"]).read_text(encoding="utf-8"))
-        self.data_colours = {code.upper() for code in theme["dataColors"]}
+        self.series_colour = theme["dataColors"][0].upper()
 
     def __call__(self, ref: str) -> str:
         for known in (self.tokens, self.palette):
             if ref in known:
                 return known[ref]
-        if ref.upper() in self.data_colours:
-            return ref.upper()
-        raise ValueError(f"colour {ref!r} is neither a token, a palette entry nor a data colour of the theme")
+        if ref.upper() == self.series_colour:
+            return self.series_colour
+        raise ValueError(f"colour {ref!r} is neither a token, a palette entry nor the first data colour of the theme "
+                         f"({self.series_colour})")
 
 
 def _group_colours(entity: str, prop: str, colours: Colours) -> list[dict]:
@@ -171,7 +173,7 @@ def _button_objects(label: str, current: bool, colours: Colours) -> dict:
     text = [
         {"properties": {"show": _lit("true")}},
         {"properties": {"text": _lit("'" + label.replace("'", "''") + "'"), "fontColor": _solid(inks[0]), "fontSize": _lit("11D"),
-                        "horizontalAlignment": _lit("'left'"), "leftMargin": _lit("20D"), **bold},
+                        "horizontalAlignment": _lit("'left'"), "leftMargin": _lit("20L"), **bold},
          "selector": {"id": "default"}},
         {"properties": {"fontColor": _solid(inks[1]), **bold}, "selector": {"id": "hover"}},
     ]
@@ -208,6 +210,11 @@ def _page_json(page: dict) -> dict:
     return data
 
 
+def _textbox(colours: Colours, *args, **kwargs) -> dict:
+    """Visual.textbox with the accent token as the colour of its link runs (they are underlined as well)."""
+    return Visual.textbox(*args, link_colour=colours("accent"), **kwargs)
+
+
 def _paragraph(paragraph: str | dict, colours: Colours) -> str | dict:
     """A spec paragraph is a string or {"text", "size", "bold", "colour" (a colour name), "url"}; the colour becomes a hex code."""
     if isinstance(paragraph, str) or "colour" not in paragraph:
@@ -218,8 +225,8 @@ def _paragraph(paragraph: str | dict, colours: Colours) -> str | dict:
 def _visual_json(name: str, spec: dict, colours: Colours) -> dict:
     if spec["type"] == "textbox":
         container = _card_container(colours) if spec.get("card") else None
-        return Visual.textbox(name, spec["x"], spec["y"], spec["w"], spec["h"],
-                              [_paragraph(p, colours) for p in spec["paragraphs"]], container=container)
+        return _textbox(colours, name, spec["x"], spec["y"], spec["w"], spec["h"],
+                        [_paragraph(p, colours) for p in spec["paragraphs"]], container=container)
     roles = {role: [tuple(f) for f in fields] for role, fields in spec["roles"].items()}
     parameters = {role: {"parameter": tuple(p["parameter"]), "default": tuple(p["default"])}
                   for role, p in spec.get("field_parameters", {}).items()}
@@ -239,7 +246,7 @@ def _chrome(page: dict, pages: list[dict], colours: Colours) -> dict[str, dict]:
     panel = _panel_container(colours)
     name = lambda key: stable_name(pid, "chrome", key)  # noqa: E731
     out = {
-        "brand": Visual.textbox(name("brand"), 0, 0, PANEL_WIDTH, NAV_TOP, [
+        "brand": _textbox(colours, name("brand"), 0, 0, PANEL_WIDTH, NAV_TOP, [
             {"text": "ENERGIEWENDE", "size": 13, "bold": True, "colour": ink},
             {"text": "MONITOR", "size": 13, "bold": True, "colour": accent},
             {"text": "Strommarkt und Ausbau in Deutschland", "size": 9, "colour": muted},
@@ -251,16 +258,18 @@ def _chrome(page: dict, pages: list[dict], colours: Colours) -> dict[str, dict]:
             extra_objects=_button_objects(target["displayName"], target["id"] == pid, colours), title_hidden=True,
             container={**panel, "visualLink": _page_link(target["id"])})
     nav_end = NAV_TOP + NAV_HEIGHT * len(pages)
-    out["filler"] = Visual.textbox(name("filler"), 0, nav_end, PANEL_WIDTH, 616 - nav_end, [""], container=panel)
-    out["footer"] = Visual.textbox(name("footer"), 0, 616, PANEL_WIDTH, 104, [
+    out["filler"] = _textbox(colours, name("filler"), 0, nav_end, PANEL_WIDTH, 616 - nav_end, [""], container=panel)
+    out["footer"] = _textbox(colours, name("footer"), 0, 616, PANEL_WIDTH, 104, [
         {"text": "Daten: SMARD (CC BY 4.0), MaStR (dl-de/by-2-0)", "size": 8, "colour": muted},
         {"text": "Harithas Harikaran", "size": 8, "colour": muted},
         {"text": "github.com/HARISPAARTAN/energiewende-monitor", "size": 8, "colour": muted,
          "url": "https://github.com/HARISPAARTAN/energiewende-monitor"},
     ], container=panel)
-    out["title"] = Visual.textbox(name("title"), 216, 12, 640, 40, [
+    out["title"] = _textbox(colours, name("title"), 216, 12, 640, 40, [
         {"text": page["displayName"], "size": 18, "bold": True, "colour": ink}], container=_bare_container())
-    stand = {"type": "card", "x": 964, "y": 12, "w": 300, "h": 40, "title": "Datenstand", "title_hidden": True, "bare": True,
+    # 396 px wide (right edge at the 1264 margin, 12 px right of the title box): `Datenstand: SMARD 28.12.2026 · MaStR September 2026`
+    # measures about 345 px at 10 pt Segoe UI Semibold and has to stay on one line
+    stand = {"type": "card", "x": 868, "y": 12, "w": 396, "h": 40, "title": "Datenstand", "title_hidden": True, "bare": True,
              "label_size": 10, "label_colour": "inkMuted", "roles": {"Values": [["Kennzahlen", "Datenstand Kopfzeile", "Measure"]]}}
     out["stand"] = _visual_json(name("stand"), stand, colours)
     return out

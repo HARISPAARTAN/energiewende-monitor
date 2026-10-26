@@ -28,20 +28,6 @@
       "labels": [
         {
           "properties": {
-            "bold": {
-              "expr": {
-                "Literal": {
-                  "Value": "false"
-                }
-              }
-            },
-            "fontFamily": {
-              "expr": {
-                "Literal": {
-                  "Value": "'wf_standard-font, helvetica, arial, sans-serif'"
-                }
-              }
-            },
             "fontSize": {
               "expr": {
                 "Literal": {

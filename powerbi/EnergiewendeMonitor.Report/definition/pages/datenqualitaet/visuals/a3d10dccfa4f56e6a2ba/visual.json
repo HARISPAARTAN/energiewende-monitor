@@ -50,8 +50,9 @@
                   },
                   {
                     "textStyle": {
-                      "color": "#A9B8C8",
-                      "fontSize": "10pt"
+                      "color": "#22D3EE",
+                      "fontSize": "10pt",
+                      "textDecoration": "underline"
                     },
                     "url": "https://www.govdata.de/dl-de/by-2-0",
                     "value": "https://www.govdata.de/dl-de/by-2-0"

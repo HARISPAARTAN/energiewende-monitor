@@ -4,8 +4,8 @@
   "position": {
     "height": 40,
     "tabOrder": 7,
-    "width": 300,
-    "x": 964,
+    "width": 396,
+    "x": 868,
     "y": 12,
     "z": 7
   },
@@ -28,13 +28,6 @@
       "labels": [
         {
           "properties": {
-            "bold": {
-              "expr": {
-                "Literal": {
-                  "Value": "false"
-                }
-              }
-            },
             "color": {
               "solid": {
                 "color": {
@@ -43,13 +36,6 @@
                       "Value": "'#8291A3'"
                     }
                   }
-                }
-              }
-            },
-            "fontFamily": {
-              "expr": {
-                "Literal": {
-                  "Value": "'wf_standard-font, helvetica, arial, sans-serif'"
                 }
               }
             },

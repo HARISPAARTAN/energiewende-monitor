@@ -6,6 +6,7 @@ from pathlib import Path
 
 import pytest
 
+from tools.pbi.build_report import Colours
 from tools.pbi.pbir import ROLES, default_alt_text, iter_fields, load_report, stable_name
 from tools.pbi.tmdl import load_model
 
@@ -243,8 +244,8 @@ def test_key_bindings(report):
     # the five KPI texts, in this order, behind the cards titled as before
     assert [v.title for v in cards] == ["Erzeugung", "EE-Anteil", "Day-Ahead Ø", "Negative Preisstunden", "Installierte Leistung"]
     assert [v.bound_fields() for v in cards] == [[("Kennzahlen", n, "Measure")] for n in KPI_ORDER]
-    for v in cards:
-        assert lit(props(v, "labels")["fontSize"]) == "24D" and lit(props(v, "labels")["labelDisplayUnits"]) == "1D", v.title
+    for v in cards:  # 20D, not 24D: `92,87 €/MWh` would nearly fill the 200 px tile at 24D (about 197 of 200 px in Segoe UI Semibold)
+        assert lit(props(v, "labels")["fontSize"]) == "20D" and lit(props(v, "labels")["labelDisplayUnits"]) == "1D", v.title
         assert lit(props(v, "categoryLabels")["show"]) == "false", v.title
     dq = next(p for p in report.pages if p.display_name == "Datenqualität & Quellen")
     dq_cards = sorted((v for v in content(dq) if v.visual_type == "card"), key=lambda v: v.raw["position"]["x"])
@@ -332,10 +333,10 @@ def heatmap_colours():
 
 def test_no_template_colour_literals_survive(report):
     """None of the template's hard-coded colours (red fill, mint background, white, border grey) remains; every hex colour in a
-    visual is a token, a palette colour, a data colour of the theme or a heatmap colour of the spec; literal colours in the
-    container objects exist only on the chrome and on the text boxes that are cards."""
+    visual is a token, a palette colour, the first data colour of the theme (series colours by measure) or a heatmap colour of
+    the spec; literal colours in the container objects exist only on the chrome and on the text boxes that are cards."""
     theme = json.loads(THEME_FILE.read_text(encoding="utf-8"))
-    allowed = set(TOKENS.values()) | set(PALETTE.values()) | {c.upper() for c in theme["dataColors"]} | heatmap_colours()
+    allowed = set(TOKENS.values()) | set(PALETTE.values()) | {theme["dataColors"][0].upper()} | heatmap_colours()
     for p in report.pages:
         for v in p.visuals:
             text = json.dumps(v.raw, ensure_ascii=False)
@@ -459,7 +460,9 @@ PANEL_TILES = {  # key -> x, y, width, height on the 1280 x 720 canvas
     "brand": (0, 0, 200, 104), "nav0": (0, 104, 200, 48), "nav1": (0, 152, 200, 48), "nav2": (0, 200, 200, 48),
     "nav3": (0, 248, 200, 48), "nav4": (0, 296, 200, 48), "filler": (0, 344, 200, 272), "footer": (0, 616, 200, 104),
 }
-HEADER_TILES = {"title": (216, 12, 640, 40), "stand": (964, 12, 300, 40)}
+# the data stand is 396 px wide, not 300: `Datenstand: SMARD 28.12.2026 · MaStR September 2026` measures about 345 px at 10 pt
+# Segoe UI Semibold (the card font of the theme) and has to stay on one line; the card ends at the 1264 margin, 12 px right of the title
+HEADER_TILES = {"title": (216, 12, 640, 40), "stand": (868, 12, 396, 40)}
 
 
 def geometry(visual):
@@ -524,8 +527,8 @@ def button_problems(visual, target, current, where):
             out.append(f"{where}: {state} text must be {'bold' if current else 'regular'}")
     default = props(visual, "text", "default")
     if (lit_of(default, "text"), lit_of(default, "fontSize"), lit_of(default, "horizontalAlignment"), lit_of(default, "leftMargin")) != \
-            (f"'{target.display_name}'", "11D", "'left'", "20D"):
-        out.append(f"{where}: button text is not the page name at 11D, left aligned, 20D margin")
+            (f"'{target.display_name}'", "11D", "'left'", "20L"):  # an integer literal, as Desktop writes leftMargin
+        out.append(f"{where}: button text is not the page name at 11D, left aligned, 20L margin")
     if lit_of(props(visual, "text"), "show") != "true" or lit_of(props(visual, "fill"), "show") != "true":
         out.append(f"{where}: text and fill must be shown")
     return out
@@ -559,7 +562,7 @@ def chrome_problems(page, pages):
     link = "https://github.com/HARISPAARTAN/energiewende-monitor"
     if text_runs(tile["footer"]) != [[("Daten: SMARD (CC BY 4.0), MaStR (dl-de/by-2-0)", "8pt", None, muted, None)],
                                      [("Harithas Harikaran", "8pt", None, muted, None)],
-                                     [("github.com/HARISPAARTAN/energiewende-monitor", "8pt", None, muted, link)]]:
+                                     [("github.com/HARISPAARTAN/energiewende-monitor", "8pt", None, accent, link)]]:
         out.append(f"{page.display_name}/footer: wrong text, style or link {text_runs(tile['footer'])}")
     if text_runs(tile["title"]) != [[(page.display_name, "18pt", "bold", ink, None)]]:
         out.append(f"{page.display_name}/title: not the page name at 18pt bold ink")
@@ -678,7 +681,9 @@ def test_datenqualitaet_text_boxes_are_cards_with_a_heading_and_link_runs(report
         first, *rest = text_runs(box)
         assert [(size, weight, colour) for _, size, weight, colour, _ in first] == [("12pt", "bold", ink)]
         for paragraph in rest:
-            assert {(size, weight, colour) for _, size, weight, colour, _ in paragraph} == {("10pt", None, secondary)}
+            # the text around a link is secondary ink; link runs have their own look (test_link_runs_are_accent_coloured_and_underlined)
+            assert {(size, weight, colour) for _, size, weight, colour, url in paragraph if not url} == {("10pt", None, secondary)}
+            assert {(size, weight) for _, size, weight, _, url in paragraph if url} <= {("10pt", None)}  # a link keeps size and weight
     # the licence URL and the two project links are link runs of their own
     links = {url for box in boxes for paragraph in text_runs(box) for _, _, _, _, url in paragraph if url}
     assert links == {"https://www.govdata.de/dl-de/by-2-0", "https://github.com/HARISPAARTAN/energiewende-monitor",
@@ -696,6 +701,61 @@ def test_every_url_in_a_text_box_is_a_link_run(report):
                             assert url == value, (p.display_name, v.name, value)  # the run is exactly the URL
                             seen += 1
     assert seen == 3  # the licence URL and the two project links on the quality page
+
+
+def link_run_problems(visual, where):
+    """A link must look like one: the accent colour and an underline, in the size and weight of its paragraph. No other run is decorated."""
+    out = []
+    for _, run in runs_of(visual):
+        style = run["textStyle"]
+        if run.get("url"):
+            if (style.get("color") or "").upper() != TOKENS["accent"]:
+                out.append(f"{where}: the link {run['url']} is {style.get('color')}, expected the accent {TOKENS['accent']}")
+            if style.get("textDecoration") != "underline":
+                out.append(f"{where}: the link {run['url']} is not underlined")
+        elif "textDecoration" in style:
+            out.append(f"{where}: {run['value']!r} is decorated but no link")
+    return out
+
+
+def test_link_runs_are_accent_coloured_and_underlined(report):
+    seen, problems = 0, []
+    for p in report.pages:
+        for v in p.visuals:
+            if v.visual_type == "textbox":
+                problems += link_run_problems(v, f"{p.display_name}/{v.name}")
+                seen += sum(1 for _, run in runs_of(v) if run.get("url"))
+    assert not problems, problems
+    assert seen == 5 + 3  # the footer link on each of the five pages and the three links of the quality page
+
+
+def card_font_problems(visual, where):
+    """The value of a card is drawn in the theme's callout class (Segoe UI Semibold): the visual sets a size, no font family and no bold flag."""
+    labels = props(visual, "labels")
+    out = [f"{where}: labels.{key} overrides the font of the theme's callout class" for key in ("fontFamily", "bold") if key in labels]
+    if "fontSize" not in labels:
+        out.append(f"{where}: labels has no fontSize")
+    return out
+
+
+def test_card_values_take_the_theme_callout_font(report):
+    theme = json.loads(THEME_FILE.read_text(encoding="utf-8"))
+    assert theme["textClasses"]["callout"]["fontFace"] == "Segoe UI Semibold"
+    cards = [(p, v) for p in report.pages for v in p.visuals if v.visual_type == "card"]
+    assert len(cards) == 5 + 3 + 5  # the KPI row, the three quality cards and the data stand of each page
+    problems = [msg for p, v in cards for msg in card_font_problems(v, f"{p.display_name}/{v.title}")]
+    assert not problems, problems
+
+
+def test_colour_names_resolve_to_tokens_palette_entries_and_the_first_data_colour_only():
+    colours = Colours(SPEC)
+    theme = json.loads(THEME_FILE.read_text(encoding="utf-8"))
+    first, *others = theme["dataColors"]
+    assert colours("accent") == TOKENS["accent"] and colours("Wind") == PALETTE["Wind"]
+    assert colours(first) == colours(first.lower()) == first.upper()  # the series colour of a measure
+    for rejected in [*others, "#123456", "nonsense"]:  # the other seven data colours are no spec colours
+        with pytest.raises(ValueError):
+            colours(rejected)
 
 
 def test_hidden_titles_keep_their_text_for_the_alt_text(report):
@@ -904,3 +964,30 @@ def test_mutation_gauge_and_card_defects_are_caught(report):
     assert card_container_problems(box) == []
     del box.raw["visual"]["visualContainerObjects"]["dropShadow"]
     assert card_container_problems(box)
+
+
+def test_mutation_link_without_accent_or_underline_is_caught(report):
+    page = _page(report, "Datenqualität & Quellen")
+    footer = next(v for v in page.visuals if v.name == chrome_names(page)["footer"])
+    assert link_run_problems(footer, "footer") == []
+
+    def link(box):
+        return next(run for _, run in runs_of(box) if run.get("url"))
+
+    wrong_colour = copy.deepcopy(footer)
+    link(wrong_colour)["textStyle"]["color"] = TOKENS["inkMuted"]
+    no_underline = copy.deepcopy(footer)
+    del link(no_underline)["textStyle"]["textDecoration"]
+    decorated_text = copy.deepcopy(footer)
+    next(run for _, run in runs_of(decorated_text) if not run.get("url"))["textStyle"]["textDecoration"] = "underline"
+    for broken in (wrong_colour, no_underline, decorated_text):
+        assert link_run_problems(broken, "footer")
+
+
+def test_mutation_card_with_its_own_font_is_caught(report):
+    card = _visual(report, "Überblick", "Erzeugung")
+    assert card_font_problems(card, "card") == []
+    for key, value in (("bold", "false"), ("fontFamily", "'Arial'")):
+        broken = copy.deepcopy(card)
+        props(broken, "labels")[key] = {"expr": {"Literal": {"Value": value}}}
+        assert card_font_problems(broken, "card"), key
