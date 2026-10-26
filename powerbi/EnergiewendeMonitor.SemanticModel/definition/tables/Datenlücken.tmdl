@@ -18,7 +18,7 @@ table Datenlücken
 
 		annotation SummarizationSetBy = Automatic
 
-	column 'Jahr-Monat'
+	column Jahr-Monat
 		dataType: string
 		lineageTag: 2dba1fa4-343e-53de-9a5f-fb1c52253745
 		summarizeBy: none
@@ -65,3 +65,4 @@ table Datenlücken
 	annotation PBI_NavigationStepName = Navigation
 
 	annotation PBI_ResultType = Table
+

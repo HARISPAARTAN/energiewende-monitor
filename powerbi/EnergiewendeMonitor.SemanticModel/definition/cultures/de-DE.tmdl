@@ -1,2 +1,95 @@
 cultureInfo de-DE
 
+	linguisticMetadata =
+			{
+			  "Version": "2.0.0",
+			  "Language": "en-US",
+			  "Entities": {
+			    "preisphasen.min_preis__mwh": {
+			      "Definition": {
+			        "Binding": {
+			          "ConceptualEntity": "Preisphasen",
+			          "ConceptualProperty": "Min Preis €/MWh"
+			        }
+			      },
+			      "State": "Generated",
+			      "Terms": [
+			        {
+			          "Min €/MWh": {
+			            "State": "Suggested",
+			            "Source": {
+			              "Type": "External",
+			              "Agent": "PowerBI.VisualColumnRename"
+			            },
+			            "Weight": 0.9
+			          }
+			        }
+			      ]
+			    },
+			    "preisphasen.ø_preis__mwh": {
+			      "Definition": {
+			        "Binding": {
+			          "ConceptualEntity": "Preisphasen",
+			          "ConceptualProperty": "Ø Preis €/MWh"
+			        }
+			      },
+			      "State": "Generated",
+			      "Terms": [
+			        {
+			          "Ø €/MWh": {
+			            "State": "Suggested",
+			            "Source": {
+			              "Type": "External",
+			              "Agent": "PowerBI.VisualColumnRename"
+			            },
+			            "Weight": 0.9
+			          }
+			        }
+			      ]
+			    },
+			    "kennzahlen.installierte_leistung_mw": {
+			      "Definition": {
+			        "Binding": {
+			          "ConceptualEntity": "Kennzahlen",
+			          "ConceptualProperty": "Installierte Leistung (MW)"
+			        }
+			      },
+			      "State": "Generated",
+			      "Terms": [
+			        {
+			          "Leistung (MW)": {
+			            "State": "Suggested",
+			            "Source": {
+			              "Type": "External",
+			              "Agent": "PowerBI.VisualColumnRename"
+			            },
+			            "Weight": 0.9
+			          }
+			        }
+			      ]
+			    },
+			    "kennzahlen.volllaststunden_h": {
+			      "Definition": {
+			        "Binding": {
+			          "ConceptualEntity": "Kennzahlen",
+			          "ConceptualProperty": "Volllaststunden (h)"
+			        }
+			      },
+			      "State": "Generated",
+			      "Terms": [
+			        {
+			          "Volllaststunden": {
+			            "State": "Suggested",
+			            "Source": {
+			              "Type": "External",
+			              "Agent": "PowerBI.VisualColumnRename"
+			            },
+			            "Weight": 0.9
+			          }
+			        }
+			      ]
+			    }
+			  }
+			}
+		contentType: json
+

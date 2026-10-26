@@ -4,18 +4,18 @@ table Energieträger
 
 	column 'Energieträger Key'
 		dataType: int64
-		formatString: 0
 		isHidden
+		formatString: 0
 		lineageTag: 92d12890-e70e-599f-b127-27516aba09e2
 		summarizeBy: none
 		sourceColumn: energietraeger_key
 
 		annotation SummarizationSetBy = Automatic
 
-	column 'SMARD-Filter'
+	column SMARD-Filter
 		dataType: int64
-		formatString: 0
 		isHidden
+		formatString: 0
 		lineageTag: 9442bff3-bc1d-5f38-b681-7dfa38aaeab1
 		summarizeBy: none
 		sourceColumn: smard_filter_id
@@ -58,8 +58,8 @@ table Energieträger
 
 	column Sortierung
 		dataType: int64
-		formatString: 0
 		isHidden
+		formatString: 0
 		lineageTag: 4f8d71a2-cf6b-5d2a-a6b3-8ade58e5a6a9
 		summarizeBy: none
 		sourceColumn: sortierung
@@ -86,8 +86,8 @@ table Energieträger
 	/// Sort key of Gruppe in stack order: Biomasse, Wind, Photovoltaik, Wasserkraft, Erdgas, Steinkohle, Braunkohle, Sonstige. Reads the carrier, never Gruppe: Gruppe sorts by this column, so reading Gruppe here is a circular dependency and no table loads.
 	column 'Gruppe Sortierung' = SWITCH('Energieträger'[Energieträger], "Biomasse", 1, "Wind Onshore", 2, "Wind Offshore", 2, "Photovoltaik", 3, "Wasserkraft", 4, "Erdgas", 5, "Steinkohle", 6, "Braunkohle", 7, 8)
 		dataType: int64
-		formatString: 0
 		isHidden
+		formatString: 0
 		lineageTag: e0605793-f6d6-514a-8483-19354dfdf768
 		summarizeBy: none
 
@@ -105,3 +105,4 @@ table Energieträger
 	annotation PBI_NavigationStepName = Navigation
 
 	annotation PBI_ResultType = Table
+

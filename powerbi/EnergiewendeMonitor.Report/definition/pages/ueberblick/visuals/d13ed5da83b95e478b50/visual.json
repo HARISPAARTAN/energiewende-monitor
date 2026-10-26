@@ -1,16 +1,39 @@
 {
-  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.13.0/schema.json",
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.14.0/schema.json",
   "name": "d13ed5da83b95e478b50",
   "position": {
-    "height": 52,
-    "tabOrder": 10,
-    "width": 300,
     "x": 540,
     "y": 60,
-    "z": 10
+    "z": 10,
+    "height": 52,
+    "width": 300,
+    "tabOrder": 10
   },
   "visual": {
-    "drillFilterOtherVisuals": true,
+    "visualType": "slicer",
+    "query": {
+      "queryState": {
+        "Values": {
+          "projections": [
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "Kennzahl-Auswahl"
+                    }
+                  },
+                  "Property": "Kennzahl-Auswahl"
+                }
+              },
+              "queryRef": "Kennzahl-Auswahl.Kennzahl-Auswahl",
+              "nativeQueryRef": "Kennzahl-Auswahl",
+              "active": true
+            }
+          ]
+        }
+      }
+    },
     "objects": {
       "data": [
         {
@@ -33,6 +56,97 @@
                 "Literal": {
                   "Value": "false"
                 }
+              }
+            },
+            "filter": {
+              "filter": {
+                "Version": 2,
+                "From": [
+                  {
+                    "Name": "k",
+                    "Entity": "Kennzahl-Auswahl",
+                    "Type": 0
+                  }
+                ],
+                "Where": [
+                  {
+                    "Condition": {
+                      "In": {
+                        "Expressions": [
+                          {
+                            "Column": {
+                              "Expression": {
+                                "SourceRef": {
+                                  "Source": "k"
+                                }
+                              },
+                              "Property": "Kennzahl-Auswahl Fields"
+                            }
+                          }
+                        ],
+                        "Values": [
+                          [
+                            {
+                              "Literal": {
+                                "Value": "'''Kennzahlen''[Erzeugung (MWh)]'"
+                              }
+                            }
+                          ]
+                        ]
+                      }
+                    },
+                    "Annotations": {
+                      "filterExpressionMetadata": {
+                        "expressions": [
+                          {
+                            "Column": {
+                              "Expression": {
+                                "SourceRef": {
+                                  "Entity": "Kennzahl-Auswahl"
+                                }
+                              },
+                              "Property": "Kennzahl-Auswahl"
+                            }
+                          }
+                        ],
+                        "decomposedIdentities": {
+                          "values": [
+                            [
+                              {
+                                "0": [
+                                  {
+                                    "Literal": {
+                                      "Value": "'''Kennzahlen''[Erzeugung (MWh)]'"
+                                    }
+                                  }
+                                ]
+                              }
+                            ]
+                          ],
+                          "columns": [
+                            {
+                              "value": {
+                                "Column": {
+                                  "Expression": {
+                                    "SourceRef": {
+                                      "Entity": "Kennzahl-Auswahl"
+                                    }
+                                  },
+                                  "Property": "Kennzahl-Auswahl Fields"
+                                }
+                              }
+                            }
+                          ]
+                        },
+                        "valueMap": [
+                          {
+                            "0": "Erzeugung (MWh)"
+                          }
+                        ]
+                      }
+                    }
+                  }
+                ]
               }
             }
           }
@@ -72,29 +186,6 @@
         }
       ]
     },
-    "query": {
-      "queryState": {
-        "Values": {
-          "projections": [
-            {
-              "active": true,
-              "field": {
-                "Column": {
-                  "Expression": {
-                    "SourceRef": {
-                      "Entity": "Kennzahl-Auswahl"
-                    }
-                  },
-                  "Property": "Kennzahl-Auswahl"
-                }
-              },
-              "nativeQueryRef": "Kennzahl-Auswahl",
-              "queryRef": "Kennzahl-Auswahl.Kennzahl-Auswahl"
-            }
-          ]
-        }
-      }
-    },
     "visualContainerObjects": {
       "title": [
         {
@@ -110,6 +201,6 @@
         }
       ]
     },
-    "visualType": "slicer"
+    "drillFilterOtherVisuals": true
   }
 }

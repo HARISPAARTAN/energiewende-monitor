@@ -1,8 +1,8 @@
 /// Field parameter: switches the measure shown in the selected visuals.
-table 'Kennzahl-Auswahl'
+table Kennzahl-Auswahl
 	lineageTag: 097dcc3e-85b7-593c-879f-6fafa7c485b2
 
-	column 'Kennzahl-Auswahl'
+	column Kennzahl-Auswahl
 		dataType: string
 		lineageTag: 1ad8cde8-79e1-5b33-b58b-1a49af875236
 		summarizeBy: none
@@ -32,15 +32,15 @@ table 'Kennzahl-Auswahl'
 
 	column 'Kennzahl-Auswahl Order'
 		dataType: int64
-		formatString: 0
 		isHidden
+		formatString: 0
 		lineageTag: 71ba7c43-f2b1-5d91-a1bf-c9a94d205cc7
 		summarizeBy: sum
 		sourceColumn: [Value3]
 
 		annotation SummarizationSetBy = Automatic
 
-	partition 'Kennzahl-Auswahl' = calculated
+	partition Kennzahl-Auswahl = calculated
 		mode: import
 		source =
 				{
@@ -51,3 +51,4 @@ table 'Kennzahl-Auswahl'
 				}
 
 	annotation PBI_Id = 8b41d20ac4e35431bb612e5cd9eed935
+

@@ -46,6 +46,15 @@ def _project_json_files() -> list[Path]:
     return sorted(p for p in files if ".pbi" not in p.parts and "StaticResources" not in p.parts and p.name != "diagramLayout.json")
 
 
+# Desktop writes these three files without $schema; they validate against the version pinned for them
+DESKTOP_WITHOUT_SCHEMA = {".pbip": "pbip", ".pbir": "definition.pbir", ".pbism": "definition.pbism"}
+
+
+def _pinned_for(path: Path) -> str | None:
+    pin = VERSIONS.get(DESKTOP_WITHOUT_SCHEMA.get(path.suffix, ""))
+    return pin.get("$schema") if isinstance(pin, dict) else pin
+
+
 def _template_files() -> list[Path]:
     return sorted((TOOLS / "templates").glob("*.json"))
 
@@ -70,11 +79,13 @@ def test_json_validates_against_pinned_schema(path):
     raw = path.read_bytes()
     assert not raw.startswith(b"\xef\xbb\xbf"), "UTF-8 without BOM required"
     data = json.loads(raw.decode("utf-8"))
-    uri = data.get("$schema")
-    assert uri, "every PBIP/PBIR JSON file carries $schema"
+    uri = data.get("$schema") or _pinned_for(path)
+    assert uri, "every PBIP/PBIR JSON file carries $schema (Desktop leaves it out only in .pbip, .pbir and .pbism)"
     if uri in VERSIONS.get("unpublished", []):
         pytest.skip(f"{uri} was written by Desktop but is not published in microsoft/json-schemas yet")
     assert uri in _pinned(), f"{uri} is not a pinned version (tools/pbi/schema_versions.json)"
+    if "$schema" not in data:
+        data = {"$schema": uri, **data}  # the published schema requires it, Desktop leaves it out; the rest must validate
     errors = sorted(_validator(uri).iter_errors(data), key=lambda e: list(e.absolute_path))
     assert not errors, "\n".join(f"{'/'.join(map(str, e.absolute_path))}: {e.message}" for e in errors[:10])
 

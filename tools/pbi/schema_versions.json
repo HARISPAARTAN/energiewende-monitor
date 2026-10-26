@@ -24,5 +24,5 @@
     "json-schemas": "microsoft/json-schemas@5e1199a15b80e3d51198fe017b1a6fb9bb0871a6",
     "templates": "microsoft/fabric-toolbox@29264d36e5fdf483498faf97013ecf4dd0bd8a10"
   },
-  "unpublished": []
+  "unpublished": ["https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.14.0/schema.json"]
 }

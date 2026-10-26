@@ -61,3 +61,4 @@ relationship energietraeger-kapazitaet
 relationship datum-preisphasen
 	fromColumn: Preisphasen.'Start Datum Key'
 	toColumn: Datum.'Datum Key'
+

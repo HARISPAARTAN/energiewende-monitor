@@ -4,8 +4,8 @@ table Last
 
 	column 'Region Key'
 		dataType: int64
-		formatString: 0
 		isHidden
+		formatString: 0
 		lineageTag: b9be8675-0d2d-5a0d-886e-a310af944e08
 		summarizeBy: none
 		sourceColumn: region_key
@@ -14,8 +14,8 @@ table Last
 
 	column 'Zeitstempel UTC'
 		dataType: dateTime
-		formatString: General Date
 		isHidden
+		formatString: General Date
 		lineageTag: f291a5a5-b796-5e64-9678-a83c8a58cd3a
 		summarizeBy: none
 		sourceColumn: ts_utc
@@ -24,8 +24,8 @@ table Last
 
 	column 'Datum Key'
 		dataType: int64
-		formatString: 0
 		isHidden
+		formatString: 0
 		lineageTag: 738e0bf4-28ec-54b7-83a1-29f073a9f592
 		summarizeBy: none
 		sourceColumn: datum_key
@@ -34,8 +34,8 @@ table Last
 
 	column 'Zeit Key'
 		dataType: int64
-		formatString: 0
 		isHidden
+		formatString: 0
 		lineageTag: a6b7a923-8841-512f-85c7-c15fb5976b81
 		summarizeBy: none
 		sourceColumn: zeit_key
@@ -44,8 +44,8 @@ table Last
 
 	column 'Auflösung (min)'
 		dataType: int64
-		formatString: 0
 		isHidden
+		formatString: 0
 		lineageTag: 3ce226b7-7e6b-5d39-b050-ce4f84d98fbe
 		summarizeBy: none
 		sourceColumn: aufloesung_min
@@ -53,7 +53,7 @@ table Last
 		annotation SummarizationSetBy = Automatic
 
 	column 'Netzlast MWh'
-		dataType: decimal
+		dataType: double
 		isHidden
 		lineageTag: 789d6c98-4177-55d2-86ee-02be8f45bcab
 		summarizeBy: sum
@@ -61,8 +61,10 @@ table Last
 
 		annotation SummarizationSetBy = Automatic
 
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
 	column 'Residuallast MWh'
-		dataType: decimal
+		dataType: double
 		isHidden
 		lineageTag: 8d822f72-4036-54f6-9a45-e37a87f9c6dc
 		summarizeBy: sum
@@ -70,14 +72,18 @@ table Last
 
 		annotation SummarizationSetBy = Automatic
 
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
 	column 'Pumpspeicher Verbrauch MWh'
-		dataType: decimal
+		dataType: double
 		isHidden
 		lineageTag: 6ba2886e-8eae-56b5-990e-aea257d9bd85
 		summarizeBy: sum
 		sourceColumn: pumpspeicher_verbrauch_mwh
 
 		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
 
 	partition Last = m
 		mode: import
@@ -91,3 +97,4 @@ table Last
 	annotation PBI_NavigationStepName = Navigation
 
 	annotation PBI_ResultType = Table
+

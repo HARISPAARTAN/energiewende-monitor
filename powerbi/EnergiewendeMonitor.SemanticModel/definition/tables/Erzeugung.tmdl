@@ -4,8 +4,8 @@ table Erzeugung
 
 	column 'Region Key'
 		dataType: int64
-		formatString: 0
 		isHidden
+		formatString: 0
 		lineageTag: d4565dab-7483-588d-bbda-05c2d2faecdd
 		summarizeBy: none
 		sourceColumn: region_key
@@ -14,8 +14,8 @@ table Erzeugung
 
 	column 'Energieträger Key'
 		dataType: int64
-		formatString: 0
 		isHidden
+		formatString: 0
 		lineageTag: 9a022826-2ad4-560d-ad6a-7832b5edba05
 		summarizeBy: none
 		sourceColumn: energietraeger_key
@@ -24,8 +24,8 @@ table Erzeugung
 
 	column 'Zeitstempel UTC'
 		dataType: dateTime
-		formatString: General Date
 		isHidden
+		formatString: General Date
 		lineageTag: 28c3effe-9654-53fa-883e-93c958e1ba79
 		summarizeBy: none
 		sourceColumn: ts_utc
@@ -34,8 +34,8 @@ table Erzeugung
 
 	column 'Datum Key'
 		dataType: int64
-		formatString: 0
 		isHidden
+		formatString: 0
 		lineageTag: 5bdf3423-1949-529d-ac84-824853e94b02
 		summarizeBy: none
 		sourceColumn: datum_key
@@ -44,8 +44,8 @@ table Erzeugung
 
 	column 'Zeit Key'
 		dataType: int64
-		formatString: 0
 		isHidden
+		formatString: 0
 		lineageTag: 698bbd83-f502-5c2e-ac3f-2946b98b9661
 		summarizeBy: none
 		sourceColumn: zeit_key
@@ -54,8 +54,8 @@ table Erzeugung
 
 	column 'Auflösung (min)'
 		dataType: int64
-		formatString: 0
 		isHidden
+		formatString: 0
 		lineageTag: 879eb7cd-edb0-5cf8-9c4d-9b13db851b21
 		summarizeBy: none
 		sourceColumn: aufloesung_min
@@ -63,13 +63,15 @@ table Erzeugung
 		annotation SummarizationSetBy = Automatic
 
 	column 'Erzeugung MWh'
-		dataType: decimal
+		dataType: double
 		isHidden
 		lineageTag: 03d1eadc-44c7-52d6-ab63-25fe578b6c1b
 		summarizeBy: sum
 		sourceColumn: erzeugung_mwh
 
 		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
 
 	partition Erzeugung = m
 		mode: import
@@ -83,3 +85,4 @@ table Erzeugung
 	annotation PBI_NavigationStepName = Navigation
 
 	annotation PBI_ResultType = Table
+

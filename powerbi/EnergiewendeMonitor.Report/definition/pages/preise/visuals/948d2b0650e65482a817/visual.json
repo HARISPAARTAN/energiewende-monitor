@@ -1,16 +1,86 @@
 {
-  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.13.0/schema.json",
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.14.0/schema.json",
   "name": "948d2b0650e65482a817",
   "position": {
-    "height": 282,
-    "tabOrder": 11,
-    "width": 518,
     "x": 216,
     "y": 422,
-    "z": 11
+    "z": 11,
+    "height": 282,
+    "width": 518,
+    "tabOrder": 11
   },
   "visual": {
-    "drillFilterOtherVisuals": true,
+    "visualType": "scatterChart",
+    "query": {
+      "queryState": {
+        "Category": {
+          "projections": [
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "Last Stunde"
+                    }
+                  },
+                  "Property": "Stunde UTC"
+                }
+              },
+              "queryRef": "Last Stunde.Stunde UTC",
+              "nativeQueryRef": "Stunde UTC",
+              "active": true
+            }
+          ]
+        },
+        "X": {
+          "projections": [
+            {
+              "field": {
+                "Aggregation": {
+                  "Expression": {
+                    "Column": {
+                      "Expression": {
+                        "SourceRef": {
+                          "Entity": "Last Stunde"
+                        }
+                      },
+                      "Property": "Residuallast MWh"
+                    }
+                  },
+                  "Function": 0
+                }
+              },
+              "queryRef": "Sum(Last Stunde.Residuallast MWh)",
+              "nativeQueryRef": "Residuallast MWh",
+              "active": true
+            }
+          ]
+        },
+        "Y": {
+          "projections": [
+            {
+              "field": {
+                "Aggregation": {
+                  "Expression": {
+                    "Column": {
+                      "Expression": {
+                        "SourceRef": {
+                          "Entity": "Last Stunde"
+                        }
+                      },
+                      "Property": "Day-Ahead €/MWh"
+                    }
+                  },
+                  "Function": 0
+                }
+              },
+              "queryRef": "Sum(Last Stunde.Day-Ahead €/MWh)",
+              "nativeQueryRef": "Day-Ahead €/MWh"
+            }
+          ]
+        }
+      }
+    },
     "objects": {
       "categoryLabels": [
         {
@@ -38,75 +108,6 @@
           }
         }
       ]
-    },
-    "query": {
-      "queryState": {
-        "Category": {
-          "projections": [
-            {
-              "active": true,
-              "field": {
-                "Column": {
-                  "Expression": {
-                    "SourceRef": {
-                      "Entity": "Last Stunde"
-                    }
-                  },
-                  "Property": "Stunde UTC"
-                }
-              },
-              "nativeQueryRef": "Stunde UTC",
-              "queryRef": "Last Stunde.Stunde UTC"
-            }
-          ]
-        },
-        "X": {
-          "projections": [
-            {
-              "field": {
-                "Aggregation": {
-                  "Expression": {
-                    "Column": {
-                      "Expression": {
-                        "SourceRef": {
-                          "Entity": "Last Stunde"
-                        }
-                      },
-                      "Property": "Residuallast MWh"
-                    }
-                  },
-                  "Function": 0
-                }
-              },
-              "nativeQueryRef": "Residuallast MWh",
-              "queryRef": "Sum(Last Stunde.Residuallast MWh)"
-            }
-          ]
-        },
-        "Y": {
-          "projections": [
-            {
-              "field": {
-                "Aggregation": {
-                  "Expression": {
-                    "Column": {
-                      "Expression": {
-                        "SourceRef": {
-                          "Entity": "Last Stunde"
-                        }
-                      },
-                      "Property": "Day-Ahead €/MWh"
-                    }
-                  },
-                  "Function": 0
-                }
-              },
-              "nativeQueryRef": "Day-Ahead €/MWh",
-              "queryRef": "Sum(Last Stunde.Day-Ahead €/MWh)"
-            }
-          ]
-        }
-      }
     },
     "visualContainerObjects": {
       "general": [
@@ -197,6 +198,6 @@
         }
       ]
     },
-    "visualType": "scatterChart"
+    "drillFilterOtherVisuals": true
   }
 }

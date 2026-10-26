@@ -260,9 +260,9 @@ table Kennzahlen
 	column Spalte
 		dataType: int64
 		isHidden
+		lineageTag: 45ea69c2-ce1d-52f6-a72b-c61dc485f0c3
 		summarizeBy: none
 		sourceColumn: [Value]
-		lineageTag: 45ea69c2-ce1d-52f6-a72b-c61dc485f0c3
 
 		annotation SummarizationSetBy = Automatic
 
@@ -271,3 +271,4 @@ table Kennzahlen
 		source = {BLANK()}
 
 	annotation PBI_Id = efd41d5a22ac59059544104cd743aefb
+

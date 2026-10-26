@@ -23,9 +23,11 @@ VIEWS = [
     "v_dim_datum", "v_dim_zeit", "v_dim_energietraeger", "v_dim_region", "v_dim_bundesland", "v_erzeugung",
     "v_last", "v_preis", "v_preis_last_stunde", "v_negative_preisphasen", "v_dq_luecken", "v_kapazitaet",
 ]
+# SQL decimal and numeric reach Power Query as type number, which Desktop loads as double: on the first refresh it re-typed
+# every column declared decimal (fixed decimal needs Currency.Type in the query, as money and smallmoney get)
 SQL_TO_TMDL = {
     "bigint": "int64", "int": "int64", "smallint": "int64", "tinyint": "int64",
-    "decimal": "decimal", "numeric": "decimal", "money": "decimal", "smallmoney": "decimal",
+    "decimal": "double", "numeric": "double", "money": "decimal", "smallmoney": "decimal",
     "float": "double", "real": "double",
     "date": "dateTime", "datetime": "dateTime", "datetime2": "dateTime", "smalldatetime": "dateTime",
     "datetimeoffset": "dateTime", "time": "dateTime",

@@ -10,7 +10,7 @@
       "nodes": [
         {
           "location": {
-            "x": 147.0,
+            "x": 147,
             "y": 0
           },
           "nodeIndex": "Zeit",
@@ -23,7 +23,7 @@
         },
         {
           "location": {
-            "x": 441.0,
+            "x": 441,
             "y": 0
           },
           "nodeIndex": "Region",
@@ -36,7 +36,7 @@
         },
         {
           "location": {
-            "x": 735.0,
+            "x": 735,
             "y": 0
           },
           "nodeIndex": "Datum",
@@ -49,7 +49,7 @@
         },
         {
           "location": {
-            "x": 1029.0,
+            "x": 1029,
             "y": 0
           },
           "nodeIndex": "Energieträger",
@@ -62,7 +62,7 @@
         },
         {
           "location": {
-            "x": 1323.0,
+            "x": 1323,
             "y": 0
           },
           "nodeIndex": "Bundesland",
@@ -75,7 +75,7 @@
         },
         {
           "location": {
-            "x": 0.0,
+            "x": 0,
             "y": 430
           },
           "nodeIndex": "Preis",
@@ -88,7 +88,7 @@
         },
         {
           "location": {
-            "x": 294.0,
+            "x": 294,
             "y": 430
           },
           "nodeIndex": "Last",
@@ -101,7 +101,7 @@
         },
         {
           "location": {
-            "x": 588.0,
+            "x": 588,
             "y": 430
           },
           "nodeIndex": "Last Stunde",
@@ -114,7 +114,7 @@
         },
         {
           "location": {
-            "x": 882.0,
+            "x": 882,
             "y": 430
           },
           "nodeIndex": "Preisphasen",
@@ -127,7 +127,7 @@
         },
         {
           "location": {
-            "x": 1176.0,
+            "x": 1176,
             "y": 430
           },
           "nodeIndex": "Erzeugung",
@@ -140,7 +140,7 @@
         },
         {
           "location": {
-            "x": 1470.0,
+            "x": 1470,
             "y": 430
           },
           "nodeIndex": "Kapazität",
@@ -153,7 +153,7 @@
         },
         {
           "location": {
-            "x": 441.0,
+            "x": 441,
             "y": 860
           },
           "nodeIndex": "Kennzahlen",
@@ -166,7 +166,7 @@
         },
         {
           "location": {
-            "x": 735.0,
+            "x": 735,
             "y": 860
           },
           "nodeIndex": "Kennzahl-Auswahl",
@@ -179,7 +179,7 @@
         },
         {
           "location": {
-            "x": 1029.0,
+            "x": 1029,
             "y": 860
           },
           "nodeIndex": "Datenlücken",

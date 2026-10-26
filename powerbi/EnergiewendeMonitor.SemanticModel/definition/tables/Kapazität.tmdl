@@ -4,15 +4,15 @@ table Kapazität
 
 	column 'Datum Key'
 		dataType: int64
-		formatString: 0
 		isHidden
+		formatString: 0
 		lineageTag: f89d440c-aa5b-509b-bd32-84065392ed3a
 		summarizeBy: none
 		sourceColumn: datum_key
 
 		annotation SummarizationSetBy = Automatic
 
-	column 'Jahr-Monat'
+	column Jahr-Monat
 		dataType: string
 		lineageTag: ae3667bb-df76-5610-9125-b860e93a71f8
 		summarizeBy: none
@@ -22,8 +22,8 @@ table Kapazität
 
 	column 'Bundesland Key'
 		dataType: int64
-		formatString: 0
 		isHidden
+		formatString: 0
 		lineageTag: d18b4abb-4a11-5d27-b0c1-5e676fdba9f7
 		summarizeBy: none
 		sourceColumn: bundesland_key
@@ -32,8 +32,8 @@ table Kapazität
 
 	column 'Energieträger Key'
 		dataType: int64
-		formatString: 0
 		isHidden
+		formatString: 0
 		lineageTag: 1155387e-115f-5b9b-9972-9628b2a045d3
 		summarizeBy: none
 		sourceColumn: energietraeger_key
@@ -41,7 +41,7 @@ table Kapazität
 		annotation SummarizationSetBy = Automatic
 
 	column 'Zubau MW'
-		dataType: decimal
+		dataType: double
 		isHidden
 		lineageTag: a0d81433-6eaa-55e3-a912-8ef45342d842
 		summarizeBy: sum
@@ -49,10 +49,12 @@ table Kapazität
 
 		annotation SummarizationSetBy = Automatic
 
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
 	column 'Anzahl Zubau'
 		dataType: int64
-		formatString: 0
 		isHidden
+		formatString: 0
 		lineageTag: 149960e3-f207-523e-b817-46f85b51bb73
 		summarizeBy: sum
 		sourceColumn: anzahl_zubau
@@ -60,7 +62,7 @@ table Kapazität
 		annotation SummarizationSetBy = Automatic
 
 	column 'Abgang MW'
-		dataType: decimal
+		dataType: double
 		isHidden
 		lineageTag: 5444f53f-cc83-53a2-a50f-20ce9d135bfb
 		summarizeBy: sum
@@ -68,10 +70,12 @@ table Kapazität
 
 		annotation SummarizationSetBy = Automatic
 
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
 	column 'Anzahl Abgang'
 		dataType: int64
-		formatString: 0
 		isHidden
+		formatString: 0
 		lineageTag: 2be63695-3d72-59aa-9597-345a4f320994
 		summarizeBy: sum
 		sourceColumn: anzahl_abgang
@@ -79,18 +83,20 @@ table Kapazität
 		annotation SummarizationSetBy = Automatic
 
 	column 'Anfangsbestand MW'
-		dataType: decimal
+		dataType: double
 		isHidden
 		lineageTag: 786e2de2-32c3-5859-8f6e-9bcabd626d81
-		summarizeBy: none
+		summarizeBy: sum
 		sourceColumn: anfangsbestand_mw
 
 		annotation SummarizationSetBy = Automatic
 
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
 	column 'Anfangsbestand Anzahl'
 		dataType: int64
-		formatString: 0
 		isHidden
+		formatString: 0
 		lineageTag: abf7aa8f-f7dd-5912-9c66-4fe5c0d12357
 		summarizeBy: none
 		sourceColumn: anfangsbestand_anzahl
@@ -98,17 +104,19 @@ table Kapazität
 		annotation SummarizationSetBy = Automatic
 
 	column 'Bestand MW'
-		dataType: decimal
+		dataType: double
 		lineageTag: 67099d23-0bad-5b7e-9cf1-92d806252719
-		summarizeBy: none
+		summarizeBy: sum
 		sourceColumn: bestand_mw
 
 		annotation SummarizationSetBy = Automatic
 
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
 	column 'Bestand Anzahl'
 		dataType: int64
-		formatString: 0
 		isHidden
+		formatString: 0
 		lineageTag: c3a3e54f-dff2-5398-9b92-42ffcb45e21c
 		summarizeBy: none
 		sourceColumn: bestand_anzahl
@@ -127,3 +135,4 @@ table Kapazität
 	annotation PBI_NavigationStepName = Navigation
 
 	annotation PBI_ResultType = Table
+

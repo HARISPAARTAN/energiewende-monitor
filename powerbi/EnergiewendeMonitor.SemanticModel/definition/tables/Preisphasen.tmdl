@@ -4,8 +4,8 @@ table Preisphasen
 
 	column 'Region Key'
 		dataType: int64
-		formatString: 0
 		isHidden
+		formatString: 0
 		lineageTag: fbc8cffa-e163-56ee-a551-e0944f637ed1
 		summarizeBy: none
 		sourceColumn: region_key
@@ -14,8 +14,8 @@ table Preisphasen
 
 	column 'Start Datum Key'
 		dataType: int64
-		formatString: 0
 		isHidden
+		formatString: 0
 		lineageTag: 150da2d7-ff40-5487-8dac-07454a456750
 		summarizeBy: none
 		sourceColumn: start_datum_key
@@ -68,20 +68,24 @@ table Preisphasen
 		annotation SummarizationSetBy = Automatic
 
 	column 'Min Preis €/MWh'
-		dataType: decimal
+		dataType: double
 		lineageTag: cd457840-101b-5dc8-9743-2b5a3d0d3af8
-		summarizeBy: none
+		summarizeBy: sum
 		sourceColumn: min_preis_eur_mwh
 
 		annotation SummarizationSetBy = Automatic
 
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
 	column 'Ø Preis €/MWh'
-		dataType: decimal
+		dataType: double
 		lineageTag: 5db1d114-fbc0-59e0-bf11-2169a3b234bd
-		summarizeBy: none
+		summarizeBy: sum
 		sourceColumn: avg_preis_eur_mwh
 
 		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
 
 	partition Preisphasen = m
 		mode: import
@@ -95,3 +99,4 @@ table Preisphasen
 	annotation PBI_NavigationStepName = Navigation
 
 	annotation PBI_ResultType = Table
+

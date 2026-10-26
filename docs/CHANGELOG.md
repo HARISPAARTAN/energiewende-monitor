@@ -4,8 +4,8 @@
 
 Stand: Dateien und Prüfungen sind fertig. In Power BI Desktop sind am 2026-10-26 die Aktualisierung, der Abgleich (9 von 9 Kennzahlen
 innerhalb der Toleranz) und die Zeilensicherheit geprüft (Glossar, Abschnitt Abgleich). Am selben Tag sind alle fünf Seiten in Desktop
-erfasst und durchgesehen; die Korrekturen stehen unten. Die sieben Screenshots der README sind aufgenommen. Offen sind das Speichern in
-Desktop und der Tag; das Datum setzt der Tag.
+erfasst und durchgesehen; die Korrekturen stehen unten. Die sieben Screenshots der README sind aufgenommen, und das Projekt ist in
+Desktop gespeichert (Befunde unten). Offen ist der Tag; das Datum setzt der Tag.
 
 - Leitstand-Design: dunkler Bericht mit Seitenleiste (Marke, fünf Schaltflächen, Quellen) und Kopfzeile mit Datenstand auf jeder Seite,
   Kennzahlenzeile, Kacheln mit Haarlinie und schwachem Schimmer und dem Thema `Energiewende Leitstand`. Die Farben sind benannte Werte
@@ -40,6 +40,13 @@ Desktop und der Tag; das Datum setzt der Tag.
   Baden-Württemberg, Volllaststunden und die drei Messinstrumente leer, Erzeugung unverändert. `reconcile.dax` nimmt dafür eine Rolle an.
 - Screenshots 01 bis 07 nach `docs/screenshots/SHOTLIST.md` (Jahr 2025, Oktober 2025 auf Erzeugung & Last, Kennzahl-Auswahl
   Day-Ahead Ø auf 07).
+- Erstes Speichern in Desktop (2026-10-26): Desktop hat die Dateien normalisiert (Zeilenenden, Anführungszeichen und Reihenfolge in
+  TMDL, Q&A-Sprachmetadaten in `cultures/de-DE.tmdl`, `diagramLayout.json`, die Themen als formatiertes JSON, zwei `.platform`-Dateien
+  für die Git-Integration von Fabric). Ab jetzt ist der gespeicherte Stand die Quelle; `build_report.py` wird nicht mehr ausgeführt.
+  Inhaltlich: 14 Zahlenspalten sind jetzt `double` statt Festkommazahl, weil Power Query SQL-`decimal` als Zahl liest
+  (`make_skeleton.py` bildet `decimal` und `numeric` jetzt auf `double` ab). `.pbip`, `definition.pbir` und `definition.pbism` schreibt
+  Desktop ohne `$schema`; der Schematest prüft sie gegen die angeheftete Version. Drei Visuals tragen `visualContainer` 2.14.0, das in
+  microsoft/json-schemas noch fehlt (`schema_versions.json`, `unpublished`).
 - Power-BI-Projekt als PBIP (`powerbi/EnergiewendeMonitor.pbip`): Semantikmodell als TMDL, Bericht als PBIR, beide code-first
   erzeugt (`tools/pbi/`). Schemas von Microsoft sind vendort (`tools/pbi/schemas/`, `schema_versions.json`), die Visualvorlagen
   stammen aus microsoft/fabric-toolbox (MIT, `tools/pbi/templates/`). Quelle des Modells: `Sql.Database("127.0.0.1,1433",

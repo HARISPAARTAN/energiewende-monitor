@@ -1,0 +1,11 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/gitIntegration/platformProperties/2.0.0/schema.json",
+  "metadata": {
+    "type": "SemanticModel",
+    "displayName": "EnergiewendeMonitor"
+  },
+  "config": {
+    "version": "2.0",
+    "logicalId": "d7778740-a5af-4ba6-9afe-3624817a580a"
+  }
+}

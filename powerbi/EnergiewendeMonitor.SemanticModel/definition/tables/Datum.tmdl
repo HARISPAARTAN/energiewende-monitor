@@ -5,8 +5,8 @@ table Datum
 
 	column 'Datum Key'
 		dataType: int64
-		formatString: 0
 		isHidden
+		formatString: 0
 		lineageTag: 7c4fe36f-9a23-5f99-9d1e-2d2d466a0d64
 		summarizeBy: none
 		sourceColumn: datum_key
@@ -15,13 +15,15 @@ table Datum
 
 	column Datum
 		dataType: dateTime
-		formatString: dd.MM.yyyy
 		isKey
+		formatString: dd.MM.yyyy
 		lineageTag: 362ad0d2-8e7a-5ba7-94ec-dff23ca03b59
 		summarizeBy: none
 		sourceColumn: datum
 
 		annotation SummarizationSetBy = Automatic
+
+		annotation UnderlyingDateTimeDataType = Date
 
 	column Jahr
 		dataType: int64
@@ -68,7 +70,7 @@ table Datum
 
 		annotation SummarizationSetBy = Automatic
 
-	column 'Jahr-Monat'
+	column Jahr-Monat
 		dataType: string
 		lineageTag: cfa9e426-2bfe-5692-b058-1ec59c385257
 		summarizeBy: none
@@ -85,7 +87,7 @@ table Datum
 
 		annotation SummarizationSetBy = Automatic
 
-	column 'ISO-Jahr'
+	column ISO-Jahr
 		dataType: int64
 		formatString: 0
 		lineageTag: 3b40d90f-23dd-5146-8ff0-2e37d91b1206
@@ -94,7 +96,7 @@ table Datum
 
 		annotation SummarizationSetBy = Automatic
 
-	column 'ISO-Woche'
+	column ISO-Woche
 		dataType: int64
 		formatString: 0
 		lineageTag: 2de7215e-fa7f-59fa-a535-abb3c292dc05
@@ -157,8 +159,8 @@ table Datum
 
 	column Viertelstunden
 		dataType: int64
-		formatString: 0
 		isHidden
+		formatString: 0
 		lineageTag: d293a5c1-6e07-588c-96c7-1986085f1dcd
 		summarizeBy: none
 		sourceColumn: viertelstunden
@@ -196,3 +198,4 @@ table Datum
 	annotation PBI_NavigationStepName = Navigation
 
 	annotation PBI_ResultType = Table
+

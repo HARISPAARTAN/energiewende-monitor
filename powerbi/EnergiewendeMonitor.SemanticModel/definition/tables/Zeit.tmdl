@@ -4,8 +4,8 @@ table Zeit
 
 	column 'Zeit Key'
 		dataType: int64
-		formatString: 0
 		isHidden
+		formatString: 0
 		lineageTag: 37719ac3-0ca7-54ac-9f00-20a89ba2fc67
 		summarizeBy: none
 		sourceColumn: zeit_key
@@ -20,6 +20,8 @@ table Zeit
 		sourceColumn: uhrzeit
 
 		annotation SummarizationSetBy = Automatic
+
+		annotation UnderlyingDateTimeDataType = Time
 
 	column Stunde
 		dataType: int64
@@ -60,8 +62,8 @@ table Zeit
 	/// Sort order of the part of day: night, morning, afternoon, evening.
 	column 'Tageszeit Nr' = SWITCH(TRUE(), Zeit[Stunde] < 6, 1, Zeit[Stunde] < 12, 2, Zeit[Stunde] < 18, 3, 4)
 		dataType: int64
-		formatString: 0
 		isHidden
+		formatString: 0
 		lineageTag: 15830505-abc9-5069-80ad-00e6cf90d588
 		summarizeBy: none
 
@@ -79,3 +81,4 @@ table Zeit
 	annotation PBI_NavigationStepName = Navigation
 
 	annotation PBI_ResultType = Table
+

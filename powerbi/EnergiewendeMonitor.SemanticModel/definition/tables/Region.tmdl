@@ -4,15 +4,15 @@ table Region
 
 	column 'Region Key'
 		dataType: int64
-		formatString: 0
 		isHidden
+		formatString: 0
 		lineageTag: 838caf57-8192-570a-a527-0b0c46ac4c15
 		summarizeBy: none
 		sourceColumn: region_key
 
 		annotation SummarizationSetBy = Automatic
 
-	column 'SMARD-Code'
+	column SMARD-Code
 		dataType: string
 		lineageTag: d57fe488-9ccd-5f83-a3c9-c6f23e18806f
 		summarizeBy: none
@@ -64,3 +64,4 @@ table Region
 	annotation PBI_NavigationStepName = Navigation
 
 	annotation PBI_ResultType = Table
+

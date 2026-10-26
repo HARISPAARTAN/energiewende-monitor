@@ -1,16 +1,91 @@
 {
-  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.13.0/schema.json",
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.14.0/schema.json",
   "name": "b84b56ccea2551638c10",
   "position": {
-    "height": 232,
-    "tabOrder": 19,
-    "width": 518,
     "x": 746,
     "y": 472,
-    "z": 19
+    "z": 19,
+    "height": 232,
+    "width": 518,
+    "tabOrder": 19
   },
   "visual": {
-    "drillFilterOtherVisuals": true,
+    "visualType": "lineChart",
+    "query": {
+      "queryState": {
+        "Category": {
+          "projections": [
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "Datum"
+                    }
+                  },
+                  "Property": "Monatsanfang"
+                }
+              },
+              "queryRef": "Datum.Monatsanfang",
+              "nativeQueryRef": "Monatsanfang",
+              "active": true
+            }
+          ]
+        },
+        "Y": {
+          "projections": [
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "Kennzahlen"
+                    }
+                  },
+                  "Property": "Erzeugung (MWh)"
+                }
+              },
+              "queryRef": "Kennzahlen.Erzeugung (MWh)",
+              "nativeQueryRef": "Erzeugung (MWh)",
+              "displayName": "Erzeugung (MWh)"
+            }
+          ],
+          "fieldParameters": [
+            {
+              "parameterExpr": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "Kennzahl-Auswahl"
+                    }
+                  },
+                  "Property": "Kennzahl-Auswahl"
+                }
+              },
+              "index": 0,
+              "length": 1
+            }
+          ]
+        }
+      },
+      "sortDefinition": {
+        "sort": [
+          {
+            "field": {
+              "Column": {
+                "Expression": {
+                  "SourceRef": {
+                    "Entity": "Datum"
+                  }
+                },
+                "Property": "Monatsanfang"
+              }
+            },
+            "direction": "Ascending"
+          }
+        ]
+      }
+    },
     "objects": {
       "legend": [
         {
@@ -32,80 +107,6 @@
           }
         }
       ]
-    },
-    "query": {
-      "queryState": {
-        "Category": {
-          "projections": [
-            {
-              "active": true,
-              "field": {
-                "Column": {
-                  "Expression": {
-                    "SourceRef": {
-                      "Entity": "Datum"
-                    }
-                  },
-                  "Property": "Monatsanfang"
-                }
-              },
-              "nativeQueryRef": "Monatsanfang",
-              "queryRef": "Datum.Monatsanfang"
-            }
-          ]
-        },
-        "Y": {
-          "fieldParameters": [
-            {
-              "index": 0,
-              "length": 1,
-              "parameterExpr": {
-                "Column": {
-                  "Expression": {
-                    "SourceRef": {
-                      "Entity": "Kennzahl-Auswahl"
-                    }
-                  },
-                  "Property": "Kennzahl-Auswahl"
-                }
-              }
-            }
-          ],
-          "projections": [
-            {
-              "field": {
-                "Measure": {
-                  "Expression": {
-                    "SourceRef": {
-                      "Entity": "Kennzahlen"
-                    }
-                  },
-                  "Property": "Erzeugung (MWh)"
-                }
-              },
-              "nativeQueryRef": "Erzeugung (MWh)",
-              "queryRef": "Kennzahlen.Erzeugung (MWh)"
-            }
-          ]
-        }
-      },
-      "sortDefinition": {
-        "sort": [
-          {
-            "direction": "Ascending",
-            "field": {
-              "Column": {
-                "Expression": {
-                  "SourceRef": {
-                    "Entity": "Datum"
-                  }
-                },
-                "Property": "Monatsanfang"
-              }
-            }
-          }
-        ]
-      }
     },
     "visualContainerObjects": {
       "general": [
@@ -196,6 +197,6 @@
         }
       ]
     },
-    "visualType": "lineChart"
+    "drillFilterOtherVisuals": true
   }
 }
