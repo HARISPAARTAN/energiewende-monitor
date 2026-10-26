@@ -36,6 +36,8 @@ Desktop und der Tag; das Datum setzt der Tag.
 - Modellansicht: `tools/pbi/diagram_layout.py` schreibt `diagramLayout.json` mit den Dimensionen oben, den Fakten darunter und den Tabellen
   ohne Beziehung in einer dritten Reihe; die automatische Anordnung von Desktop zog Linien durch Tabellen. Beim Speichern übernimmt Desktop
   die Datei.
+- Zeilenebene: Ein Live-Test fragt das geöffnete Modell mit und ohne die Rolle `Landesbehörde BW` ab (wie "Anzeigen als"): Leistung nur für
+  Baden-Württemberg, Volllaststunden und die drei Messinstrumente leer, Erzeugung unverändert. `reconcile.dax` nimmt dafür eine Rolle an.
 - Screenshots 01 bis 07 nach `docs/screenshots/SHOTLIST.md` (Jahr 2025, Oktober 2025 auf Erzeugung & Last, Kennzahl-Auswahl
   Day-Ahead Ø auf 07).
 - Power-BI-Projekt als PBIP (`powerbi/EnergiewendeMonitor.pbip`): Semantikmodell als TMDL, Bericht als PBIR, beide code-first

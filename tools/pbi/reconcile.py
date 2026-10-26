@@ -195,10 +195,13 @@ def _clean(value):
         return str(value)
 
 
-def dax(port: int, query: str) -> list[dict]:
-    """Run a DAX query against the first database of the local instance; rows as dicts (column names unbracketed)."""
+def dax(port: int, query: str, role: str | None = None) -> list[dict]:
+    """Run a DAX query against the first database of the local instance; rows as dicts (column names unbracketed).
+
+    With a role the query runs under that role's row-level security, as "View as" in Desktop does (Roles in the connection string).
+    """
     connection_cls = _load_adomd()
-    con = connection_cls(f"Data Source=localhost:{port}")
+    con = connection_cls(f"Data Source=localhost:{port}" + (f";Roles={role}" if role else ""))
     con.Open()
     try:
         from Microsoft.AnalysisServices.AdomdClient import AdomdCommand

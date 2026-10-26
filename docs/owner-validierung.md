@@ -84,7 +84,8 @@ darf nichts ausgeben, sonst weicht der Bericht von `tools/pbi/pages.json` ab.
    - Ausbau: Ein Klick auf einen Balken (Bundesland) filtert die Tabelle "Volllaststunden nach Energieträger und Jahr": die Spalte Volllaststunden ist
      dann leer, nie über 8.760 Stunden. Ohne Auswahl liegen die Werte unter 8.760 Stunden (Wind Onshore 2025: 1.634).
    - RLS: Modellierung, Anzeigen als, `Landesbehörde BW` ankreuzen, OK. Ausbau zeigt nur Baden-Württemberg, Volllaststunden sind leer, die
-     Messinstrumente auf Überblick sind leer; danach "Anzeige beenden".
+     Messinstrumente auf Überblick sind leer; danach "Anzeige beenden". Dasselbe prüft der Abgleich oben automatisch
+     (`test_role_landesbehoerde_bw_sees_only_baden_wuerttemberg`: dieselben Abfragen mit und ohne die Rolle in der Verbindung).
 8. Screenshots zuletzt, nach `docs/screenshots/SHOTLIST.md`: Fenster maximiert, jede Seite 1280 px breit (Win+Shift+S, Fenster-Ausschnitt), als PNG in
    `E:\GITGUB\energiewende-monitor\docs\screenshots\` mit den dort genannten Dateinamen. Slicer und Filter vorher zurücksetzen.
 9. Datei, Speichern (Strg+S), Desktop schließen. Desktop normalisiert beim ersten Speichern Dateien: CRLF-Zeilenenden, Reihenfolge der

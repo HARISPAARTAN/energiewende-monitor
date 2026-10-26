@@ -35,6 +35,28 @@ def sql_values():
     return out
 
 
+ROLE_TOTALS = (
+    'EVALUATE ROW("Erzeugung", [Erzeugung (MWh)], "Volllaststunden", [Volllaststunden (h)], "PV", [Zielerreichung Photovoltaik %], '
+    '"Wind an Land", [Zielerreichung Wind an Land %], "Wind auf See", [Zielerreichung Wind auf See %])'
+)
+STATES_WITH_CAPACITY = (
+    'EVALUATE SELECTCOLUMNS(FILTER(SUMMARIZECOLUMNS(Bundesland[Bundesland], "MW", [Installierte Leistung (MW)]), NOT ISBLANK([MW])), '
+    '"Bundesland", Bundesland[Bundesland])'
+)
+
+
+def test_role_landesbehoerde_bw_sees_only_baden_wuerttemberg(port):
+    # the RLS check of the owner checklist (View as "Landesbehörde BW"): capacity only for BW, no full-load hours and no 2030 gauges
+    # (both need the national capacity), generation unchanged (SMARD data is national and not filtered by the role)
+    states = [row["Bundesland"] for row in reconcile.dax(port, STATES_WITH_CAPACITY, role="Landesbehörde BW")]
+    assert states == ["Baden-Württemberg"]
+    assert len(reconcile.dax(port, STATES_WITH_CAPACITY)) > 1
+    everyone, bw = reconcile.dax(port, ROLE_TOTALS)[0], reconcile.dax(port, ROLE_TOTALS, role="Landesbehörde BW")[0]
+    assert bw["Erzeugung"] == everyone["Erzeugung"]
+    assert all(bw[k] is None for k in ("Volllaststunden", "PV", "Wind an Land", "Wind auf See")), bw
+    assert all(everyone[k] is not None for k in ("Volllaststunden", "PV", "Wind an Land", "Wind auf See")), everyone
+
+
 @pytest.mark.parametrize("rid", list(TOLERANCE))
 def test_dax_matches_sql(port, sql_values, rid):
     dax_value = reconcile.dax_value(port, rid)
