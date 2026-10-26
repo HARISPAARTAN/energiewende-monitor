@@ -2,11 +2,11 @@
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.13.0/schema.json",
   "name": "e8560f28f0c5590ab4c2",
   "position": {
-    "height": 282,
+    "height": 318,
     "tabOrder": 11,
     "width": 518,
     "x": 216,
-    "y": 422,
+    "y": 386,
     "z": 11
   },
   "visual": {
@@ -84,14 +84,14 @@
                 "Column": {
                   "Expression": {
                     "SourceRef": {
-                      "Entity": "Datum"
+                      "Entity": "Zeit"
                     }
                   },
-                  "Property": "Wochentag"
+                  "Property": "Tageszeit"
                 }
               },
-              "nativeQueryRef": "Wochentag",
-              "queryRef": "Datum.Wochentag"
+              "nativeQueryRef": "Tageszeit",
+              "queryRef": "Zeit.Tageszeit"
             }
           ]
         },
@@ -103,14 +103,14 @@
                 "Column": {
                   "Expression": {
                     "SourceRef": {
-                      "Entity": "Zeit"
+                      "Entity": "Datum"
                     }
                   },
-                  "Property": "Tageszeit"
+                  "Property": "Wochentag"
                 }
               },
-              "nativeQueryRef": "Tageszeit",
-              "queryRef": "Zeit.Tageszeit"
+              "nativeQueryRef": "Wochentag",
+              "queryRef": "Datum.Wochentag"
             }
           ]
         },

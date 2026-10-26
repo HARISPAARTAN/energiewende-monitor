@@ -46,11 +46,11 @@
                       "Entity": "Datum"
                     }
                   },
-                  "Property": "Jahr-Monat"
+                  "Property": "Monatsanfang"
                 }
               },
-              "nativeQueryRef": "Jahr-Monat",
-              "queryRef": "Datum.Jahr-Monat"
+              "nativeQueryRef": "Monatsanfang",
+              "queryRef": "Datum.Monatsanfang"
             }
           ]
         },
@@ -100,7 +100,7 @@
                     "Entity": "Datum"
                   }
                 },
-                "Property": "Jahr-Monat"
+                "Property": "Monatsanfang"
               }
             }
           }

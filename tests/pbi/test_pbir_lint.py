@@ -20,7 +20,7 @@ TOKENS = {name: code.upper() for name, code in SPEC["tokens"].items()}
 PALETTE = {name: code.upper() for name, code in SPEC["palette"].items()}
 PAGES = ["Überblick", "Erzeugung & Last", "Preise", "Ausbau", "Datenqualität & Quellen"]
 CATEGORIES = {"Erneuerbar", "Konventionell"}  # Energieträger[Kategorie] values (kategorie_de in the dimension)
-DRILLTHROUGH_FIELD = ("Datum", "Jahr-Monat", "Column")
+DRILLTHROUGH_FIELD = ("Datum", "Monatsanfang", "Column")
 BOOKMARK_FIELD = ("Energieträger", "Kategorie", "Column")
 GROUP_FIELD = ("Energieträger", "Gruppe", "Column")
 PHASES_TITLE = "Längste negative Preisphasen"
@@ -29,6 +29,8 @@ CHROME_KEYS = ["brand", "nav0", "nav1", "nav2", "nav3", "nav4", "filler", "foote
 KPI_ORDER = ["KPI Erzeugung", "KPI EE-Anteil", "KPI Day-Ahead Ø", "KPI Negative Preisstunden", "KPI Installierte Leistung"]
 HEX = re.compile(r"#[0-9A-Fa-f]{6}\b")
 URL_IN_TEXT = re.compile(r"https?://")
+MONTH_AXIS = ("Datum", "Monatsanfang", "Column")
+ADDRESSES = {"github.com/HARISPAARTAN/energiewende-monitor", "harispaartan.github.io", "www.govdata.de/dl-de/by-2-0"}
 
 
 def chrome_names(page):
@@ -250,7 +252,9 @@ def test_key_bindings(report):
     dq = next(p for p in report.pages if p.display_name == "Datenqualität & Quellen")
     dq_cards = sorted((v for v in content(dq) if v.visual_type == "card"), key=lambda v: v.raw["position"]["x"])
     assert [v.bound_fields() for v in dq_cards] == [[("Kennzahlen", n, "Measure")] for n in ("Datenstand", "Datenstand MaStR", "Zeilen")]
-    assert [lit(props(v, "labels")["fontSize"]) for v in dq_cards] == ["18D"] * 3
+    # 20D in 88 px tall cards: at 18D in 80 px cards Desktop clipped the values at the top and the bottom
+    assert [lit(props(v, "labels")["fontSize"]) for v in dq_cards] == ["20D"] * 3
+    assert {geometry(v)[3] for v in dq_cards} == {88}
     # the histogram counts price hours, not the rows of all fact tables
     hist = by_title(report, "Preise", "Verteilung der Stundenpreise (Klassen à 10 €)")
     assert ("Kennzahlen", "Preisstunden", "Measure") in hist.bound_fields()
@@ -434,7 +438,7 @@ def test_attributions_and_links_present(report):
 
 def test_drillthrough_resolves_against_the_model(report, model):
     el = next(p for p in report.pages if p.display_name == "Erzeugung & Last")
-    assert el.drillthrough_fields == [{"Column": {"Expression": {"SourceRef": {"Entity": "Datum"}}, "Property": "Jahr-Monat"}}]
+    assert el.drillthrough_fields == [{"Column": {"Expression": {"SourceRef": {"Entity": "Datum"}}, "Property": "Monatsanfang"}}]
     assert drillthrough_problems(el, model) == []
 
 
@@ -543,8 +547,9 @@ def button_problems(visual, target, current, where):
             out.append(f"{where}: {state} text must be {'bold' if current else 'regular'}")
     default = props(visual, "text", "default")
     if (lit_of(default, "text"), lit_of(default, "fontSize"), lit_of(default, "horizontalAlignment"), lit_of(default, "leftMargin")) != \
-            (f"'{target.display_name}'", "11D", "'left'", "20L"):  # an integer literal, as Desktop writes leftMargin
-        out.append(f"{where}: button text is not the page name at 11D, left aligned, 20L margin")
+            (f"'{target.display_name}'", "10D", "'left'", "20L"):  # an integer literal, as Desktop writes leftMargin
+        # 10D: at 11D Desktop cut the bold label of the current page to "Datenqualität &..."
+        out.append(f"{where}: button text is not the page name at 10D, left aligned, 20L margin")
     if lit_of(props(visual, "text"), "show") != "true" or lit_of(props(visual, "fill"), "show") != "true":
         out.append(f"{where}: text and fill must be shown")
     return out
@@ -575,11 +580,16 @@ def chrome_problems(page, pages):
         out.append(f"{page.display_name}/brand: wrong text or style {text_runs(tile['brand'])}")
     if text_runs(tile["filler"]) != [[("", "12pt", None, None, None)]]:
         out.append(f"{page.display_name}/filler: not one empty paragraph")
-    link = "https://github.com/HARISPAARTAN/energiewende-monitor"
-    if text_runs(tile["footer"]) != [[("Daten: SMARD (CC BY 4.0), MaStR (dl-de/by-2-0)", "8pt", None, muted, None)],
+    # one source per line and no link: in 168 px the old lines broke inside "(dl-de/by-2-0)" and "energiewende-monitor"
+    if text_runs(tile["footer"]) != [[("Daten: SMARD (CC BY 4.0)", "8pt", None, muted, None)],
+                                     [("MaStR (dl-de/by-2-0)", "8pt", None, muted, None)],
                                      [("Harithas Harikaran", "8pt", None, muted, None)],
-                                     [("github.com/HARISPAARTAN/energiewende-monitor", "8pt", None, accent, link)]]:
-        out.append(f"{page.display_name}/footer: wrong text, style or link {text_runs(tile['footer'])}")
+                                     [("GitHub: energiewende-monitor", "8pt", None, muted, None)]]:
+        out.append(f"{page.display_name}/footer: wrong text or style {text_runs(tile['footer'])}")
+    for key, top in (("brand", "14D"), ("footer", "8D")):  # the text starts 20 px in, in line with the button labels
+        padding = props(tile[key], "padding", container=True)
+        if [lit_of(padding, side) for side in ("left", "right", "top", "bottom")] != ["20D", "12D", top, "0D"]:
+            out.append(f"{page.display_name}/{key}: container padding must be 20D left, 12D right, {top} top, 0D bottom")
     if text_runs(tile["title"]) != [[(page.display_name, "18pt", "bold", ink, None)]]:
         out.append(f"{page.display_name}/title: not the page name at 18pt bold ink")
     for key in ("background", "border", "dropShadow"):
@@ -596,6 +606,10 @@ def chrome_problems(page, pages):
             out.append(f"{page.display_name}/stand: container {key} must be off")
     if lit_of(props(stand, "title", container=True), "show") != "false" or stand.title != "Datenstand":
         out.append(f"{page.display_name}/stand: the title must be hidden and read Datenstand")
+    # no padding on title and data stand: the base theme pads every visual by 14 to 16 px, which clipped the 40 px data stand
+    for key in ("title", "stand"):
+        if {lit_of(props(tile[key], "padding", container=True), side) for side in ("left", "right", "top", "bottom")} != {"0D"}:
+            out.append(f"{page.display_name}/{key}: the container padding must be 0D on every side")
     order = {v.name: v.raw["position"]["tabOrder"] for v in page.visuals}
     if len(set(order.values())) != len(order) or len({v.raw["position"]["z"] for v in page.visuals}) != len(order):
         out.append(f"{page.display_name}: z and tabOrder must be unique")
@@ -671,7 +685,7 @@ def test_ee_anteil_chart_emphasises_the_current_year(report):
 
 
 def card_container_problems(visual):
-    """The card look written out for a text box: surface, hairline border with radius 10, faint accent glow."""
+    """The card look written out for a text box: surface, hairline border with radius 10, faint accent glow, inner padding."""
     out = []
     background = props(visual, "background", container=True)
     if (lit_of(background, "show"), colour_of(background, "color"), lit_of(background, "transparency")) != ("true", TOKENS["surface"], "0D"):
@@ -684,65 +698,58 @@ def card_container_problems(visual):
                 "shadowSpread": "0D", "angle": "45D", "transparency": "88D"}
     if {k: lit_of(glow, k) for k in expected} != expected or colour_of(glow, "color") != TOKENS["accent"]:
         out.append(f"{visual.name}: the glow is not the theme's (accent, Outer, Custom, blur 12D, distance 0D, spread 0D, 45D, 88D)")
+    padding = props(visual, "padding", container=True)
+    if [lit_of(padding, side) for side in ("left", "right", "top", "bottom")] != ["16D", "16D", "12D", "12D"]:
+        out.append(f"{visual.name}: padding must be 16D left and right, 12D top and bottom (a text box has none, the text touched the border)")
     return out
 
 
-def test_datenqualitaet_text_boxes_are_cards_with_a_heading_and_link_runs(report):
+def test_datenqualitaet_text_boxes_are_cards_with_a_heading(report):
     page = next(p for p in report.pages if p.display_name == "Datenqualität & Quellen")
     boxes = sorted((v for v in content(page) if v.visual_type == "textbox"), key=lambda v: v.raw["position"]["y"])
-    assert [geometry(v) for v in boxes] == [(864, 152, 400, 300), (216, 464, 1048, 240)]
+    # the gap table at full height on the left, sources and project stacked on the right: beside a table of the same
+    # height the sources card was half empty
+    assert [geometry(v) for v in boxes] == [(864, 160, 400, 316), (864, 488, 400, 216)]
+    table = next(v for v in content(page) if v.visual_type == "tableEx")
+    assert geometry(table) == (216, 160, 636, 544)
     ink, secondary = TOKENS["ink"], TOKENS["inkSecondary"]
     for box in boxes:
         assert card_container_problems(box) == []
         first, *rest = text_runs(box)
         assert [(size, weight, colour) for _, size, weight, colour, _ in first] == [("12pt", "bold", ink)]
         for paragraph in rest:
-            # the text around a link is secondary ink; link runs have their own look (test_link_runs_are_accent_coloured_and_underlined)
-            assert {(size, weight, colour) for _, size, weight, colour, url in paragraph if not url} == {("10pt", None, secondary)}
-            assert {(size, weight) for _, size, weight, _, url in paragraph if url} <= {("10pt", None)}  # a link keeps size and weight
-    # the licence URL and the two project links are link runs of their own
-    links = {url for box in boxes for paragraph in text_runs(box) for _, _, _, _, url in paragraph if url}
-    assert links == {"https://www.govdata.de/dl-de/by-2-0", "https://github.com/HARISPAARTAN/energiewende-monitor",
-                     "https://harispaartan.github.io/projects/energiewende-monitor/"}
+            assert {(size, weight, colour, url) for _, size, weight, colour, url in paragraph} == {("10pt", None, secondary, None)}
 
 
-def test_every_url_in_a_text_box_is_a_link_run(report):
-    seen = 0
+def test_addresses_are_plain_text_without_a_scheme(report):
+    # Desktop draws a link run of a text box in a fixed dark blue (#1D5899 measured on the panel), whatever colour the run or
+    # the theme's hyperlink sets, and that is not readable on the dark tiles. So the addresses are plain text, and without
+    # "https://": the generator turns a URL with a scheme into a link run
+    seen = set()
     for p in report.pages:
         for v in p.visuals:
             if v.visual_type == "textbox":
-                for paragraph in text_runs(v):
-                    for value, _, _, _, url in paragraph:
-                        if URL_IN_TEXT.search(value):
-                            assert url == value, (p.display_name, v.name, value)  # the run is exactly the URL
-                            seen += 1
-    assert seen == 3  # the licence URL and the two project links on the quality page
+                for value, _, _, _, url in (run for paragraph in text_runs(v) for run in paragraph):
+                    assert url is None and not URL_IN_TEXT.search(value), (p.display_name, v.name, value)
+                    seen |= {address for address in ADDRESSES if address in value}
+    assert seen == ADDRESSES
 
 
 def link_run_problems(visual, where):
-    """A link must look like one: the accent colour and an underline, in the size and weight of its paragraph. No other run is decorated."""
+    """No run of a text box is a link or decorated (see test_addresses_are_plain_text_without_a_scheme)."""
     out = []
     for _, run in runs_of(visual):
-        style = run["textStyle"]
         if run.get("url"):
-            if (style.get("color") or "").upper() != TOKENS["accent"]:
-                out.append(f"{where}: the link {run['url']} is {style.get('color')}, expected the accent {TOKENS['accent']}")
-            if style.get("textDecoration") != "underline":
-                out.append(f"{where}: the link {run['url']} is not underlined")
-        elif "textDecoration" in style:
-            out.append(f"{where}: {run['value']!r} is decorated but no link")
+            out.append(f"{where}: {run['value']!r} is a link run; Desktop draws it in a fixed dark blue")
+        if "textDecoration" in run["textStyle"]:
+            out.append(f"{where}: {run['value']!r} is decorated")
     return out
 
 
-def test_link_runs_are_accent_coloured_and_underlined(report):
-    seen, problems = 0, []
-    for p in report.pages:
-        for v in p.visuals:
-            if v.visual_type == "textbox":
-                problems += link_run_problems(v, f"{p.display_name}/{v.name}")
-                seen += sum(1 for _, run in runs_of(v) if run.get("url"))
+def test_text_boxes_have_no_link_runs_and_no_decoration(report):
+    problems = [msg for p in report.pages for v in p.visuals if v.visual_type == "textbox"
+                for msg in link_run_problems(v, f"{p.display_name}/{v.name}")]
     assert not problems, problems
-    assert seen == 5 + 3  # the footer link on each of the five pages and the three links of the quality page
 
 
 def card_font_problems(visual, where):
@@ -786,6 +793,130 @@ def test_hidden_titles_keep_their_text_for_the_alt_text(report):
         assert tile["stand"].alt_text == "Kennzahl: Datenstand"
     gauges = sorted((v for p in report.pages for v in p.visuals if v.visual_type == "gauge"), key=lambda v: v.raw["position"]["x"])
     assert [v.alt_text for v in gauges] == [f"Messinstrument: {title}" for title, *_ in GAUGES]
+
+
+MONTH_CHARTS = [  # (page, title) of the charts with one point or bar a month
+    ("Überblick", "Erzeugung nach Energieträger je Monat (MWh)"), ("Überblick", "EE-Anteil vs. Vorjahr"),
+    ("Überblick", "Kennzahl-Auswahl je Monat"), ("Preise", "Negative Preisstunden je Monat"),
+    ("Ausbau", "Zubau nach Monat und Energieträger (MW)"),
+]
+
+
+def axis_fields(visual, role):
+    return [f for proj in visual.raw["visual"]["query"]["queryState"][role]["projections"] for f in iter_fields(proj["field"])]
+
+
+def test_month_charts_have_a_continuous_date_axis(report):
+    # On the text column Jahr-Monat the axis is categorical: Desktop keeps about 20 px a month and adds a scroll bar after
+    # about two years (preferredCategoryWidth did not change that). The date column Monatsanfang makes the axis continuous.
+    for page, title in MONTH_CHARTS:
+        assert axis_fields(by_title(report, page, title), "Category") == [MONTH_AXIS], (page, title)
+    for p in report.pages:
+        for v in p.visuals:
+            assert ("Datum", "Jahr-Monat", "Column") not in v.bound_fields(), (p.display_name, v.title)
+
+
+def comparison_filters(visual):
+    """(entity, property, kind, ComparisonKind, literal) of every visual-level comparison filter."""
+    out = []
+    for f in visual.raw.get("filterConfig", {}).get("filters", []):
+        if f.get("type") == "Advanced":
+            (where,) = f["filter"]["Where"]
+            comparison = where["Condition"]["Comparison"]
+            ((kind, left),) = comparison["Left"].items()
+            (source,) = f["filter"]["From"]
+            assert left["Expression"]["SourceRef"]["Source"] == source["Name"]
+            out.append((source["Entity"], left["Property"], kind, comparison["ComparisonKind"], comparison["Right"]["Literal"]["Value"]))
+    return out
+
+
+def test_filters_keep_visuals_to_the_period_with_data(report):
+    # the calendar runs from 1990 to 2030 (the register since 1990, the targets to 2030); SMARD data start in 2023
+    def slicer(page, field):
+        return next(v for p in report.pages if p.display_name == page for v in p.visuals
+                    if v.visual_type == "slicer" and axis_fields(v, "Values") == [field])
+    year = ("Datum", "Jahr", "Column")
+    cases = [
+        (slicer("Überblick", year), [("Kennzahlen", "Erzeugung (MWh)", "Measure", 1, "0D")]),
+        (slicer("Preise", year), [("Kennzahlen", "Preisstunden", "Measure", 1, "0D")]),
+        (slicer("Ausbau", year), [("Kennzahlen", "Zubau (MW)", "Measure", 1, "0D")]),
+        # the date range spans the days with generation data, not 01.01.1990 to 31.12.2030
+        (slicer("Erzeugung & Last", ("Datum", "Datum", "Column")), [("Kennzahlen", "Erzeugung (MWh)", "Measure", 1, "0D")]),
+        # the previous-year line ran on for twelve months past the data stand
+        (by_title(report, "Überblick", "EE-Anteil vs. Vorjahr"), [("Kennzahlen", "EE-Anteil %", "Measure", 1, "0D")]),
+        # additions from 2019: the register is incomplete before (see the note on the quality page)
+        (by_title(report, "Ausbau", "Zubau nach Monat und Energieträger (MW)"), [("Datum", "Jahr", "Column", 2, "2019L")]),
+        # full load hours exist for the years with generation; capacity alone (before 2023, carried on to 2030) gave empty rows
+        (by_title(report, "Ausbau", "Volllaststunden nach Energieträger und Jahr"),
+         [("Kennzahlen", "Volllaststunden (h)", "Measure", 1, "0D")]),
+    ]
+    for visual, expected in cases:
+        assert comparison_filters(visual) == expected, visual.title or visual.bound_fields()
+    filtered = {id(v) for v, _ in cases}
+    others = [(p.display_name, v.title) for p in report.pages for v in p.visuals if id(v) not in filtered and comparison_filters(v)]
+    assert not others, others
+
+
+def test_carrier_legends_show_all_eight_groups(report):
+    # in one row at 9 pt the eight groups need about 545 px: Desktop cut labels ("Photovolt...") or paged the legend
+    carriers = {id(v): (p.display_name, v) for p, v in carrier_charts(report)}
+    legends = {(page, v.title): (lit(props(v, "legend")["position"]), lit_of(props(v, "legend"), "fontSize"))
+               for page, v in carriers.values()}
+    assert legends == {
+        ("Überblick", "Erzeugung nach Energieträger je Monat (MWh)"): ("'Bottom'", "8D"),  # 236 px: six lines on the right
+        ("Erzeugung & Last", "Erzeugung nach Energieträger (MWh)"): ("'Right'", None),
+        ("Ausbau", "Zubau nach Monat und Energieträger (MW)"): ("'Right'", None),
+    }
+    for p in report.pages:  # every other legend that is shown sits at the bottom (no position: the theme's, Bottom)
+        for v in p.visuals:
+            if id(v) not in carriers and lit_of(props(v, "legend"), "show") == "true":
+                assert lit_of(props(v, "legend"), "position") in (None, "'Bottom'"), (p.display_name, v.title)
+
+
+def test_slicers_have_no_search_and_the_measure_slicer_selects_one(report):
+    slicers = [(p.display_name, v) for p in report.pages for v in p.visuals if v.visual_type == "slicer"]
+    for page, v in slicers:  # the captured slicer template has search switched on
+        assert lit(props(v, "general")["selfFilterEnabled"]) == "false", (page, axis_fields(v, "Values"))
+    by_field = {(page, *axis_fields(v, "Values")): v for page, v in slicers}
+    # one measure at a time: with "Select all" the chart drew the four measures on one axis; single select picks the
+    # first entry, Erzeugung (MWh), when nothing is selected
+    selection = props(by_field[("Überblick", ("Kennzahl-Auswahl", "Kennzahl-Auswahl", "Column"))], "selection")
+    assert (lit(selection["strictSingleSelect"]), lit(selection["selectAllCheckboxEnabled"])) == ("true", "false")
+    # the two category tiles without a third "Select all" tile
+    assert lit(props(by_field[("Überblick", BOOKMARK_FIELD)], "selection")["selectAllCheckboxEnabled"]) == "false"
+
+
+def test_heatmap_has_the_weekdays_as_rows(report):
+    # seven weekdays down and four times of day across fit the 518 px tile; the other way round the last columns were cut
+    matrix = by_title(report, "Erzeugung & Last", "Residuallast Ø nach Tageszeit und Wochentag")
+    assert axis_fields(matrix, "Rows") == [("Datum", "Wochentag", "Column")]
+    assert axis_fields(matrix, "Columns") == [("Zeit", "Tageszeit", "Column")]
+
+
+def test_labels_and_markers_that_cluttered_are_off(report):
+    # the histogram wrote "0.0K" over every empty class; a label on each month crowded the negative-hours bars
+    for title in ("Verteilung der Stundenpreise (Klassen à 10 €)", "Negative Preisstunden je Monat"):
+        assert lit(props(by_title(report, "Preise", title), "labels")["show"]) == "false", title
+    area = by_title(report, "Überblick", "Erzeugung nach Energieträger je Monat (MWh)")
+    assert lit(props(area, "lineStyles")["showMarker"]) == "false"  # the template's markers dotted every stack edge
+
+
+def test_table_headers_fit_their_tiles(report):
+    def headers(visual):
+        return [proj.get("displayName") for proj in visual.raw["visual"]["query"]["queryState"]["Values"]["projections"]]
+    # short headers through the projection's displayName: the measure names cut the last column off in 518 px
+    assert headers(by_title(report, "Preise", PHASES_TITLE)) == [None, None, None, "Min €/MWh", "Ø €/MWh"]
+    volll = by_title(report, "Ausbau", "Volllaststunden nach Energieträger und Jahr")
+    assert headers(volll) == [None, None, None, "Leistung (MW)", "Volllaststunden"]
+    assert [lit(props(volll, key)["fontSize"]) for key in ("columnHeaders", "values")] == ["9D", "9D"]
+    assert lit(props(volll, "total")["totals"]) == "false"  # a total of full load hours over carriers means nothing
+
+
+def test_theme_switches_the_automatic_subtitles_off():
+    # the base theme switches subtitles on for every visual and Desktop fills them in English ("Erzeugung by Jahr");
+    # the gauges show their own at visual level (test_three_gauges_show_the_2030_targets)
+    theme = json.loads(THEME_FILE.read_text(encoding="utf-8"))
+    assert theme["visualStyles"]["*"]["*"]["subTitle"][0]["show"] is False
 
 
 # --- the lint must bite: each mutation of a good report has to be reported -------------------------------------------
@@ -881,7 +1012,7 @@ def test_mutation_missing_sort_or_topn_is_caught(report, model):
     assert phases_problems(top_20, model)
 
 
-ORDERED_AXES = {("Datum", "Jahr-Monat"), ("Datum", "Datum"), ("Zeit", "Uhrzeit"), ("Preis", "Preis Klasse (10 €)")}
+ORDERED_AXES = {("Datum", "Monatsanfang"), ("Datum", "Datum"), ("Zeit", "Uhrzeit"), ("Preis", "Preis Klasse (10 €)")}
 
 
 def _column(field):
@@ -947,7 +1078,14 @@ def test_mutation_header_and_panel_defects_are_caught(report):
     def geometry_moved(page):
         _tile(page, "brand").raw["position"]["height"] = 100
 
-    for mutate in (stand_binding, footer_missing, title_text, tab_order, panel_colour, geometry_moved):
+    def stand_padded(page):
+        props(_tile(page, "stand"), "padding", container=True)["top"]["expr"]["Literal"]["Value"] = "14D"
+
+    def footer_at_the_edge(page):
+        props(_tile(page, "footer"), "padding", container=True)["left"]["expr"]["Literal"]["Value"] = "0D"
+
+    for mutate in (stand_binding, footer_missing, title_text, tab_order, panel_colour, geometry_moved, stand_padded,
+                   footer_at_the_edge):
         page = _page(report, "Ausbau")
         assert chrome_problems(page, report.pages) == []
         mutate(page)
@@ -978,25 +1116,21 @@ def test_mutation_gauge_and_card_defects_are_caught(report):
     box = copy.deepcopy(next(v for v in _page(report, "Datenqualität & Quellen").visuals if v.visual_type == "textbox"
                              and v.name not in chrome_names(_page(report, "Datenqualität & Quellen")).values()))
     assert card_container_problems(box) == []
-    del box.raw["visual"]["visualContainerObjects"]["dropShadow"]
-    assert card_container_problems(box)
+    for key in ("dropShadow", "padding"):
+        broken = copy.deepcopy(box)
+        del broken.raw["visual"]["visualContainerObjects"][key]
+        assert card_container_problems(broken), key
 
 
-def test_mutation_link_without_accent_or_underline_is_caught(report):
+def test_mutation_link_run_or_decoration_is_caught(report):
     page = _page(report, "Datenqualität & Quellen")
     footer = next(v for v in page.visuals if v.name == chrome_names(page)["footer"])
     assert link_run_problems(footer, "footer") == []
-
-    def link(box):
-        return next(run for _, run in runs_of(box) if run.get("url"))
-
-    wrong_colour = copy.deepcopy(footer)
-    link(wrong_colour)["textStyle"]["color"] = TOKENS["inkMuted"]
-    no_underline = copy.deepcopy(footer)
-    del link(no_underline)["textStyle"]["textDecoration"]
-    decorated_text = copy.deepcopy(footer)
-    next(run for _, run in runs_of(decorated_text) if not run.get("url"))["textStyle"]["textDecoration"] = "underline"
-    for broken in (wrong_colour, no_underline, decorated_text):
+    linked = copy.deepcopy(footer)
+    runs_of(linked)[-1][1]["url"] = "https://github.com/HARISPAARTAN/energiewende-monitor"
+    underlined = copy.deepcopy(footer)
+    runs_of(underlined)[0][1]["textStyle"]["textDecoration"] = "underline"
+    for broken in (linked, underlined):
         assert link_run_problems(broken, "footer")
 
 

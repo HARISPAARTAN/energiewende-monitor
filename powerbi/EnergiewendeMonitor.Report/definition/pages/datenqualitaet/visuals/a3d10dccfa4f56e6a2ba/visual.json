@@ -2,11 +2,11 @@
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.13.0/schema.json",
   "name": "a3d10dccfa4f56e6a2ba",
   "position": {
-    "height": 300,
+    "height": 316,
     "tabOrder": 12,
     "width": 400,
     "x": 864,
-    "y": 152,
+    "y": 160,
     "z": 12
   },
   "visual": {
@@ -46,23 +46,7 @@
                       "color": "#A9B8C8",
                       "fontSize": "10pt"
                     },
-                    "value": "Kapazitäten: Datenquelle: Marktstammdatenregister der Bundesnetzagentur, Datenlizenz Deutschland – Namensnennung – Version 2.0 ("
-                  },
-                  {
-                    "textStyle": {
-                      "color": "#22D3EE",
-                      "fontSize": "10pt",
-                      "textDecoration": "underline"
-                    },
-                    "url": "https://www.govdata.de/dl-de/by-2-0",
-                    "value": "https://www.govdata.de/dl-de/by-2-0"
-                  },
-                  {
-                    "textStyle": {
-                      "color": "#A9B8C8",
-                      "fontSize": "10pt"
-                    },
-                    "value": "), Daten aggregiert."
+                    "value": "Kapazitäten: Datenquelle: Marktstammdatenregister der Bundesnetzagentur, Datenlizenz Deutschland – Namensnennung – Version 2.0 (www.govdata.de/dl-de/by-2-0), Daten aggregiert."
                   }
                 ]
               },
@@ -212,6 +196,40 @@
               "expr": {
                 "Literal": {
                   "Value": "88D"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "padding": [
+        {
+          "properties": {
+            "bottom": {
+              "expr": {
+                "Literal": {
+                  "Value": "12D"
+                }
+              }
+            },
+            "left": {
+              "expr": {
+                "Literal": {
+                  "Value": "16D"
+                }
+              }
+            },
+            "right": {
+              "expr": {
+                "Literal": {
+                  "Value": "16D"
+                }
+              }
+            },
+            "top": {
+              "expr": {
+                "Literal": {
+                  "Value": "12D"
                 }
               }
             }

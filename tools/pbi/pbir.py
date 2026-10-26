@@ -48,9 +48,12 @@ def field_ref(entity: str, prop: str, kind: str) -> dict:
     return {kind: {"Expression": {"SourceRef": {"Entity": entity}}, "Property": prop}}
 
 
-def projection(entity: str, prop: str, kind: str, active: bool = False) -> dict:
+def projection(entity: str, prop: str, kind: str, active: bool = False, display: str | None = None) -> dict:
+    """display: the name the visual shows for the field (a shorter column header), as Desktop writes a rename in the well."""
     query_ref = f"{kind}({entity}.{prop})" if kind in AGGREGATIONS else f"{entity}.{prop}"
     p = {"field": field_ref(entity, prop, kind), "queryRef": query_ref, "nativeQueryRef": prop}
+    if display:
+        p["displayName"] = display
     if active:
         p["active"] = True
     return p
@@ -164,6 +167,28 @@ def _field_parameter_role(parameter: tuple[str, str], default: tuple[str, str, s
             "fieldParameters": [{"parameterExpr": field_ref(parameter[0], parameter[1], "Column"), "index": 0, "length": 1}]}
 
 
+COMPARISONS = {"=": 0, ">": 1, ">=": 2, "<": 3, "<=": 4}  # PBIR ComparisonKind codes
+
+
+def _comparison_filter(name: str, spec: dict) -> dict:
+    """Visual-level advanced filter in the shape Desktop writes for "is greater than (or equal to)": on a whole-number column
+    {"field": [entity, column], "op": ">=", "value": 2019}, or on a measure {"field": [entity, measure], "kind": "Measure",
+    "op": ">", "value": 0}, which keeps the rows of the visual where the measure passes (a blank measure never does)."""
+    entity, prop = spec["field"]
+    kind = spec.get("kind", "Column")
+    if kind not in ("Column", "Measure"):
+        raise ValueError(f"a comparison filter is on a Column or a Measure, not {kind!r}")
+    value = f"{int(spec['value'])}L" if kind == "Column" else f"{float(spec['value']):g}D"
+    left = {kind: {"Expression": {"SourceRef": {"Source": "f"}}, "Property": prop}}
+    condition = {"Comparison": {"ComparisonKind": COMPARISONS[spec["op"]], "Left": left, "Right": {"Literal": {"Value": value}}}}
+    return {
+        "name": name,
+        "field": field_ref(entity, prop, kind),
+        "type": "Advanced",
+        "filter": {"Version": 2, "From": [{"Name": "f", "Entity": entity, "Type": 0}], "Where": [{"Condition": condition}]},
+    }
+
+
 def _top_n_filter(name: str, spec: dict) -> dict:
     """Visual-level TopN filter in the shape Desktop writes: the filtered field is the item column, the ranking
     field is aggregated in a subquery ordered descending with `Top`, and the filter keeps the items In that subquery."""
@@ -195,11 +220,14 @@ class Visual:
                       roles: dict[str, list[tuple[str, str, str]]], z: int = 0, extra_objects: dict | None = None,
                       alt: str | None = None, sort: dict | None = None, top_n: dict | None = None,
                       field_parameters: dict[str, dict] | None = None, subtitle: str | None = None,
-                      title_hidden: bool = False, container: dict | None = None) -> dict:
+                      title_hidden: bool = False, container: dict | None = None, filters: list[dict] | None = None) -> dict:
         """alt: alt text (None derives a German one from the title, "" leaves none); sort: {"field": [e, p, kind],
         "direction": "Descending"}; top_n: {"field": [e, p], "by": [e, p, aggregation], "n": 10};
         field_parameters: {role: {"parameter": (entity, column), "default": (entity, measure, "Measure")}};
         subtitle: shown under the title; title_hidden: the title text is kept (alt text) but not shown;
+        filters: visual-level comparison filters [{"field": [e, column], "op": ">=", "value": 2019}] or, with "kind": "Measure",
+        on a measure;
+        a role field is (entity, property, kind) or (entity, property, kind, display name);
         container: container objects (background, border, dropShadow, visualLink ...) that replace the template's."""
         if visual_type not in ROLES:
             raise ValueError(f"unknown visual type {visual_type!r}")
@@ -221,7 +249,8 @@ class Visual:
             state.clear()
             for role, fields in roles.items():
                 active = role in ("Category", "Rows", "Columns") or visual_type == "slicer"
-                state[role] = {"projections": [projection(e, p, k, active and k == "Column") for e, p, k in fields]}
+                state[role] = {"projections": [projection(f[0], f[1], f[2], active and f[2] == "Column", f[3] if len(f) > 3 else None)
+                                               for f in fields]}
             for role, fp in (field_parameters or {}).items():
                 state[role] = _field_parameter_role(fp["parameter"], fp["default"])
         container_objects = v["visual"].setdefault("visualContainerObjects", {})
@@ -233,8 +262,10 @@ class Visual:
         if sort:
             e, p, k = sort["field"]
             v["visual"]["query"]["sortDefinition"] = {"sort": [{"field": field_ref(e, p, k), "direction": sort["direction"]}]}
-        if top_n:
-            v["filterConfig"] = {"filters": [_top_n_filter(stable_name(name, "topn"), top_n)]}
+        visual_filters = [_top_n_filter(stable_name(name, "topn"), top_n)] if top_n else []
+        visual_filters += [_comparison_filter(stable_name(name, "filter", str(i)), f) for i, f in enumerate(filters or [])]
+        if visual_filters:
+            v["filterConfig"] = {"filters": visual_filters}
         if extra_objects:
             objects = v["visual"].setdefault("objects", {})
             for key, items in extra_objects.items():

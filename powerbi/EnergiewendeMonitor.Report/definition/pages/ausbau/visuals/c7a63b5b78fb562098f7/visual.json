@@ -1,5 +1,57 @@
 {
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.13.0/schema.json",
+  "filterConfig": {
+    "filters": [
+      {
+        "field": {
+          "Column": {
+            "Expression": {
+              "SourceRef": {
+                "Entity": "Datum"
+              }
+            },
+            "Property": "Jahr"
+          }
+        },
+        "filter": {
+          "From": [
+            {
+              "Entity": "Datum",
+              "Name": "f",
+              "Type": 0
+            }
+          ],
+          "Version": 2,
+          "Where": [
+            {
+              "Condition": {
+                "Comparison": {
+                  "ComparisonKind": 2,
+                  "Left": {
+                    "Column": {
+                      "Expression": {
+                        "SourceRef": {
+                          "Source": "f"
+                        }
+                      },
+                      "Property": "Jahr"
+                    }
+                  },
+                  "Right": {
+                    "Literal": {
+                      "Value": "2019L"
+                    }
+                  }
+                }
+              }
+            }
+          ]
+        },
+        "name": "09d8661c0f805b6c91df",
+        "type": "Advanced"
+      }
+    ]
+  },
   "name": "c7a63b5b78fb562098f7",
   "position": {
     "height": 286,
@@ -366,7 +418,7 @@
             "position": {
               "expr": {
                 "Literal": {
-                  "Value": "'Bottom'"
+                  "Value": "'Right'"
                 }
               }
             },
@@ -394,11 +446,11 @@
                       "Entity": "Datum"
                     }
                   },
-                  "Property": "Jahr-Monat"
+                  "Property": "Monatsanfang"
                 }
               },
-              "nativeQueryRef": "Jahr-Monat",
-              "queryRef": "Datum.Jahr-Monat"
+              "nativeQueryRef": "Monatsanfang",
+              "queryRef": "Datum.Monatsanfang"
             }
           ]
         },
@@ -450,7 +502,7 @@
                     "Entity": "Datum"
                   }
                 },
-                "Property": "Jahr-Monat"
+                "Property": "Monatsanfang"
               }
             }
           }

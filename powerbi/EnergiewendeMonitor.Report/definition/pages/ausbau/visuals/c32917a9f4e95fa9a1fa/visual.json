@@ -23,7 +23,18 @@
                       "color": "#8291A3",
                       "fontSize": "8pt"
                     },
-                    "value": "Daten: SMARD (CC BY 4.0), MaStR (dl-de/by-2-0)"
+                    "value": "Daten: SMARD (CC BY 4.0)"
+                  }
+                ]
+              },
+              {
+                "textRuns": [
+                  {
+                    "textStyle": {
+                      "color": "#8291A3",
+                      "fontSize": "8pt"
+                    },
+                    "value": "MaStR (dl-de/by-2-0)"
                   }
                 ]
               },
@@ -42,12 +53,10 @@
                 "textRuns": [
                   {
                     "textStyle": {
-                      "color": "#22D3EE",
-                      "fontSize": "8pt",
-                      "textDecoration": "underline"
+                      "color": "#8291A3",
+                      "fontSize": "8pt"
                     },
-                    "url": "https://github.com/HARISPAARTAN/energiewende-monitor",
-                    "value": "github.com/HARISPAARTAN/energiewende-monitor"
+                    "value": "GitHub: energiewende-monitor"
                   }
                 ]
               }
@@ -115,6 +124,40 @@
               "expr": {
                 "Literal": {
                   "Value": "false"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "padding": [
+        {
+          "properties": {
+            "bottom": {
+              "expr": {
+                "Literal": {
+                  "Value": "0D"
+                }
+              }
+            },
+            "left": {
+              "expr": {
+                "Literal": {
+                  "Value": "20D"
+                }
+              }
+            },
+            "right": {
+              "expr": {
+                "Literal": {
+                  "Value": "12D"
+                }
+              }
+            },
+            "top": {
+              "expr": {
+                "Literal": {
+                  "Value": "8D"
                 }
               }
             }

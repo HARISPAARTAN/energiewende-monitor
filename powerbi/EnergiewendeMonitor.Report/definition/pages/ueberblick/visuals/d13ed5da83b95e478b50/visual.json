@@ -31,7 +31,7 @@
             "selfFilterEnabled": {
               "expr": {
                 "Literal": {
-                  "Value": "true"
+                  "Value": "false"
                 }
               }
             }
@@ -55,6 +55,13 @@
         {
           "properties": {
             "selectAllCheckboxEnabled": {
+              "expr": {
+                "Literal": {
+                  "Value": "false"
+                }
+              }
+            },
+            "strictSingleSelect": {
               "expr": {
                 "Literal": {
                   "Value": "true"

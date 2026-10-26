@@ -1,5 +1,57 @@
 {
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.13.0/schema.json",
+  "filterConfig": {
+    "filters": [
+      {
+        "field": {
+          "Measure": {
+            "Expression": {
+              "SourceRef": {
+                "Entity": "Kennzahlen"
+              }
+            },
+            "Property": "Volllaststunden (h)"
+          }
+        },
+        "filter": {
+          "From": [
+            {
+              "Entity": "Kennzahlen",
+              "Name": "f",
+              "Type": 0
+            }
+          ],
+          "Version": 2,
+          "Where": [
+            {
+              "Condition": {
+                "Comparison": {
+                  "ComparisonKind": 1,
+                  "Left": {
+                    "Measure": {
+                      "Expression": {
+                        "SourceRef": {
+                          "Source": "f"
+                        }
+                      },
+                      "Property": "Volllaststunden (h)"
+                    }
+                  },
+                  "Right": {
+                    "Literal": {
+                      "Value": "0D"
+                    }
+                  }
+                }
+              }
+            }
+          ]
+        },
+        "name": "3431f21b25bf50a2bae0",
+        "type": "Advanced"
+      }
+    ]
+  },
   "name": "c6a1831026bf5e589d8a",
   "position": {
     "height": 282,
@@ -14,7 +66,41 @@
     "objects": {
       "columnHeaders": [
         {
-          "properties": {}
+          "properties": {
+            "fontSize": {
+              "expr": {
+                "Literal": {
+                  "Value": "9D"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "total": [
+        {
+          "properties": {
+            "totals": {
+              "expr": {
+                "Literal": {
+                  "Value": "false"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "values": [
+        {
+          "properties": {
+            "fontSize": {
+              "expr": {
+                "Literal": {
+                  "Value": "9D"
+                }
+              }
+            }
+          }
         }
       ]
     },
@@ -65,6 +151,7 @@
               "queryRef": "Kennzahlen.Erzeugung (MWh)"
             },
             {
+              "displayName": "Leistung (MW)",
               "field": {
                 "Measure": {
                   "Expression": {
@@ -79,6 +166,7 @@
               "queryRef": "Kennzahlen.Installierte Leistung (MW)"
             },
             {
+              "displayName": "Volllaststunden",
               "field": {
                 "Measure": {
                   "Expression": {

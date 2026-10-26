@@ -18,7 +18,7 @@
                 "Entity": "Datum"
               }
             },
-            "Property": "Jahr-Monat"
+            "Property": "Monatsanfang"
           }
         },
         "howCreated": "Drillthrough",
@@ -41,7 +41,7 @@
                 "Entity": "Datum"
               }
             },
-            "Property": "Jahr-Monat"
+            "Property": "Monatsanfang"
           }
         },
         "name": "79ea4709763b5af3b090"

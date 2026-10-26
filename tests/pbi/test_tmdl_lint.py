@@ -214,6 +214,15 @@ def test_kalender_hierarchy_and_culture(model):
     assert (MODEL_DIR / "cultures" / "de-DE.tmdl").exists()
 
 
+def test_monatsanfang_is_a_date_for_the_month_axes(model):
+    # the axis of the monthly charts and the drillthrough field: as a date the axis is continuous; on the text column
+    # Jahr-Monat Desktop kept about 20 px a month and scrolled
+    column = model.tables["Datum"].columns["Monatsanfang"]
+    assert column.expression == "DATE('Datum'[Jahr], 'Datum'[Monat], 1)"
+    assert (column.data_type, column.format_string, column.summarize_by, column.is_hidden) == ("dateTime", "MMM yyyy", "none", False)
+    assert column.description
+
+
 def test_no_description_property_only_triple_slash():
     # descriptions are written as /// lines; a `description:` property would be a second, conflicting source
     for path in MODEL_DIR.rglob("*.tmdl"):

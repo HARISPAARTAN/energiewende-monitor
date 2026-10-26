@@ -28,7 +28,7 @@
       "border": [{"show": true, "color": {"solid": {"color": "#1E3A55"}}, "radius": 10}],
       "dropShadow": [{"show": true, "color": {"solid": {"color": "#22D3EE"}}, "position": "Outer", "preset": "Custom", "shadowSpread": 0, "shadowBlur": 12, "angle": 45, "shadowDistance": 0, "transparency": 88}],
       "title": [{"show": true, "fontColor": {"solid": {"color": "#E8EEF4"}}, "fontSize": 11, "fontFamily": "Segoe UI Semibold"}],
-      "subTitle": [{"fontColor": {"solid": {"color": "#8291A3"}}, "fontSize": 9}],
+      "subTitle": [{"show": false, "fontColor": {"solid": {"color": "#8291A3"}}, "fontSize": 9}],
       "visualHeader": [{"background": {"solid": {"color": "#102233"}}, "border": {"solid": {"color": "#1E3A55"}}, "foreground": {"solid": {"color": "#A9B8C8"}}, "transparency": 0}],
       "visualTooltip": [{"titleFontColor": {"solid": {"color": "#A9B8C8"}}, "valueFontColor": {"solid": {"color": "#E8EEF4"}}, "background": {"solid": {"color": "#13304A"}}}],
       "categoryAxis": [{"labelColor": {"solid": {"color": "#8291A3"}}, "titleColor": {"solid": {"color": "#8291A3"}}, "showAxisTitle": false, "gridlineShow": false}],

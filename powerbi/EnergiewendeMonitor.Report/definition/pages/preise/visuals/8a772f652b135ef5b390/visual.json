@@ -170,6 +170,7 @@
               "queryRef": "Preisphasen.Stunden"
             },
             {
+              "displayName": "Min €/MWh",
               "field": {
                 "Column": {
                   "Expression": {
@@ -184,6 +185,7 @@
               "queryRef": "Preisphasen.Min Preis €/MWh"
             },
             {
+              "displayName": "Ø €/MWh",
               "field": {
                 "Column": {
                   "Expression": {

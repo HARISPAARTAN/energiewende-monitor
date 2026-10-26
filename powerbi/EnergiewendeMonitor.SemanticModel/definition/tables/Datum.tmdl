@@ -76,6 +76,15 @@ table Datum
 
 		annotation SummarizationSetBy = Automatic
 
+	/// First day of the month as a date: the axis of the monthly charts. A date axis is continuous, so a chart shows every month of the period without a scroll bar; on the text column Jahr-Monat the axis is categorical, needs about 20 px a month and scrolls after about two years. Also the drillthrough field of Erzeugung & Last.
+	column Monatsanfang = DATE('Datum'[Jahr], 'Datum'[Monat], 1)
+		dataType: dateTime
+		formatString: MMM yyyy
+		lineageTag: f461f61d-7c36-5667-8405-9451abf13b9e
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+
 	column 'ISO-Jahr'
 		dataType: int64
 		formatString: 0

@@ -100,8 +100,8 @@ def _heatmap(spec: dict) -> list[dict]:
 
 
 def _formatting(spec: dict, colours: Colours) -> dict:
-    """Visual-level objects: card label size, legend at the bottom, one fill per carrier group, series colours by measure,
-    the gauge's scale and fill."""
+    """Visual-level objects: card label size, legend at the bottom (carrier groups: on the right, or at 8 pt in a low chart),
+    one fill per carrier group, series colours by measure, the gauge's scale and fill."""
     objects: dict = {}
     roles = spec.get("roles", {})
     kind = spec["type"]
@@ -112,7 +112,14 @@ def _formatting(spec: dict, colours: Colours) -> dict:
         objects["labels"] = [{"properties": labels}]
         objects["categoryLabels"] = [{"properties": {"show": _lit("false")}}]
     if kind in CHARTS and (len(roles.get("Series", [])) or len(roles.get("Y", [])) > 1 or spec.get("legend")):
-        objects["legend"] = [{"properties": {"show": _lit("true"), "position": _lit("'Bottom'")}}]
+        # The eight carrier groups need about 545 px in one row at 9 pt, more than the 486 to 536 px inside the 518 and 568 px
+        # tiles: Desktop cut labels ("Photovolt...") or paged the legend (six of eight shown). A carrier chart of 280 px or more
+        # lists them on the right, one a line; the 236 px area chart on Überblick has room for six lines there and paged
+        # again, so it keeps the bottom row at 8 pt (about 485 px).
+        legend = {"show": _lit("true"), "position": _lit("'Bottom'")}
+        if any(f[:2] == list(GROUP) for f in roles.get("Series", [])):
+            legend.update({"position": _lit("'Right'")} if spec["h"] >= 280 else {"fontSize": _lit("8D")})
+        objects["legend"] = [{"properties": legend}]
     if kind == "columnChart":
         objects["labels"] = [{"properties": {"show": _lit("false")}}]
     if kind in COLOURED_BY_GROUP and any(f[:2] == list(GROUP) for f in roles.get("Series", [])):
@@ -127,14 +134,21 @@ def _formatting(spec: dict, colours: Colours) -> dict:
         objects["dataPoint"] = [{"properties": {"fill": _solid(colours(spec["fill"]))}}]
     if spec.get("heatmap"):
         objects["values"] = _heatmap(spec["heatmap"])
+    if kind == "slicer":  # no search box: the captured slicer template has search (selfFilterEnabled) switched on
+        objects["general"] = [{"properties": {"selfFilterEnabled": _lit("false")}}]
     for key, items in spec.get("objects", {}).items():
-        objects[key] = items
+        # a spec entry without selector adds its properties to the entry above, so a slicer keeps search off next to its orientation
+        plain = len(items) == 1 and "selector" not in items[0] and len(objects.get(key, [])) == 1 and "selector" not in objects[key][0]
+        objects[key] = [{"properties": {**objects[key][0]["properties"], **items[0]["properties"]}}] if plain else items
     return objects
 
 
 def _bare_container() -> dict:
-    """No container background, border or shadow: the visual sits directly on the canvas."""
-    return {key: [{"properties": {"show": _lit("false")}}] for key in ("background", "border", "dropShadow")}
+    """No container background, border, shadow or padding: the visual sits directly on the canvas. The base theme pads every
+    visual by 14 to 16 px, which leaves the 40 px data-stand card no room for its line and clips it."""
+    bare = {key: [{"properties": {"show": _lit("false")}}] for key in ("background", "border", "dropShadow")}
+    bare["padding"] = [{"properties": {side: _lit("0D") for side in ("bottom", "left", "right", "top")}}]
+    return bare
 
 
 def _panel_container(colours: Colours) -> dict:
@@ -146,9 +160,16 @@ def _panel_container(colours: Colours) -> dict:
     }
 
 
+def _panel_text_container(colours: Colours, top: int) -> dict:
+    """A text tile of the side panel (brand, footer): the panel look plus padding, so that the text starts 20 px in, in line with
+    the button labels (leftMargin 20), and does not touch the canvas edge."""
+    padding = {"left": _lit("20D"), "right": _lit("12D"), "top": _lit(f"{top}D"), "bottom": _lit("0D")}
+    return {**_panel_container(colours), "padding": [{"properties": padding}]}
+
+
 def _card_container(colours: Colours) -> dict:
     """The card look of the theme, written out for a text box (the theme switches these off for text boxes): surface,
-    hairline border with radius 10 and the faint accent glow."""
+    hairline border with radius 10, the faint accent glow, and padding (a text box has none, so its text touched the border)."""
     glow = {"show": _lit("true"), "position": _lit("'Outer'"), "preset": _lit("'Custom'"), "color": _solid(colours("accent")),
             "shadowBlur": _lit("12D"), "shadowDistance": _lit("0D"), "shadowSpread": _lit("0D"), "angle": _lit("45D"),
             "transparency": _lit("88D")}
@@ -156,6 +177,7 @@ def _card_container(colours: Colours) -> dict:
         "background": [{"properties": {"show": _lit("true"), "color": _solid(colours("surface")), "transparency": _lit("0D")}}],
         "border": [{"properties": {"show": _lit("true"), "color": _solid(colours("hairline")), "radius": _lit("10D")}}],
         "dropShadow": [{"properties": glow}],
+        "padding": [{"properties": {"left": _lit("16D"), "right": _lit("16D"), "top": _lit("12D"), "bottom": _lit("12D")}}],
     }
 
 
@@ -172,7 +194,9 @@ def _button_objects(label: str, current: bool, colours: Colours) -> dict:
     bold = {"bold": _lit("true")} if current else {}
     text = [
         {"properties": {"show": _lit("true")}},
-        {"properties": {"text": _lit("'" + label.replace("'", "''") + "'"), "fontColor": _solid(inks[0]), "fontSize": _lit("11D"),
+        # 10 pt: the bold label of the current page, "Datenqualität & Quellen", has to fit the 200 px button minus the 20 px left
+        # margin and the 12 px right margin of the base theme; at 11 pt Desktop cut it to "Datenqualität &..."
+        {"properties": {"text": _lit("'" + label.replace("'", "''") + "'"), "fontColor": _solid(inks[0]), "fontSize": _lit("10D"),
                         "horizontalAlignment": _lit("'left'"), "leftMargin": _lit("20L"), **bold},
          "selector": {"id": "default"}},
         {"properties": {"fontColor": _solid(inks[1]), **bold}, "selector": {"id": "hover"}},
@@ -234,7 +258,7 @@ def _visual_json(name: str, spec: dict, colours: Colours) -> dict:
                                 roles, extra_objects=_formatting(spec, colours), alt=spec.get("alt"),
                                 sort=spec.get("sort"), top_n=spec.get("top_n"), field_parameters=parameters,
                                 subtitle=spec.get("subtitle"), title_hidden=spec.get("title_hidden", False),
-                                container=_bare_container() if spec.get("bare") else None)
+                                container=_bare_container() if spec.get("bare") else None, filters=spec.get("filters"))
 
 
 def _chrome(page: dict, pages: list[dict], colours: Colours) -> dict[str, dict]:
@@ -250,7 +274,7 @@ def _chrome(page: dict, pages: list[dict], colours: Colours) -> dict[str, dict]:
             {"text": "ENERGIEWENDE", "size": 13, "bold": True, "colour": ink},
             {"text": "MONITOR", "size": 13, "bold": True, "colour": accent},
             {"text": "Strommarkt und Ausbau in Deutschland", "size": 9, "colour": muted},
-        ], container=panel),
+        ], container=_panel_text_container(colours, 14)),
     }
     for i, target in enumerate(pages):
         out[f"nav{i}"] = Visual.from_template(
@@ -259,12 +283,15 @@ def _chrome(page: dict, pages: list[dict], colours: Colours) -> dict[str, dict]:
             container={**panel, "visualLink": _page_link(target["id"])})
     nav_end = NAV_TOP + NAV_HEIGHT * len(pages)
     out["filler"] = _textbox(colours, name("filler"), 0, nav_end, PANEL_WIDTH, 616 - nav_end, [""], container=panel)
+    # one source per line and a short repository line: in the 168 px between the paddings the old lines broke inside "(dl-de/by-2-0)"
+    # and inside "energiewende-monitor". Plain text, no link run: Desktop draws a link in a fixed dark blue (#1D5899 measured on the
+    # panel) whatever colour the run or the theme's hyperlink sets, and that is not readable on the panel
     out["footer"] = _textbox(colours, name("footer"), 0, 616, PANEL_WIDTH, 104, [
-        {"text": "Daten: SMARD (CC BY 4.0), MaStR (dl-de/by-2-0)", "size": 8, "colour": muted},
+        {"text": "Daten: SMARD (CC BY 4.0)", "size": 8, "colour": muted},
+        {"text": "MaStR (dl-de/by-2-0)", "size": 8, "colour": muted},
         {"text": "Harithas Harikaran", "size": 8, "colour": muted},
-        {"text": "github.com/HARISPAARTAN/energiewende-monitor", "size": 8, "colour": muted,
-         "url": "https://github.com/HARISPAARTAN/energiewende-monitor"},
-    ], container=panel)
+        {"text": "GitHub: energiewende-monitor", "size": 8, "colour": muted},
+    ], container=_panel_text_container(colours, 8))
     out["title"] = _textbox(colours, name("title"), 216, 12, 640, 40, [
         {"text": page["displayName"], "size": 18, "bold": True, "colour": ink}], container=_bare_container())
     # 396 px wide (right edge at the 1264 margin, 12 px right of the title box): `Datenstand: SMARD 28.12.2026 · MaStR September 2026`
