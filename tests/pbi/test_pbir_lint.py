@@ -322,9 +322,10 @@ def test_palette_and_tokens_are_pinned():
         "surface": "#102233", "surfaceRaised": "#13304A", "hairline": "#1E3A55", "grid": "#1B3048", "ink": "#E8EEF4",
         "inkSecondary": "#A9B8C8", "inkMuted": "#8291A3", "accent": "#22D3EE",
     }
-    # the palette order is the stack order of the model's sort column
-    sort_key = load_model(MODEL).tables["Energieträger"].columns["Gruppe Sortierung"].expression
-    assert re.findall(r'"([^"]+)", \d', sort_key) + ["Sonstige"] == list(PALETTE)
+    # the palette order is the stack order: Gruppe's names by their sort number, then its default Sonstige
+    gruppe = load_model(MODEL).tables["Energieträger"].columns["Gruppe"].expression
+    numbered = sorted((int(n), name) for n, name in re.findall(r'(\d+), "([^"]+)"', gruppe))
+    assert [name for _, name in numbered] + ["Sonstige"] == list(PALETTE)
 
 
 def heatmap_colours():

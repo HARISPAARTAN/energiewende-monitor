@@ -72,12 +72,14 @@ Die berechnete Spalte `'Energieträger'[Gruppe]` faltet die zwölf Energieträge
 **Formeln**
 
 ```dax
-Gruppe =
-SWITCH('Energieträger'[Energieträger], "Biomasse", "Biomasse", "Wind Onshore", "Wind", "Wind Offshore", "Wind", "Photovoltaik", "Photovoltaik", "Wasserkraft", "Wasserkraft", "Erdgas", "Erdgas", "Steinkohle", "Steinkohle", "Braunkohle", "Braunkohle", "Sonstige")
-
 Gruppe Sortierung =
-SWITCH('Energieträger'[Gruppe], "Biomasse", 1, "Wind", 2, "Photovoltaik", 3, "Wasserkraft", 4, "Erdgas", 5, "Steinkohle", 6, "Braunkohle", 7, 8)
+SWITCH('Energieträger'[Energieträger], "Biomasse", 1, "Wind Onshore", 2, "Wind Offshore", 2, "Photovoltaik", 3, "Wasserkraft", 4, "Erdgas", 5, "Steinkohle", 6, "Braunkohle", 7, 8)
+
+Gruppe =
+SWITCH('Energieträger'[Gruppe Sortierung], 1, "Biomasse", 2, "Wind", 3, "Photovoltaik", 4, "Wasserkraft", 5, "Erdgas", 6, "Steinkohle", 7, "Braunkohle", "Sonstige")
 ```
+
+**Warum die Sortierspalte den Energieträger liest.** `Gruppe` ist nach `Gruppe Sortierung` sortiert, also berechnet Power BI `Gruppe Sortierung` zuerst. Läse die Sortierspalte `Gruppe`, hinge jede der beiden Spalten von der anderen ab; Desktop meldet dann beim Laden jeder Tabelle „A circular dependency was detected“. Deshalb steht die Zuordnung Energieträger → Gruppe als Nummer in `Gruppe Sortierung`, und `Gruppe` benennt nur die Nummern.
 
 ## Erzeugung (MWh)
 

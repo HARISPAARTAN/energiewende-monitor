@@ -164,6 +164,49 @@ def test_sort_by_columns(model):
         assert sort_col in model.tables[table].columns, (table, sort_col)
 
 
+def test_calculated_columns_and_sort_keys_have_no_circular_dependency(model):
+    # The engine computes a calculated column after every column and measure its DAX reads, and a column after its
+    # sort-by column. A cycle through either kind of edge fails every table on load ("A circular dependency was
+    # detected"), and neither the TMDL parser nor TOM reports it: a sort key must not read the column it sorts.
+    ref = re.compile(r"(?:'([^']+)'|(?<![\w\]'])([A-Za-z_][A-Za-z0-9_]*))\[([^\]]+)\]")
+    unqualified = re.compile(r"(?<![\w'\]])\[([^\]]+)\]")
+    measure_table = {m: t for t, tab in model.tables.items() for m in tab.measures}
+
+    def reads(table, expression):
+        found = {(quoted or bare, item) for quoted, bare, item in ref.findall(expression)}
+        for item in unqualified.findall(expression):
+            if item in measure_table:
+                found.add((measure_table[item], item))
+            elif item in model.tables[table].columns:
+                found.add((table, item))
+        return found
+
+    edges = {}
+    for t, tab in model.tables.items():
+        for name, col in tab.columns.items():
+            edges[(t, name)] = (reads(t, col.expression) if col.expression else set()) | (
+                {(t, col.sort_by_column)} if col.sort_by_column else set())
+        for name, m in tab.measures.items():
+            edges[(t, name)] = reads(t, m.expression)
+    state, path = {}, []
+
+    def visit(node):
+        state[node] = "open"
+        path.append(node)
+        for nxt in sorted(edges.get(node, ())):
+            if state.get(nxt) == "open":
+                cycle = path[path.index(nxt):] + [nxt]
+                pytest.fail("circular dependency: " + " -> ".join(f"{t}[{c}]" for t, c in cycle))
+            if nxt not in state:
+                visit(nxt)
+        state[node] = "done"
+        path.pop()
+
+    for node in sorted(edges):
+        if node not in state:
+            visit(node)
+
+
 def test_kalender_hierarchy_and_culture(model):
     assert model.tables["Datum"].hierarchies["Kalender"] == ["Jahr", "Quartal", "Monat Name", "Datum"]
     assert model.culture == "de-DE"
@@ -302,23 +345,29 @@ def parse_switch(expression: str):
 
 
 def test_gruppe_folds_the_twelve_seed_carriers_into_eight_groups(model):
-    column = model.tables["Energieträger"].columns["Gruppe"]
+    table = model.tables["Energieträger"]
+    column, key = table.columns["Gruppe"], table.columns["Gruppe Sortierung"]
     assert column.data_type == "string" and column.summarize_by == "none" and not column.is_hidden
     assert column.expression, "Gruppe is a calculated column: `column Gruppe = <DAX>`"
     with SEED.open(encoding="utf-8", newline="") as fh:
         carriers = [r["name_de"] for r in csv.DictReader(fh)]
     assert len(carriers) == 12
+    # the carrier-to-group mapping lives in the sort key (carrier -> number); Gruppe only names the numbers
+    key_subject, key_pairs, key_default = parse_switch(key.expression)
+    assert key_subject == "'Energieträger'[Energieträger]"
+    number = dict(key_pairs)
+    assert len(number) == len(key_pairs), "a carrier is listed twice"
+    assert set(number) <= set(carriers), sorted(set(number) - set(carriers))
     subject, pairs, default = parse_switch(column.expression)
-    assert subject == "'Energieträger'[Energieträger]"
-    mapping = dict(pairs)
-    assert len(mapping) == len(pairs), "a carrier is listed twice"
-    assert set(mapping) <= set(carriers), sorted(set(mapping) - set(carriers))
+    assert subject == "'Energieträger'[Gruppe Sortierung]"
+    name = dict(pairs)
+    mapping = {carrier: name.get(n, default) for carrier, n in number.items()}
     assert mapping == {"Biomasse": "Biomasse", "Wind Onshore": "Wind", "Wind Offshore": "Wind", "Photovoltaik": "Photovoltaik",
                        "Wasserkraft": "Wasserkraft", "Erdgas": "Erdgas", "Steinkohle": "Steinkohle", "Braunkohle": "Braunkohle"}
-    assert default == "Sonstige"
+    assert name.get(key_default, default) == "Sonstige"
     # what the default branch catches: exactly these four carriers of the seed
-    assert set(carriers) - set(mapping) == {"Kernenergie", "Pumpspeicher", "Sonstige Erneuerbare", "Sonstige Konventionelle"}
-    assert {mapping.get(c, default) for c in carriers} == set(GROUPS)
+    assert set(carriers) - set(number) == {"Kernenergie", "Pumpspeicher", "Sonstige Erneuerbare", "Sonstige Konventionelle"}
+    assert {mapping.get(c, "Sonstige") for c in carriers} == set(GROUPS)
 
 
 def test_gruppe_sorts_by_the_hidden_sort_key_in_stack_order(model):
@@ -327,10 +376,13 @@ def test_gruppe_sorts_by_the_hidden_sort_key_in_stack_order(model):
     assert gruppe.sort_by_column == "Gruppe Sortierung"
     assert key.is_hidden and key.data_type == "int64" and key.format_string == "0" and key.summarize_by == "none"
     assert key.expression, "Gruppe Sortierung is a calculated column"
-    subject, pairs, default = parse_switch(key.expression)
-    assert subject == "'Energieträger'[Gruppe]"
-    by_number = sorted(pairs, key=lambda p: p[1])
-    assert [n for _, n in by_number] == list(range(1, len(GROUPS)))
-    assert [group for group, _ in by_number] + ["Sonstige"] == GROUPS and default == len(GROUPS)  # Sonstige is the default, 8
-    _, group_pairs, group_default = parse_switch(gruppe.expression)
-    assert {g for _, g in group_pairs} | {group_default} == set(GROUPS)
+    # Gruppe names the numbers 1..7 in stack order; Sonstige is the default of both: number 8, name Sonstige
+    subject, pairs, default = parse_switch(gruppe.expression)
+    assert subject == "'Energieträger'[Gruppe Sortierung]"
+    by_number = sorted(pairs)
+    assert [n for n, _ in by_number] == list(range(1, len(GROUPS)))
+    assert [g for _, g in by_number] + [default] == GROUPS
+    _, key_pairs, key_default = parse_switch(key.expression)
+    assert key_default == len(GROUPS) and len(GROUPS) not in dict(pairs)
+    # every number the key hands out has a name, so no carrier lands in Sonstige by accident
+    assert {n for _, n in key_pairs} == set(range(1, len(GROUPS)))

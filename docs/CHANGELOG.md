@@ -19,6 +19,9 @@ Desktop, die Screenshots und der Tag; das Datum setzt der Tag.
   Achsen folgen weiter der Sprache des Betrachters.
 - Korrekturen nach der Desktop-Sitzung (1cc1416): Tabellennamen mit Umlauten sind in DAX gequotet (Desktop lehnte `Energieträger[...]` ab), Zeit- und
   Klassenachsen sortieren aufsteigend, `desktop_port()` liest die BOM-lose Portdatei des Store-Builds.
+- Korrektur nach dem Öffnen am 2026-10-26: `Gruppe Sortierung` las `Gruppe`, während `Gruppe` nach `Gruppe Sortierung` sortiert; Desktop meldete
+  beim Laden jeder Tabelle eine zirkuläre Abhängigkeit. Jetzt liest die Sortierspalte den Energieträger, und `Gruppe` benennt ihre Nummern. Ein
+  neuer Test sucht im Modell Zyklen über Formeln und Sortierspalten.
 - Abgleich und Zeilensicherheit am 2026-10-26: Die neun Abgleichswerte R1 bis R9 stimmen mit SQL überein; die Rolle `Landesbehörde BW` zeigt nur
   Baden-Württemberg.
 - Power-BI-Projekt als PBIP (`powerbi/EnergiewendeMonitor.pbip`): Semantikmodell als TMDL, Bericht als PBIR, beide code-first
