@@ -155,24 +155,49 @@ fixture seed. Run `ewmonitor load` again before a Power BI refresh.
 The Power BI project is committed as a PBIP: `powerbi/EnergiewendeMonitor.pbip` with the semantic model as TMDL
 (`EnergiewendeMonitor.SemanticModel/`) and the report in PBIR format (`EnergiewendeMonitor.Report/`). Both are generated and
 linted code-first (`tools/pbi/`, `tests/pbi/`); Desktop reads the files directly. The model has 14 tables (four facts,
-`Last Stunde`, `Preisphasen`, `Datenlücken`, five dimensions, `Kennzahlen`, `Kennzahl-Auswahl`), 26 measures with English
-descriptions, one role (`Landesbehörde BW`, row-level security on `Bundesland[Kürzel] = "BW"`) and the `Energiewende` theme. Every
-measure is described in [docs/kpi-glossar.md](docs/kpi-glossar.md) (German) with formula, unit, source and notes.
+`Last Stunde`, `Preisphasen`, `Datenlücken`, five dimensions, `Kennzahlen`, `Kennzahl-Auswahl`), 35 measures with English
+descriptions, one role (`Landesbehörde BW`, row-level security on `Bundesland[Kürzel] = "BW"`) and the dark `Energiewende Leitstand`
+theme. Every measure is described in [docs/kpi-glossar.md](docs/kpi-glossar.md) (German) with formula, unit, source and notes.
+
+**Design (Leitstand).** The report is designed as a dark control room (owner decision of 2026-10-26):
+
+- **Navigation and header.** Every page has a side panel on the left (200 pixels: brand tile, five buttons, sources and author) and the page
+  title with the data stand on top (`Datenstand Kopfzeile`: SMARD date and MaStR month). The button of the current page is highlighted. In
+  Power BI Desktop the buttons only fire with Ctrl+click.
+- **KPI row in German number format.** The five tiles on Überblick show text from the `KPI …` measures (for example `439,3 TWh`,
+  `89,32 €/MWh`, `303,7 GW`). Visuals format numbers by the viewer's language setting; on the owner's Desktop one page showed `92.87 €` next to
+  `1.791`. The KPI measures therefore set the `de-DE` locale explicitly and append the unit. They are display-only: no calculation uses them, and
+  tables and axes still follow the viewer's setting.
+- **Gauges with the legal source.** Three gauges on Überblick show the installed capacity at the end of the selected period as a share of the
+  statutory 2030 value: photovoltaics 215 GW (§ 4 No. 3 letter d EEG 2023), onshore wind 115 GW (§ 4 No. 1 letter d EEG 2023) and offshore wind at
+  least 30 GW (§ 1 para. 2 WindSeeG); the law texts were read on gesetze-im-internet.de on 2026-10-26. The capacity comes from the
+  Marktstammdatenregister (net rated capacity, limits in the glossary) and can differ from the Bundesnetzagentur's official target monitoring.
+  The reference is the 2030 value, not the yearly expansion path. Under a federal-state selection and the RLS role the gauges are blank, because the
+  targets are national.
+- **Carrier groups.** A chart keeps at most eight colours apart, twelve carriers it does not. The calculated column `Gruppe` folds them into
+  seven colour groups (Biomasse, Wind, Photovoltaik, Wasserkraft, Erdgas, Steinkohle, Braunkohle) and `Sonstige` (Kernenergie, Pumpspeicher,
+  Sonstige Erneuerbare, Sonstige Konventionelle). The three charts by carrier colour and stack by group; the per-carrier values stay in the
+  tables and slicers. According to the design spec the palette was checked on 2026-10-26 on the tile surface `#102233` with the dataviz
+  method's validator (worst adjacent colour-vision ΔE 8.4, normal-vision ΔE 19.8, all contrasts at least 3:1).
+- **Dark theme.** Page background, tiles with a hairline border and a faint glow, text in three grades. The colours are named values in
+  `tools/pbi/pages.json` (`tokens`, `palette`); the theme `energiewende.json` repeats the shared values and a test keeps them equal. The look in
+  Power BI Desktop is checked in the validation session.
 
 The five pages (16:9, 1280 by 720, German labels):
 
-1. **Überblick** (overview): slicers for year, month, measure selection and category; five KPI cards (generation, renewables share,
-   day-ahead average, negative price hours, installed capacity), generation per month by energy source, renewables share against the
-   previous year and a line chart switched by the `Kennzahl-Auswahl` field parameter. Two bookmarks, `Erneuerbar` and `Konventionell`, filter the
+1. **Überblick** (overview): slicers for year, month, measure selection and category; five KPI tiles (generation, renewables share,
+   day-ahead average, negative price hours, installed capacity), generation per month by carrier group, renewables share against the
+   previous year (current year blue, previous year grey), a line chart switched by the `Kennzahl-Auswahl` field parameter and the three gauges
+   for the 2030 targets. Two bookmarks, `Erneuerbar` and `Konventionell`, filter the
    category; because bookmarks are unreachable in a published report, the same filter is also a `Kategorie` slicer. A right-click on a month drills
    through to Erzeugung & Last.
 2. **Erzeugung & Last** (generation and load): grid load, residual load and renewable generation per day, the daily profile by time of day, a heat
-   map of average residual load by time of day and weekday, and generation by source; the drillthrough target.
+   map of average residual load by time of day and weekday, and generation by carrier group; the drillthrough target.
 3. **Preise** (prices): histogram of hourly prices in 10 EUR/MWh classes, negative price hours per month, day-ahead price against residual load
    per hour and the ten longest negative price phases (the table has a TopN 10 filter).
-4. **Ausbau** (expansion): installed capacity by federal state, additions by month and source, full-load hours by source and year (meaning and
+4. **Ausbau** (expansion): installed capacity by federal state, additions by month and carrier group, full-load hours by carrier and year (meaning and
    limits: section [Capacity (MaStR)](#capacity-mastr) and the glossary).
-5. **Datenqualität & Quellen** (data quality and sources): data as of for SMARD and MaStR, row count, missing quarter-hours per month, sources and licences.
+5. **Datenqualität & Quellen** (data quality and sources): data as of for SMARD and MaStR, row count, missing quarter-hours per month, sources and licences, and the project (two cards with links).
 
 ![Overview](docs/screenshots/01-ueberblick.png)
 ![Generation and load](docs/screenshots/02-erzeugung-last.png)

@@ -162,24 +162,50 @@ Das Power-BI-Projekt liegt als PBIP im Repository: `powerbi/EnergiewendeMonitor.
 (`EnergiewendeMonitor.SemanticModel/`) und dem Bericht im PBIR-Format (`EnergiewendeMonitor.Report/`). Beide werden
 code-first erzeugt und geprüft (`tools/pbi/`, `tests/pbi/`); Desktop liest die Dateien direkt. Das Modell hat 14 Tabellen
 (vier Fakten, `Last Stunde`, `Preisphasen`, `Datenlücken`, fünf Dimensionen, `Kennzahlen`, `Kennzahl-Auswahl`),
-26 Kennzahlen mit englischer Beschreibung, eine Rolle (`Landesbehörde BW`, Zeilensicherheit auf `Bundesland[Kürzel] = "BW"`) und das
-Thema `Energiewende`. Jede Kennzahl ist in [docs/kpi-glossar.md](docs/kpi-glossar.md) mit Formel, Einheit, Quelle und
+35 Kennzahlen mit englischer Beschreibung, eine Rolle (`Landesbehörde BW`, Zeilensicherheit auf `Bundesland[Kürzel] = "BW"`) und das
+dunkle Thema `Energiewende Leitstand`. Jede Kennzahl ist in [docs/kpi-glossar.md](docs/kpi-glossar.md) mit Formel, Einheit, Quelle und
 Hinweisen beschrieben.
+
+**Gestaltung (Leitstand).** Der Bericht ist als dunkle Leitwarte gestaltet (Entscheidung des Besitzers vom 2026-10-26):
+
+- **Navigation und Kopfzeile.** Jede Seite hat links eine Seitenleiste (200 Pixel: Markenkachel, fünf Schaltflächen, Quellen und Autor) und
+  oben den Seitentitel mit dem Datenstand (`Datenstand Kopfzeile`: SMARD-Datum und MaStR-Monat). Die Schaltfläche der aktuellen Seite ist
+  hervorgehoben. In Power BI Desktop lösen die Schaltflächen erst mit Strg+Klick aus.
+- **Kennzahlenzeile in deutschem Zahlenformat.** Die fünf Kacheln auf Überblick zeigen Text aus den Kennzahlen `KPI …` (zum Beispiel
+  `439,3 TWh`, `89,32 €/MWh`, `303,7 GW`). Visuals formatieren Zahlen nach der Spracheinstellung des Betrachters; auf dem Desktop des Besitzers stand
+  auf einer Seite `92.87 €` neben `1.791`. Die KPI-Kennzahlen setzen deshalb das Gebietsschema `de-DE` und hängen die Einheit an. Sie sind reine
+  Anzeige: Keine Berechnung nutzt sie, Tabellen und Achsen folgen weiter der Spracheinstellung.
+- **Messinstrumente mit Gesetzesquelle.** Drei Messinstrumente auf Überblick zeigen die installierte Leistung am Ende des gewählten Zeitraums
+  als Anteil des gesetzlichen Werts für 2030: Photovoltaik 215 GW (§ 4 Nr. 3 Buchst. d EEG 2023), Wind an Land 115 GW (§ 4 Nr. 1 Buchst. d
+  EEG 2023) und Wind auf See mindestens 30 GW (§ 1 Abs. 2 WindSeeG); die Gesetzestexte wurden am 2026-10-26 auf gesetze-im-internet.de gelesen.
+  Die Leistung stammt aus dem Marktstammdatenregister (Nettonennleistung, Einschränkungen im Glossar) und kann von der amtlichen
+  Zielüberwachung der Bundesnetzagentur abweichen. Bezug ist der Wert für 2030, nicht der jährliche Ausbaupfad. Unter einer
+  Bundesland-Auswahl und der RLS-Rolle sind die Messinstrumente leer, weil die Ziele bundesweit gelten.
+- **Energieträger-Gruppen.** Ein Diagramm hält höchstens acht Farben auseinander, zwölf Energieträger nicht. Die berechnete Spalte `Gruppe`
+  faltet sie in sieben Farbgruppen (Biomasse, Wind, Photovoltaik, Wasserkraft, Erdgas, Steinkohle, Braunkohle) und `Sonstige` (Kernenergie,
+  Pumpspeicher, Sonstige Erneuerbare, Sonstige Konventionelle). Die drei Diagramme nach Energieträger färben und stapeln nach Gruppe; der
+  Einzelwert je Energieträger bleibt in Tabellen und Slicern. Die Palette wurde laut Entwurfsspezifikation am 2026-10-26 auf dem Kachelgrund
+  `#102233` mit dem Farbprüfer der dataviz-Methode geprüft (schlechtester Abstand benachbarter Farben bei Farbfehlsichtigkeit ΔE 8,4, bei
+  normalem Sehen ΔE 19,8, alle Kontraste mindestens 3:1).
+- **Dunkles Thema.** Seitengrund, Kacheln mit Haarlinie und schwachem Schimmer, Schrift in drei Abstufungen. Die Farben stehen als benannte
+  Werte in `tools/pbi/pages.json` (`tokens`, `palette`); das Thema `energiewende.json` wiederholt die gemeinsamen Werte, und ein Test hält sie gleich.
+  Der Look in Power BI Desktop wird in der Validierungssitzung geprüft.
 
 Die fünf Seiten (16:9, 1280 mal 720, deutsche Beschriftung):
 
-1. **Überblick**: Filter für Jahr, Monat, Kennzahl-Auswahl und Kategorie; fünf Kennzahlenkarten (Erzeugung, EE-Anteil, Day-Ahead Ø,
-   negative Preisstunden, installierte Leistung), Erzeugung je Monat nach Energieträger, EE-Anteil gegen das Vorjahr und ein Liniendiagramm,
-   das der Feldparameter `Kennzahl-Auswahl` umschaltet. Zwei Lesezeichen, `Erneuerbar` und `Konventionell`, filtern die Kategorie; weil
+1. **Überblick**: Filter für Jahr, Monat, Kennzahl-Auswahl und Kategorie; fünf Kennzahlenkacheln (Erzeugung, EE-Anteil, Day-Ahead Ø,
+   negative Preisstunden, installierte Leistung), Erzeugung je Monat nach Energieträger-Gruppe, EE-Anteil gegen das Vorjahr (aktuelles Jahr blau,
+   Vorjahr grau), ein Liniendiagramm, das der Feldparameter `Kennzahl-Auswahl` umschaltet, und die drei Messinstrumente für die Ausbauziele 2030.
+   Zwei Lesezeichen, `Erneuerbar` und `Konventionell`, filtern die Kategorie; weil
    Lesezeichen in einem veröffentlichten Bericht nicht erreichbar sind, gibt es denselben Filter zusätzlich als Slicer
    `Kategorie`. Ein Rechtsklick auf einen Monat springt per Drillthrough zu Erzeugung & Last.
 2. **Erzeugung & Last**: Netzlast, Residuallast und erneuerbare Erzeugung je Tag, das Tagesprofil nach Uhrzeit, eine Heatmap der
-   mittleren Residuallast nach Tageszeit und Wochentag und die Erzeugung nach Energieträger; Zielseite des Drillthroughs.
+   mittleren Residuallast nach Tageszeit und Wochentag und die Erzeugung nach Energieträger-Gruppe; Zielseite des Drillthroughs.
 3. **Preise**: Histogramm der Stundenpreise in Klassen zu 10 EUR/MWh, negative Preisstunden je Monat, Day-Ahead-Preis gegen Residuallast
    je Stunde und die zehn längsten negativen Preisphasen (die Tabelle hat einen TopN-10-Filter).
-4. **Ausbau**: installierte Leistung nach Bundesland, Zubau nach Monat und Energieträger, Volllaststunden nach Energieträger und Jahr
+4. **Ausbau**: installierte Leistung nach Bundesland, Zubau nach Monat und Energieträger-Gruppe, Volllaststunden nach Energieträger und Jahr
    (Aussagekraft und Grenzen: Abschnitt [Kapazitäten (MaStR)](#kapazitäten-mastr) und das Glossar).
-5. **Datenqualität & Quellen**: Datenstand SMARD und MaStR, Zeilenzahl, fehlende Viertelstunden je Monat, Quellen und Lizenzen.
+5. **Datenqualität & Quellen**: Datenstand SMARD und MaStR, Zeilenzahl, fehlende Viertelstunden je Monat, Quellen und Lizenzen sowie das Projekt (zwei Karten mit Verweisen).
 
 ![Überblick](docs/screenshots/01-ueberblick.png)
 ![Erzeugung & Last](docs/screenshots/02-erzeugung-last.png)

@@ -1,8 +1,10 @@
 """Capture minimal visual templates from Microsoft's open-source PBIR reports (microsoft/fabric-toolbox, MIT).
 
 Each template keeps the visualType and the generic formatting objects of one real Desktop-written visual.json;
-query state, filters, series-specific formatting (objects with a selector) and the title are removed, and
-$schema is set to the pinned visualContainer version. The bookmark template is built from the pinned schema.
+query state, filters, series-specific formatting (objects with a data or metadata selector; visual-state selectors
+such as a button's default and hover stay), objects bound to fields of the source model, the title and everything
+that points into the source report (its canvas tooltip page, the page a button opens) are removed, and $schema is set
+to the pinned visualContainer version. The bookmark template is built from the pinned schema.
 
 Usage: uv run python tools/pbi/capture_templates.py [--from <local fabric-toolbox checkout>]
 """

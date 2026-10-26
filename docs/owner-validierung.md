@@ -40,27 +40,35 @@ darf nichts ausgeben, sonst weicht der Bericht von `tools/pbi/pages.json` ab.
    korrigiert und neu abgeglichen; Screenshots entstehen erst danach.
 7. Berichtsansicht, alle fünf Seiten öffnen (`Überblick`, `Erzeugung & Last`, `Preise`, `Ausbau`, `Datenqualität & Quellen`). Kein Visual darf
    "Visual kann nicht angezeigt werden" oder ein rotes Fehlersymbol zeigen; sonst "Details anzeigen" und den Text an den Agenten geben.
-   Die Visuals tragen das Thema `Energiewende` (kein rotes Säulendiagramm, kein mintfarbener Hintergrund auf der Seite Preise). Dann prüfen:
+   Die Seiten tragen das dunkle Thema `Energiewende Leitstand` mit Seitenleiste links und Kopfzeile oben (kein rotes Säulendiagramm, kein
+   mintfarbener Hintergrund auf der Seite Preise). Dann prüfen:
+   - Navigation und Kopfzeile: Die fünf Schaltflächen der Seitenleiste wechseln die Seite (in Desktop mit Strg+Klick); die Schaltfläche der aktuellen
+     Seite ist hervorgehoben. Die Kopfzeile zeigt den Seitentitel und rechts `Datenstand: SMARD TT.MM.JJJJ · MaStR Monat JJJJ`.
+   - Kennzahlenkacheln auf Überblick: deutsches Zahlenformat mit Einheit (zum Beispiel `439,3 TWh`, `89,32 €/MWh`, `303,7 GW` bei Jahr 2025
+     beziehungsweise ohne Filter), nirgends `92.87 €` neben `1.791`.
+   - Messinstrumente auf Überblick: Photovoltaik, Wind an Land und Wind auf See zeigen den Anteil am Ziel 2030 (ohne Datumsfilter laut Abfrage vom
+     2026-10-26 etwa 54 %, 62 % und 39 %); unter der RLS-Rolle (Punkt "RLS" unten) sind sie leer.
    - Feldparameter: Der Slicer `Kennzahl-Auswahl` ändert das Liniendiagramm unten rechts auf Überblick; alle vier Einträge zeigen eine Linie
      (nicht leer, nicht "Anzahl von ..."). Fallback: Feld im Bereich Y entfernen, den Parameter `Kennzahl-Auswahl` hineinziehen, speichern
      und die Form dem Agenten zeigen.
-   - Energieträgerfarben: Die drei gestapelten Diagramme (Überblick, Erzeugung & Last, Ausbau) zeigen je Energieträger die Farbe aus der Dimension
-     (zum Beispiel Photovoltaik gelb, Wind Offshore dunkelblau). Fallback: Format, Datenfarben, je Energieträger von Hand. Nicht "fx": das
+   - Energieträgerfarben: Die drei gestapelten Diagramme (Überblick, Erzeugung & Last, Ausbau) zeigen je Gruppe die Farbe der Palette aus
+     `tools/pbi/pages.json` (Biomasse grün, Wind blau, Photovoltaik gelb, Wasserkraft türkisgrün, Erdgas orange, Steinkohle violett, Braunkohle rot,
+     Sonstige grau); die Legende hat acht Einträge in dieser Reihenfolge. Fallback: Format, Datenfarben, je Gruppe von Hand. Nicht "fx": das
      bietet Desktop mit Legende und bei Flächendiagrammen nicht an.
    - Der Slicer `Kategorie` (Überblick) ist horizontal. Fallback: Format, Slicer-Einstellungen, Ausrichtung, Horizontal.
    - Lesezeichen: Slicer `Kategorie` zurücksetzen, dann Ansicht, Lesezeichen, `Erneuerbar` und `Konventionell` wählen. Lesezeichen erfassen den
      Seitenfilter, nicht den Zustand des Slicers; steht der Slicer auf Konventionell und wird `Erneuerbar` angewendet, ist die Seite leer. Fallback:
      beide Lesezeichen in Desktop neu aufnehmen (Slicer leer, Filter setzen, Lesezeichen aktualisieren).
-   - EE-Anteil: Slicer `Kategorie` auf Konventionell: die Karte EE-Anteil zeigt 0 % (nie mehr als 100 %), auf Erneuerbar 100 %.
+   - EE-Anteil: Slicer `Kategorie` auf Konventionell: die Kachel EE-Anteil zeigt `0,0 %` (nie mehr als 100 %), auf Erneuerbar `100,0 %`.
    - Drillthrough: auf Überblick Rechtsklick auf einen Monat im Flächendiagramm, Drillthrough, Erzeugung & Last. Der Monatsfilter bleibt gesetzt;
      zurück geht es über die Seitenregister.
    - Preise: Die Tabelle "Längste negative Preisphasen" zeigt genau zehn Zeilen (je Jahr können bei gleichem Rang mehr erscheinen; Fallback:
      Filterbereich, Erste N, 10, nach Stunden). Das Histogramm hat die Klasse -10. Die Diagrammfarben folgen dem Thema.
-   - Heatmap auf Erzeugung & Last: Die Zellwerte sind auf dem dunklen Blau (`#1F5FA8`) lesbar. Fallback: Format, Zellelemente, Schriftfarbe.
+   - Heatmap auf Erzeugung & Last: Die Zellwerte sind auf dem hellsten Blau der Skala (`#256ABF`) lesbar. Fallback: Format, Zellelemente, Schriftfarbe.
    - Ausbau: Ein Klick auf einen Balken (Bundesland) filtert die Tabelle "Volllaststunden nach Energieträger und Jahr": die Spalte Volllaststunden ist
      dann leer, nie über 8.760 Stunden. Ohne Auswahl liegen die Werte unter 8.760 Stunden (Wind Onshore 2025: 1.634).
-   - RLS: Modellierung, Anzeigen als, `Landesbehörde BW` ankreuzen, OK. Ausbau zeigt nur Baden-Württemberg, Volllaststunden sind leer;
-     danach "Anzeige beenden".
+   - RLS: Modellierung, Anzeigen als, `Landesbehörde BW` ankreuzen, OK. Ausbau zeigt nur Baden-Württemberg, Volllaststunden sind leer, die
+     Messinstrumente auf Überblick sind leer; danach "Anzeige beenden".
 8. Screenshots zuletzt, nach `docs/screenshots/SHOTLIST.md`: Fenster maximiert, jede Seite 1280 px breit (Win+Shift+S, Fenster-Ausschnitt), als PNG in
    `E:\GITGUB\energiewende-monitor\docs\screenshots\` mit den dort genannten Dateinamen. Slicer und Filter vorher zurücksetzen.
 9. Datei, Speichern (Strg+S), Desktop schließen. Desktop normalisiert beim ersten Speichern Dateien: CRLF-Zeilenenden, Reihenfolge der

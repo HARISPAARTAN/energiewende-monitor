@@ -1,23 +1,39 @@
 # Changelog
 
-## v0.3.0 (2026-10-25) Meilenstein 3 Modell und Bericht
+## v0.3.0 (unreleased) Meilenstein 3 Modell und Bericht
 
-Stand: Dateien und Prüfungen sind fertig; die erste Validierung in Power BI Desktop (Aktualisieren, Seiten, Screenshots,
-Abgleich der DAX-Seite) steht noch aus, danach folgt der Tag.
+Stand: Dateien und Prüfungen sind fertig. In Power BI Desktop sind am 2026-10-26 die Aktualisierung, der Abgleich (9 von 9 Kennzahlen
+innerhalb der Toleranz) und die Zeilensicherheit geprüft (Glossar, Abschnitt Abgleich). Offen sind der Look des Leitstand-Berichts in
+Desktop, die Screenshots und der Tag; das Datum setzt der Tag.
 
+- Leitstand-Design: dunkler Bericht mit Seitenleiste (Marke, fünf Schaltflächen, Quellen) und Kopfzeile mit Datenstand auf jeder Seite,
+  Kennzahlenzeile, Kacheln mit Haarlinie und schwachem Schimmer und dem Thema `Energiewende Leitstand`. Die Farben sind benannte Werte
+  (`tokens`, `palette`) in `tools/pbi/pages.json`; neue Vorlagen für Messinstrument (`gauge`) und Schaltfläche (`actionButton`), beim
+  Erfassen frei von Verweisen auf den Quellbericht.
+- Energieträger-Gruppen: berechnete Spalte `Gruppe` (sieben Farbgruppen und `Sonstige`) mit ausgeblendeter Sortierspalte; die drei Diagramme nach
+  Energieträger färben nach Gruppe, der Bericht liest die Farben nicht mehr aus dem Seed.
+- Zielmessinstrumente: drei Kennzahlen `Zielerreichung …` (Photovoltaik 215 GW, Wind an Land 115 GW, Wind auf See mindestens 30 GW im Jahr 2030;
+  § 4 EEG 2023 und § 1 WindSeeG, Gesetzestexte am 2026-10-26 gelesen) und drei Messinstrumente auf Überblick; bundesweit, leer unter einer
+  Bundesland-Auswahl und unter der RLS-Rolle.
+- Deutsche Zahlen auf den Kacheln: fünf Anzeigekennzahlen `KPI …` mit `FORMAT(…, "de-DE")` und Einheit, dazu `Datenstand Kopfzeile`; Tabellen und
+  Achsen folgen weiter der Sprache des Betrachters.
+- Korrekturen nach der Desktop-Sitzung (1cc1416): Tabellennamen mit Umlauten sind in DAX gequotet (Desktop lehnte `Energieträger[...]` ab), Zeit- und
+  Klassenachsen sortieren aufsteigend, `desktop_port()` liest die BOM-lose Portdatei des Store-Builds.
+- Abgleich und Zeilensicherheit am 2026-10-26: Die neun Abgleichswerte R1 bis R9 stimmen mit SQL überein; die Rolle `Landesbehörde BW` zeigt nur
+  Baden-Württemberg.
 - Power-BI-Projekt als PBIP (`powerbi/EnergiewendeMonitor.pbip`): Semantikmodell als TMDL, Bericht als PBIR, beide code-first
   erzeugt (`tools/pbi/`). Schemas von Microsoft sind vendort (`tools/pbi/schemas/`, `schema_versions.json`), die Visualvorlagen
   stammen aus microsoft/fabric-toolbox (MIT, `tools/pbi/templates/`). Quelle des Modells: `Sql.Database("127.0.0.1,1433",
   "energiewende")` auf den `rpt`-Ansichten, Importmodus, SQL-Anmeldung nur in Desktop.
 - Modell: 14 Tabellen (Erzeugung, Last, Preis, Kapazität, `Last Stunde`, `Preisphasen`, `Datenlücken`, Datum als Datumstabelle, Zeit,
-  Energieträger, Region, Bundesland, `Kennzahlen`, Feldparameter `Kennzahl-Auswahl`), 26 Kennzahlen mit englischer Beschreibung und
-  Formatzeichenfolge, Rolle `Landesbehörde BW`, Kultur de-DE. Berechnete Spalten `Preis Klasse (10 €)` (Abrunden mit INT, BLANK-sicher)
-  und `Tageszeit Nr`.
+  Energieträger, Region, Bundesland, `Kennzahlen`, Feldparameter `Kennzahl-Auswahl`), 35 Kennzahlen mit englischer Beschreibung und
+  Formatzeichenfolge, Rolle `Landesbehörde BW`, Kultur de-DE. Berechnete Spalten `Preis Klasse (10 €)` (Abrunden mit INT, BLANK-sicher),
+  `Tageszeit Nr`, `Gruppe` und `Gruppe Sortierung`.
 - Kapazitätskennzahlen: `Installierte Leistung (MW)` nimmt den Bestand des letzten Monats mit Daten am oder vor dem Periodenende;
   `Volllaststunden (h)` teilt die Erzeugung durch den durchschnittlichen Monatsendbestand der Monate mit Erzeugungsdaten. Netzreserve
   und Notstromaggregate bleiben im Bestand und sind im Glossar vermerkt. Dazu `Preisstunden` und `Datenstand MaStR`.
 - Bericht: fünf Seiten (`Überblick`, `Erzeugung & Last`, `Preise`, `Ausbau`, `Datenqualität & Quellen`, 1280 mal 720), Thema
-  `Energiewende`, Drillthrough von Überblick nach Erzeugung & Last, Lesezeichen `Erneuerbar` und `Konventionell` sowie ein Slicer
+  `Energiewende Leitstand`, Drillthrough von Überblick nach Erzeugung & Last, Lesezeichen `Erneuerbar` und `Konventionell` sowie ein Slicer
   `Kategorie` (Lesezeichen sind im veröffentlichten Bericht nicht erreichbar), TopN-10-Filter auf den Preisphasen,
   Feldparameter-Liniendiagramm, Heatmap, Histogramm der Preisklassen.
 - Tests `tests/pbi/` (offline, Marker `pbi`): Schemaprüfung aller TMDL- und PBIR-Dateien, Lint von Modell, Kennzahlen, Beziehungen,
@@ -27,7 +43,7 @@ Abgleich der DAX-Seite) steht noch aus, danach folgt der Tag.
   `tests/pbi/test_reconcile.py` (Marker `live`, überspringt ohne geöffnetes Desktop oder ADOMD), `tools/pbi/fetch_adomd.py`
   für den ADOMD-Client ohne Systeminstallation. Die SQL-Werte stehen mit Datum in `docs/kpi-glossar.md`.
 - `tools/pbi/make_public_variant.py`: Kopie des Projekts ohne Rolle als `EnergiewendeMonitor (öffentlich)` für "Im Web veröffentlichen".
-- `docs/kpi-glossar.md`: Definition, Formel, Einheit, Quelle und Hinweise für alle 26 Kennzahlen; `docs/screenshots/SHOTLIST.md`, `docs/owner-validierung.md` (Klickfolge und Fehlerschleife der Desktop-Sitzung).
+- `docs/kpi-glossar.md`: Definition, Formel, Einheit, Quelle und Hinweise für alle 35 Kennzahlen, die Anzeigetexte und die Energieträger-Gruppen; `docs/screenshots/SHOTLIST.md`, `docs/owner-validierung.md` (Klickfolge und Fehlerschleife der Desktop-Sitzung).
 - README und README.en: Abschnitte Bericht und Entwicklung (`uv sync --extra mastr`). CI: `lint-and-unit` führt zusätzlich
   `pytest tests/pbi -m "pbi and not live"` aus. Version 0.3.0 (`pyproject.toml`, `ewmonitor.__version__`).
 
