@@ -264,7 +264,7 @@ table Kennzahlen
 		summarizeBy: none
 		sourceColumn: [Value]
 
-		annotation SummarizationSetBy = Automatic
+		annotation SummarizationSetBy = User
 
 	partition Kennzahlen = calculated
 		mode: import

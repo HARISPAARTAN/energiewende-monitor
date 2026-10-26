@@ -18,6 +18,7 @@ class Column:
     sort_by_column: str | None = None
     expression: str | None = None  # DAX of a calculated column (`column Name = <DAX>`); None for a column read from the source
     description: str | None = None  # the /// lines above the declaration
+    annotations: dict[str, str] = field(default_factory=dict)  # `annotation Name = Value` of the column itself
 
 
 @dataclass
@@ -126,6 +127,12 @@ def _prop(body: list[str], key: str) -> str | None:
     return None
 
 
+def _annotations(body: list[str]) -> dict[str, str]:
+    """The object's own annotations (first indent level only), value as written."""
+    found = (re.match(r"annotation (\S+?) = (.*)$", line.strip()) for line in body if not line.startswith("\t"))
+    return {m.group(1): m.group(2).strip() for m in found if m}
+
+
 def _partition_source(body: list[str]) -> str:
     """The `source =` expression of a partition (body lines are relative: properties at 0 tabs, expression deeper)."""
     out: list[str] = []
@@ -194,6 +201,7 @@ def load_model(definition_dir: Path) -> Model:
                     _unquote(_prop(cbody, "sortByColumn") or "") or None,
                     _column_expression(_cfirst, cbody),
                     descs.get(cname),
+                    _annotations(cbody),
                 )
             for hname, _hfirst, hbody, _ in _blocks(inner, "hierarchy"):
                 t.hierarchies[hname] = [

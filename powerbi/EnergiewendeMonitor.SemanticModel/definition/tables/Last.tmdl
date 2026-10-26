@@ -10,7 +10,7 @@ table Last
 		summarizeBy: none
 		sourceColumn: region_key
 
-		annotation SummarizationSetBy = Automatic
+		annotation SummarizationSetBy = User
 
 	column 'Zeitstempel UTC'
 		dataType: dateTime
@@ -30,7 +30,7 @@ table Last
 		summarizeBy: none
 		sourceColumn: datum_key
 
-		annotation SummarizationSetBy = Automatic
+		annotation SummarizationSetBy = User
 
 	column 'Zeit Key'
 		dataType: int64
@@ -40,7 +40,7 @@ table Last
 		summarizeBy: none
 		sourceColumn: zeit_key
 
-		annotation SummarizationSetBy = Automatic
+		annotation SummarizationSetBy = User
 
 	column 'Auflösung (min)'
 		dataType: int64
@@ -50,7 +50,7 @@ table Last
 		summarizeBy: none
 		sourceColumn: aufloesung_min
 
-		annotation SummarizationSetBy = Automatic
+		annotation SummarizationSetBy = User
 
 	column 'Netzlast MWh'
 		dataType: double

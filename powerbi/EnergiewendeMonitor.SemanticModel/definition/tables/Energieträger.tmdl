@@ -10,7 +10,7 @@ table Energieträger
 		summarizeBy: none
 		sourceColumn: energietraeger_key
 
-		annotation SummarizationSetBy = Automatic
+		annotation SummarizationSetBy = User
 
 	column SMARD-Filter
 		dataType: int64
@@ -20,7 +20,7 @@ table Energieträger
 		summarizeBy: none
 		sourceColumn: smard_filter_id
 
-		annotation SummarizationSetBy = Automatic
+		annotation SummarizationSetBy = User
 
 	column Energieträger
 		dataType: string
@@ -64,7 +64,7 @@ table Energieträger
 		summarizeBy: none
 		sourceColumn: sortierung
 
-		annotation SummarizationSetBy = Automatic
+		annotation SummarizationSetBy = User
 
 	column Farbe
 		dataType: string
@@ -91,7 +91,7 @@ table Energieträger
 		lineageTag: e0605793-f6d6-514a-8483-19354dfdf768
 		summarizeBy: none
 
-		annotation SummarizationSetBy = Automatic
+		annotation SummarizationSetBy = User
 
 	partition Energieträger = m
 		mode: import

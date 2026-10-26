@@ -10,7 +10,7 @@ table Zeit
 		summarizeBy: none
 		sourceColumn: zeit_key
 
-		annotation SummarizationSetBy = Automatic
+		annotation SummarizationSetBy = User
 
 	column Uhrzeit
 		dataType: dateTime
@@ -30,7 +30,7 @@ table Zeit
 		summarizeBy: none
 		sourceColumn: stunde
 
-		annotation SummarizationSetBy = Automatic
+		annotation SummarizationSetBy = User
 
 	column Viertelstunde
 		dataType: int64
@@ -39,7 +39,7 @@ table Zeit
 		summarizeBy: none
 		sourceColumn: viertelstunde
 
-		annotation SummarizationSetBy = Automatic
+		annotation SummarizationSetBy = User
 
 	column Tageszeit
 		dataType: string
@@ -67,7 +67,7 @@ table Zeit
 		lineageTag: 15830505-abc9-5069-80ad-00e6cf90d588
 		summarizeBy: none
 
-		annotation SummarizationSetBy = Automatic
+		annotation SummarizationSetBy = User
 
 	partition Zeit = m
 		mode: import

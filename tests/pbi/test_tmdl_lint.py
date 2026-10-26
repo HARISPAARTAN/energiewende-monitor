@@ -131,6 +131,27 @@ def test_every_key_column_is_hidden_and_not_summarized(model):
                 assert col.summarize_by == "none", (tname, col.name)
 
 
+NUMERIC = ("int64", "double", "decimal")
+NOT_ADDITIVE = re.compile(r"€/MWh|bestand", re.IGNORECASE)  # prices and stock levels: a sum over hours, months or carriers means nothing
+
+
+def test_prices_and_stock_levels_are_not_summed_and_desktop_keeps_it(model):
+    # Desktop recomputes summarizeBy when it re-types a column marked SummarizationSetBy = Automatic: on the first save it turned
+    # the prices and stock levels from none to sum (decimal -> double). A deliberate none on a number is therefore marked User,
+    # the value Desktop writes for a choice made by hand.
+    matched = []
+    for tname, t in model.tables.items():
+        for col in t.columns.values():
+            if col.data_type not in NUMERIC:
+                continue
+            if NOT_ADDITIVE.search(col.name):
+                matched.append(f"{tname}.{col.name}")
+                assert col.summarize_by == "none", (tname, col.name)
+            if col.summarize_by == "none":
+                assert col.annotations.get("SummarizationSetBy") == "User", (tname, col.name, col.annotations)
+    assert len(matched) == 8, matched  # Day-Ahead in Preis and Last Stunde, Min and Ø in Preisphasen, four stock columns
+
+
 def test_time_column_format_is_clock_time(model):
     assert model.tables["Zeit"].columns["Uhrzeit"].format_string == "HH:mm"
     assert model.tables["Datum"].columns["Datum"].format_string == "dd.MM.yyyy"

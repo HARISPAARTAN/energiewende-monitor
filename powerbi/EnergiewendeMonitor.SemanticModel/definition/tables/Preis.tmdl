@@ -10,7 +10,7 @@ table Preis
 		summarizeBy: none
 		sourceColumn: region_key
 
-		annotation SummarizationSetBy = Automatic
+		annotation SummarizationSetBy = User
 
 	column 'Zeitstempel UTC'
 		dataType: dateTime
@@ -30,7 +30,7 @@ table Preis
 		summarizeBy: none
 		sourceColumn: datum_key
 
-		annotation SummarizationSetBy = Automatic
+		annotation SummarizationSetBy = User
 
 	column 'Zeit Key'
 		dataType: int64
@@ -40,16 +40,16 @@ table Preis
 		summarizeBy: none
 		sourceColumn: zeit_key
 
-		annotation SummarizationSetBy = Automatic
+		annotation SummarizationSetBy = User
 
 	column 'Day-Ahead €/MWh'
 		dataType: double
 		isHidden
 		lineageTag: 198784df-0eff-5ca9-9e1a-ed2ab81e506f
-		summarizeBy: sum
+		summarizeBy: none
 		sourceColumn: day_ahead_eur_mwh
 
-		annotation SummarizationSetBy = Automatic
+		annotation SummarizationSetBy = User
 
 		annotation PBI_FormatHint = {"isGeneralNumber":true}
 
@@ -61,7 +61,7 @@ table Preis
 		summarizeBy: none
 		sortByColumn: 'Preis Klasse Sortierung'
 
-		annotation SummarizationSetBy = Automatic
+		annotation SummarizationSetBy = User
 
 	/// Numeric sort key of the price bin.
 	column 'Preis Klasse Sortierung' = IF(ISBLANK(Preis[Day-Ahead €/MWh]), BLANK(), INT(Preis[Day-Ahead €/MWh] / 10) * 10)
@@ -71,7 +71,7 @@ table Preis
 		lineageTag: 56863319-d4f5-5aab-ac2d-05b8b9f940fa
 		summarizeBy: none
 
-		annotation SummarizationSetBy = Automatic
+		annotation SummarizationSetBy = User
 
 	partition Preis = m
 		mode: import

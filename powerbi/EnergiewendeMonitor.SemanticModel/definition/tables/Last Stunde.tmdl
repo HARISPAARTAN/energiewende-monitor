@@ -10,7 +10,7 @@ table 'Last Stunde'
 		summarizeBy: none
 		sourceColumn: region_key
 
-		annotation SummarizationSetBy = Automatic
+		annotation SummarizationSetBy = User
 
 	column 'Stunde UTC'
 		dataType: dateTime
@@ -29,7 +29,7 @@ table 'Last Stunde'
 		summarizeBy: none
 		sourceColumn: datum_key
 
-		annotation SummarizationSetBy = Automatic
+		annotation SummarizationSetBy = User
 
 	column 'Zeit Key'
 		dataType: int64
@@ -39,15 +39,15 @@ table 'Last Stunde'
 		summarizeBy: none
 		sourceColumn: zeit_key
 
-		annotation SummarizationSetBy = Automatic
+		annotation SummarizationSetBy = User
 
 	column 'Day-Ahead €/MWh'
 		dataType: double
 		lineageTag: 54f7f43c-6081-5dbb-a517-3c935980923b
-		summarizeBy: sum
+		summarizeBy: none
 		sourceColumn: day_ahead_eur_mwh
 
-		annotation SummarizationSetBy = Automatic
+		annotation SummarizationSetBy = User
 
 		annotation PBI_FormatHint = {"isGeneralNumber":true}
 

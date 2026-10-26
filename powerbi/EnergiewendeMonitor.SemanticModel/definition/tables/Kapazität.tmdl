@@ -10,7 +10,7 @@ table Kapazität
 		summarizeBy: none
 		sourceColumn: datum_key
 
-		annotation SummarizationSetBy = Automatic
+		annotation SummarizationSetBy = User
 
 	column Jahr-Monat
 		dataType: string
@@ -28,7 +28,7 @@ table Kapazität
 		summarizeBy: none
 		sourceColumn: bundesland_key
 
-		annotation SummarizationSetBy = Automatic
+		annotation SummarizationSetBy = User
 
 	column 'Energieträger Key'
 		dataType: int64
@@ -38,7 +38,7 @@ table Kapazität
 		summarizeBy: none
 		sourceColumn: energietraeger_key
 
-		annotation SummarizationSetBy = Automatic
+		annotation SummarizationSetBy = User
 
 	column 'Zubau MW'
 		dataType: double
@@ -86,10 +86,10 @@ table Kapazität
 		dataType: double
 		isHidden
 		lineageTag: 786e2de2-32c3-5859-8f6e-9bcabd626d81
-		summarizeBy: sum
+		summarizeBy: none
 		sourceColumn: anfangsbestand_mw
 
-		annotation SummarizationSetBy = Automatic
+		annotation SummarizationSetBy = User
 
 		annotation PBI_FormatHint = {"isGeneralNumber":true}
 
@@ -101,15 +101,15 @@ table Kapazität
 		summarizeBy: none
 		sourceColumn: anfangsbestand_anzahl
 
-		annotation SummarizationSetBy = Automatic
+		annotation SummarizationSetBy = User
 
 	column 'Bestand MW'
 		dataType: double
 		lineageTag: 67099d23-0bad-5b7e-9cf1-92d806252719
-		summarizeBy: sum
+		summarizeBy: none
 		sourceColumn: bestand_mw
 
-		annotation SummarizationSetBy = Automatic
+		annotation SummarizationSetBy = User
 
 		annotation PBI_FormatHint = {"isGeneralNumber":true}
 
@@ -121,7 +121,7 @@ table Kapazität
 		summarizeBy: none
 		sourceColumn: bestand_anzahl
 
-		annotation SummarizationSetBy = Automatic
+		annotation SummarizationSetBy = User
 
 	partition Kapazität = m
 		mode: import

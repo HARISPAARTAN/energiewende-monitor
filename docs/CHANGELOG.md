@@ -47,6 +47,11 @@ Desktop gespeichert (Befunde unten). Offen ist der Tag; das Datum setzt der Tag.
   (`make_skeleton.py` bildet `decimal` und `numeric` jetzt auf `double` ab). `.pbip`, `definition.pbir` und `definition.pbism` schreibt
   Desktop ohne `$schema`; der Schematest prüft sie gegen die angeheftete Version. Drei Visuals tragen `visualContainer` 2.14.0, das in
   microsoft/json-schemas noch fehlt (`schema_versions.json`, `unpublished`).
+- Standardzusammenfassung: Mit dem Typwechsel hat Desktop sechs Spalten von "Nicht zusammenfassen" auf Summe gesetzt (Day-Ahead €/MWh
+  in Preis und Last Stunde, Min- und Ø-Preis in Preisphasen, Anfangsbestand und Bestand MW), weil sie als
+  `SummarizationSetBy = Automatic` markiert waren. Preise und Bestände ergeben als Summe keinen Sinn: Die sechs Spalten stehen wieder auf
+  "Nicht zusammenfassen", und alle 50 bewusst nicht summierten Zahlenspalten tragen `SummarizationSetBy = User`, den Wert, den Desktop
+  für eine Wahl von Hand schreibt. Ein Lint-Test prüft beides; `tools/pbi/tmdl.py` liest dafür die Annotationen der Spalten.
 - Power-BI-Projekt als PBIP (`powerbi/EnergiewendeMonitor.pbip`): Semantikmodell als TMDL, Bericht als PBIR, beide code-first
   erzeugt (`tools/pbi/`). Schemas von Microsoft sind vendort (`tools/pbi/schemas/`, `schema_versions.json`), die Visualvorlagen
   stammen aus microsoft/fabric-toolbox (MIT, `tools/pbi/templates/`). Quelle des Modells: `Sql.Database("127.0.0.1,1433",

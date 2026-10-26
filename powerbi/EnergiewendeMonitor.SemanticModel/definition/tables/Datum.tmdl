@@ -11,7 +11,7 @@ table Datum
 		summarizeBy: none
 		sourceColumn: datum_key
 
-		annotation SummarizationSetBy = Automatic
+		annotation SummarizationSetBy = User
 
 	column Datum
 		dataType: dateTime
@@ -32,7 +32,7 @@ table Datum
 		summarizeBy: none
 		sourceColumn: jahr
 
-		annotation SummarizationSetBy = Automatic
+		annotation SummarizationSetBy = User
 
 	column Quartal
 		dataType: int64
@@ -41,7 +41,7 @@ table Datum
 		summarizeBy: none
 		sourceColumn: quartal
 
-		annotation SummarizationSetBy = Automatic
+		annotation SummarizationSetBy = User
 
 	column Monat
 		dataType: int64
@@ -50,7 +50,7 @@ table Datum
 		summarizeBy: none
 		sourceColumn: monat
 
-		annotation SummarizationSetBy = Automatic
+		annotation SummarizationSetBy = User
 
 	column 'Monat Name'
 		dataType: string
@@ -94,7 +94,7 @@ table Datum
 		summarizeBy: none
 		sourceColumn: iso_jahr
 
-		annotation SummarizationSetBy = Automatic
+		annotation SummarizationSetBy = User
 
 	column ISO-Woche
 		dataType: int64
@@ -103,7 +103,7 @@ table Datum
 		summarizeBy: none
 		sourceColumn: iso_woche
 
-		annotation SummarizationSetBy = Automatic
+		annotation SummarizationSetBy = User
 
 	column Tag
 		dataType: int64
@@ -112,7 +112,7 @@ table Datum
 		summarizeBy: none
 		sourceColumn: tag
 
-		annotation SummarizationSetBy = Automatic
+		annotation SummarizationSetBy = User
 
 	column 'Wochentag Nr'
 		dataType: int64
@@ -121,7 +121,7 @@ table Datum
 		summarizeBy: none
 		sourceColumn: wochentag_nr
 
-		annotation SummarizationSetBy = Automatic
+		annotation SummarizationSetBy = User
 
 	column Wochentag
 		dataType: string
@@ -165,7 +165,7 @@ table Datum
 		summarizeBy: none
 		sourceColumn: viertelstunden
 
-		annotation SummarizationSetBy = Automatic
+		annotation SummarizationSetBy = User
 
 	hierarchy Kalender
 		lineageTag: 702fc796-e642-52cf-b20d-28ee55c063f7

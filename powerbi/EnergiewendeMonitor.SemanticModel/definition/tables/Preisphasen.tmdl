@@ -10,7 +10,7 @@ table Preisphasen
 		summarizeBy: none
 		sourceColumn: region_key
 
-		annotation SummarizationSetBy = Automatic
+		annotation SummarizationSetBy = User
 
 	column 'Start Datum Key'
 		dataType: int64
@@ -20,7 +20,7 @@ table Preisphasen
 		summarizeBy: none
 		sourceColumn: start_datum_key
 
-		annotation SummarizationSetBy = Automatic
+		annotation SummarizationSetBy = User
 
 	column 'Start UTC'
 		dataType: dateTime
@@ -70,20 +70,20 @@ table Preisphasen
 	column 'Min Preis €/MWh'
 		dataType: double
 		lineageTag: cd457840-101b-5dc8-9743-2b5a3d0d3af8
-		summarizeBy: sum
+		summarizeBy: none
 		sourceColumn: min_preis_eur_mwh
 
-		annotation SummarizationSetBy = Automatic
+		annotation SummarizationSetBy = User
 
 		annotation PBI_FormatHint = {"isGeneralNumber":true}
 
 	column 'Ø Preis €/MWh'
 		dataType: double
 		lineageTag: 5db1d114-fbc0-59e0-bf11-2169a3b234bd
-		summarizeBy: sum
+		summarizeBy: none
 		sourceColumn: avg_preis_eur_mwh
 
-		annotation SummarizationSetBy = Automatic
+		annotation SummarizationSetBy = User
 
 		annotation PBI_FormatHint = {"isGeneralNumber":true}
 

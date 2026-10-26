@@ -10,7 +10,7 @@ table Region
 		summarizeBy: none
 		sourceColumn: region_key
 
-		annotation SummarizationSetBy = Automatic
+		annotation SummarizationSetBy = User
 
 	column SMARD-Code
 		dataType: string

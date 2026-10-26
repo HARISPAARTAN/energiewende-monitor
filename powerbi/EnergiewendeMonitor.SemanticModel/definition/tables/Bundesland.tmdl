@@ -10,7 +10,7 @@ table Bundesland
 		summarizeBy: none
 		sourceColumn: bundesland_key
 
-		annotation SummarizationSetBy = Automatic
+		annotation SummarizationSetBy = User
 
 	column Bundesland
 		dataType: string
